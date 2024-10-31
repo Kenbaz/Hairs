@@ -35,12 +35,20 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    # Basic Information
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(max_length=100, unique=True)
     phone_number = models.CharField(max_length=15, blank=True)
+
+
+    # Shipping Information
+    country = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
     address = models.TextField(blank=True)
+    postal_code = models.CharField(max_length=20, blank=True)
 
 
     # always required when creating a custom user
@@ -69,4 +77,8 @@ class User(AbstractUser):
 
     def has_module_perms(self, app_label):
         return True
+    
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
     

@@ -4,51 +4,100 @@ from .models import User
 
 
 class CustomUserAdmin(UserAdmin):
-   from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import Group
-from .models import User
+    list_display = (
+        'email', 
+        'username', 
+        'get_full_name',
+        'country',
+        'city',
+        'is_active',
+        'date_joined'
+    )
 
-class CustomUserAdmin(UserAdmin):
-    list_display = ('email', 'username', 'first_name', 'last_name', 'last_login', 'date_joined', 'is_staff', 'is_active')
-    list_filter = ('is_staff', 'is_active', 'is_superuser')
     readonly_fields = ('last_login', 'date_joined')
-    list_display_links = ('email', 'first_name', 'last_name')
+
+    list_display_links = ('email', 'get_full_name')
     
-    # Define fieldsets for change page
-    fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        ('Personal info', {'fields': ('username', 'first_name', 'last_name', 'phone_number', 'address')}),
-        ('Permissions', {'fields': (
-            'is_active',
-            'is_staff',
-            'is_admin',
-            'is_superuser',
-            'groups',
-            'user_permissions',
-        )}),
-        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+    list_filter = (
+        'is_active',
+        'is_staff',
+        'is_superuser',
+        'country',
+        'city',
+        'date_joined'
     )
     
-    # Define fieldsets for add page
+    search_fields = (
+        'email',
+        'username',
+        'first_name',
+        'last_name',
+        'phone_number',
+        'city',
+        'country'
+    )
+    
+    ordering = ('-date_joined',)
+    
+    fieldsets = (
+        ('Login Information', {
+            'fields': ('email', 'username', 'password')
+        }),
+        ('Personal Information', {
+            'fields': (
+                'first_name', 
+                'last_name',
+                'phone_number',
+            )
+        }),
+        ('Address Information', {
+            'fields': (
+                'country',
+                'city',
+                'state',
+                'address',
+                'postal_code',
+            )
+        }),
+        ('Permissions', {
+            'fields': (
+                'is_active',
+                'is_staff',
+                'is_superuser',
+                'is_admin',
+                'groups',
+                'user_permissions'
+            )
+        }),
+        ('Important dates', {
+            'fields': ('last_login', 'date_joined')
+        }),
+    )
+    
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
             'fields': (
-                'email', 'username', 'first_name', 'last_name',
-                'password1', 'password2', 'is_staff', 'is_active',
-                'is_admin', 'is_superuser'
+                'email',
+                'username',
+                'first_name',
+                'last_name',
+                'password1',
+                'password2',
+                'is_staff',
+                'is_active',
+                'is_superuser'
             ),
         }),
     )
     
-    search_fields = ('email', 'username', 'first_name', 'last_name')
-    ordering = ('email',)
-    filter_horizontal = ('groups', 'user_permissions',)
-
-    def get_inline_instances(self, request, obj=None):
-        if not obj:
-            return list()
-        return super().get_inline_instances(request, obj)
+    readonly_fields = ('date_joined', 'last_login')
+    
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+    get_full_name.short_description = 'Full Name'
 
 admin.site.register(User, CustomUserAdmin)
+admin.site.site_header = 'Miz Viv Hairs'
+admin.site.site_title = 'Miz Viv Hairs Admin Portal'
+admin.site.index_title = 'Welcome to Miz Viv Hairs Admin Portal'
