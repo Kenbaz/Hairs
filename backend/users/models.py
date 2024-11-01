@@ -41,6 +41,8 @@ class User(AbstractUser):
     username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(max_length=100, unique=True)
     phone_number = models.CharField(max_length=15, blank=True)
+    verified_email = models.BooleanField(default=False)
+    email_verification_token = models.CharField(max_length=100, blank=True)
 
 
     # Shipping Information
@@ -81,4 +83,3 @@ class User(AbstractUser):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
-    

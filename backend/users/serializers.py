@@ -60,3 +60,35 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
         fields = (
             'country', 'state', 'city', 'address', 'postal_code'
         )
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    new_password_repeat = serializers.CharField(required=True)
+
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password_repeat']:
+            raise serializers.ValidationError({"new password": "password field didn't match."})
+        return attrs
+    
+
+class ResetPasswordEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, validators=[validate_password])
+    new_password_repeat = serializers.CharField(required=True)
+
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password_repeat']:
+            raise serializers.ValidationError({"new password": "password field didn't match."})
+        return attrs
+    
+
+class EmailVerificationSerializer(serializers.Serializer):
+    token = serializers.CharField()
