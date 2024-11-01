@@ -59,6 +59,12 @@ class CustomUserAdmin(UserAdmin):
                 'postal_code',
             )
         }),
+        ('Account Verification', {
+            'fields': (
+                'verified_email',
+                'email_verification_token',
+            )
+        }),
         ('Permissions', {
             'fields': (
                 'is_active',
