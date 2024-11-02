@@ -1,0 +1,29 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div class="content">
+    <h1>Your Order Has Shipped!</h1>
+    <p>Dear {{ order.user.full_name }},</p>
+    <p>Great news! Your order is on its way to you.</p>
+
+    <div class="tracking-info">
+        <h2>Tracking Information</h2>
+        <p><strong>Tracking Number:</strong> {{ order.tracking_number }}</p>
+        <a href="{{ tracking_url }}" class="button">Track Your Package</a>
+    </div>
+
+    <div class="order-details">
+        <h2>Order Details</h2>
+        <table>
+            <tr>
+                <th>Order Number:</th>
+                <td>#{{ order.id }}</td>
+            </tr>
+            <tr>
+                <th>Shipping Address:</th>
+                <td>{{ order.shipping_address }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+{% endblock %}
