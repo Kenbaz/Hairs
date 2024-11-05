@@ -17,11 +17,13 @@ class OrderViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['order_status', 'payment_status']
 
+
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
             return Order.objects.all()
         return Order.objects.filter(user=user)
+    
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -30,10 +32,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             return OrderListSerializer
         return OrderDetailSerializer
     
+    
     def get_permissions(self):
         if self.action in ['update_status']:
             return [IsAdminUser()]
         return super().get_permissions()
+    
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(
@@ -50,6 +54,21 @@ class OrderViewSet(viewsets.ModelViewSet):
             OrderDetailSerializer(order).data,
             status=status.HTTP_201_CREATED
         )
+    
+    
+    def reduce_stock_on_create(self, serializer):
+        order = serializer.save()
+
+        # Reduce stock for each ordered item
+        for item in order.items.all():
+            item.product.update_stock(
+                quantity_changed = item.quantity,
+                transaction_type = 'order',
+                order=order,
+                user=self.request.user,
+                notes=f"Stock reduced from new order #{order.id}"
+            )
+
     
     @action(detail=True, methods=['post'])
     def update_status(self, request, pk=None):

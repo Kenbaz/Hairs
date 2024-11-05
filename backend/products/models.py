@@ -1,6 +1,11 @@
 from django.db import models
 from django.utils.text import slugify
-from currencies.utils import convert_price, get_active_currencies
+from currencies.utils import convert_price
+from django.core.validators import MinValueValidator
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 class Category(models.Model):
@@ -82,6 +87,70 @@ class Product(models.Model):
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    low_stock_threshold = models.PositiveIntegerField(
+        default=5,
+        help_text="Notify when stock falls below this number"
+    )
+    last_stock_update = models.DateTimeField(auto_now=True)
+
+
+    def update_stock(self, quantity_changed, transaction_type, order=None, user=None, notes=''):
+        """
+            Update product stock and create history record
+
+            Args:
+                quantity_changed (int): Negative for reduction, positive for addition
+                transaction_type (str): One of StockHistory.TRANSACTION_TYPES
+                order (Order, optional): Related order if applicable
+                user (User, optional): User making the change
+                notes (str, optional): Additional notes
+        """
+        previous_stock = self.stock
+        self.stock += quantity_changed
+        self.save()
+
+
+        # Create stock history record
+        StockHistory.objects.create(
+            product = self,
+            transaction_type=transaction_type,
+            quantity_changed=quantity_changed,
+            previous_stock=previous_stock,
+            new_stock=self.stock,
+            reference_order=order,
+            notes=notes,
+            created_by=user
+        )
+
+        # Check for low stock after reduction
+        if quantity_changed < 0:
+            self.check_low_stock()
+    
+
+    def check_low_stock(self):
+        """ Check if stock is below threshold and send notification if needed """
+        if self.notify_low_stock and self.stock <= self.low_stock_threshold:
+            self.send_low_stock_notification()
+    
+
+    def send_low_stock_notification(self):
+        """ Send low stock notification email """
+        subject = f'Low Stock Alert: {self.name}'
+        message = f"""
+        Low stock alert for {self.name}
+
+        Current stock: {self.stock}
+        Threshold: {self.low_stock_threshold}
+
+        Please restock this item soon.
+        """
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.ADMIN_EMAIL],
+            fail_silently=True
+        )
 
 
     def get_price_in_currency(self, currency_code='USD'):
@@ -124,3 +193,48 @@ class ProductImage(models.Model):
 
     class Meta:
         ordering = ['-is_primary', '-created_at']
+
+
+
+class StockHistory(models.Model):
+    TRANSACTION_TYPES = [
+        ('order', 'Order placed'),
+        ('cancel', 'Order cancelled'),
+        ('restock', 'Manual Restock'),
+        ('adjustment', 'Stock Adjustment')
+    ]
+
+    product = models.ForeignKey(
+        'Product',
+        on_delete=models.CASCADE,
+        related_name='Stock_history'
+    )
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    quantity_changed = models.IntegerField(
+        help_text="Negative for stock reduction, positive for addition"
+    )
+    previous_stock = models.IntegerField()
+    new_stock = models.IntegerField()
+    reference_order = models.ForeignKey(
+        'orders.Order',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Stock History Entry'
+        verbose_name_plural = 'Stock History Entries'
+    
+
+    def __str__(self):
+        return f"{self.product.name} - {self.transaction_type} ({self.quantity_changed})"

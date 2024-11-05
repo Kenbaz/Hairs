@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, ProductImage
+from .models import Category, Product, ProductImage, StockHistory
 
 
 @admin.register(Category)
@@ -14,6 +14,18 @@ class ProductImageInline(admin.TabularInline):
     extra = 1
 
 
+class StockHistoryInline(admin.TabularInline):
+    model = StockHistory
+    extra = 0
+    readonly_fields = [
+        'transaction_type', 'quantity_changed', 'previous_stock',
+        'new_stock', 'reference_order', 'created_at', 'created_by'
+    ]
+    can_delete = False
+    max_num = 0
+    ordering = ['-created_at']
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['name', 'category', 'price', 'stock', 'is_featured', 'created_at']
@@ -22,3 +34,41 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     inlines = [ProductImageInline]
     list_editable = ['price', 'stock', 'is_featured']
+    inlines = [ProductImageInline, StockHistoryInline]
+
+
+    def save_model(self, request, obj, form, change):
+        if change and 'stock' in form.changed_data:
+            old_product = Product.objects.get(pk=obj.pk)
+            stock_change = obj.stock - old_product.stock
+
+            super().save_model(request, obj, form, change)
+
+            # Create stock history record for manual adjustment
+            StockHistory.objects.create(
+                product=obj,
+                transaction_type='adjustment',
+                quantity_changed=stock_change,
+                new_stock=obj.stock,
+                notes='Manual stock adjustment for admin panel',
+                created_by=request.user
+            )
+        else:
+            super().save_model(request, obj, form, change)
+
+
+@admin.register(StockHistory)
+class StockHistoryAdmin(admin.ModelAdmin):
+    list_display = ['product', 'transaction_type', 'quantity_changed', 
+                   'previous_stock', 'new_stock', 'created_at']
+    list_filter = ['transaction_type', 'created_at']
+    search_fields = ['product__name', 'notes']
+    readonly_fields = ['product', 'transaction_type', 'quantity_changed',
+                      'previous_stock', 'new_stock', 'reference_order',
+                      'created_at', 'created_by']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

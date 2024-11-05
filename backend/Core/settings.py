@@ -71,6 +71,10 @@ SIMPLE_JWT = {
 }
 
 
+# Admin email
+ADMIN_EMAIL = 'affiong32@gmail.com'
+
+
 # Email Settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # Or your email provider

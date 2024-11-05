@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Product, ProductImage
+from .models import Category, Product, ProductImage, StockHistory
 from currencies.utils import get_active_currencies
 
 
@@ -151,3 +151,22 @@ class ProductPriceSerializer(serializers.Serializer):
         decimal_places=2,
         allow_null=True
     )
+
+
+
+class StockHistorySerializer(serializers.ModelSerializer):
+    created_by = serializers.StringRelatedField()
+    product = serializers.StringRelatedField()
+    reference_order = serializers.StringRelatedField()
+
+    class Meta:
+        model = StockHistory
+        fields = [
+            'id', 'product', 'transaction_type', 'quantity_changed',
+            'previous_stock', 'new_stock', 'reference_order',
+            'notes', 'created_at', 'created_by'
+        ]
+        read_only_fields = [
+            'product', 'previous_stock', 'new_stock', 
+            'created_at', 'created_by'
+        ]

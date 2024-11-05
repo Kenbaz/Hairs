@@ -25,6 +25,28 @@ class Order(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+    
+
+    def update_stock_on_status_change(self):
+        """ Update product stock based on order status change """
+        if self.order_status == 'cancelled' and self.original_status != 'cancelled':
+            # Restore stock for cancelled orders
+            for item in self.items.all():
+                item.product.update_stock(
+                    quantity_changed=item.quantity,
+                    transaction_type='cancel',
+                    order=self,
+                    notes=f"Stock restored from cancelled order #{self.id}"
+                )
+        elif self._origignal_status == 'cancelled' and self.order_status != 'cancelled':
+            # Reduce stock if order is not cancelled
+            for item in self.items.all():
+                item.product.update_stock(
+                    quantity_changed=item.quantity,
+                    transaction_type='order',
+                    order=self,
+                    notes=f"Stock reduced from reactivated order #{self.id}"
+                )
 
 
 class OrderItem(models.Model):
