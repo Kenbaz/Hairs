@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+from currencies.utils import convert_price, get_active_currencies
 
 
 class Category(models.Model):
@@ -32,6 +33,7 @@ class Category(models.Model):
         return self.name
     
 
+
 class Product(models.Model):
     HAIR_TYPE_CHOICES = [
         ('raw', 'Raw hairs'),
@@ -62,12 +64,17 @@ class Product(models.Model):
         null=True,
         blank=True
     )
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Price in USD (base currency)"
+    )
     discount_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         null=True,
-        blank=True
+        blank=True,
+        help_text="Discount price in USD (base currency)"
     )
     stock = models.IntegerField(default=0)
     care_instructions = models.TextField(blank=True)
@@ -75,6 +82,22 @@ class Product(models.Model):
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+    def get_price_in_currency(self, currency_code='USD'):
+        """ Get price in specified currency """
+        if currency_code == 'USD':
+            return self.price
+        return convert_price(self.price, 'USD', currency_code)
+    
+
+    def get_discount_price_in_currency(self, currency_code='USD'):
+        """ Get discount price in specified currency """
+        if not self.discount_price:
+            return None
+        if currency_code == 'USD':
+            return self.discount_price
+        return convert_price(self.discount_price, 'USD', currency_code)
 
 
     class Meta:

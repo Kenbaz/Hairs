@@ -5,6 +5,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Category, Product
 from .serializers import (CategorySerializer, ProductListSerializer, ProductDetailsSerializer)
 from .pagination import ProductPagination
+from currencies.utils import convert_price
+from decimal import Decimal
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -28,7 +30,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         'category__slug': ['exact'],
         'hair_type': ['exact'],
         'length': ['gte', 'lte'],
-        'price': ['gte', 'lte'],
         'is_featured': ['exact']
     }
     search_fields = ['name', 'description']
@@ -36,10 +37,62 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ['-created_at']
 
 
+    @action(detail=False)
+    def instant_search(self, request):
+        """ Endpoint for instant search with minimal data """
+        query = request.query_params.get('query', '')
+        if len(query) < 3:
+            return Response([])
+        
+        queryset = self.get_queryset().filter(name__icontains=query)[:10] # Limit to 10 results
+
+        # Using a minimal serializer for performance
+        data = [{
+            'id': product.id,
+            'name': product.name,
+            'slug': product.slug,
+            'primary_image': {
+                'image': product.images.filter(is_primary=True).first().image.url if product.images.filter(is_primary=True).exists() else None
+            }
+        } for product in queryset]
+
+        return Response(data)
+
+
     def get_serializer_class(self):
         if self.action == 'list':
             return ProductListSerializer
         return ProductDetailsSerializer
+    
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Handle price filtering in the requested currency
+        min_price = self.request.query_params.get('min_price')
+        max_price = self.request.query_params.get('max_price')
+        currency = self.request.query_params.get('currency', 'USD')
+
+        if min_price or max_price:
+            # Convert filter prices from requested currency to USD for database filtering
+            if min_price:
+                min_priced_usd = convert_price(
+                    Decimal(min_price),
+                    from_currency=currency,
+                    to_currency='USD'
+                )
+                queryset = queryset.filter(price__gte=min_priced_usd)
+            
+
+            if max_price:
+                max_price_usd = convert_price(
+                    Decimal(max_price), 
+                    from_currency=currency, 
+                    to_currency='USD'
+                )
+                queryset = queryset.filter(price__lte=max_price_usd)
+        
+        return queryset
     
     
     @action(detail=False)
