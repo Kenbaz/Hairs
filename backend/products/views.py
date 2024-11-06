@@ -1,4 +1,4 @@
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -7,9 +7,8 @@ from .serializers import (CategorySerializer, ProductListSerializer, ProductDeta
 from .pagination import ProductPagination
 from currencies.utils import convert_price
 from decimal import Decimal
-from django.core.cache import cache
 from django.conf import settings
-from utils.cache import cache_response, invalidate_product_cache
+from utils.cache import cache_response
 from rest_framework.decorators import action
 
 
