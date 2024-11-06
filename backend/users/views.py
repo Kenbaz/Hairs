@@ -24,12 +24,11 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user
     
 
-class ChangePasswordView(generics.UpdateAPIView):
+class ChangePasswordView(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = (IsAuthenticated,)
 
-
-    def update(self, request, *args, **kwargs):
+    def post(self, request):  # Changed from update to post
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -124,7 +123,7 @@ class SendVerificationEmailView(generics.GenericAPIView):
 
     def post(self, request):
         user = request.user
-        if user.email_verified:
+        if user.verified_email:
             return Response(
                 {"message": "Email already verified"},
                 status=status.HTTP_200_OK
@@ -162,8 +161,8 @@ class VerifyEmailView(generics.GenericAPIView):
 
         try:
             user = User.objects.get(email_verification_token=token)
-            if not user.email_verified:
-                user.email_verified = True
+            if not user.verified_email:
+                user.verified_email = True
                 user.email_verification_token = ''
                 user.save()
                 return Response(

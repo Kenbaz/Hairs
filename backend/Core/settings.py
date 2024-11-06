@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
+import sys
 
 # Load environment variables
 load_dotenv()
@@ -78,39 +79,47 @@ INSTALLED_APPS = [
 ]
 
 
-# Cache settings
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'PASSWORD': os.getenv('REDIS_PASSWORD', None),
-            # Enable compression
-            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-            # Enable connection pooling
-            'CONNECTION_POOL_CLASS': 'redis.BlockingconnectionPool',
-            'CONNECTION_POOL_CLASS_KWARGS': {
-                'max_connections': 50,
-                'timeout': 20,
-            }
-        },
-        # Cache timeout in seconds (1 hour)
-        'TIMEOUT': 3600,
-    },
-    'session': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/2'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'PASSWORD': os.getenv('REDIS_PASSWORD', None),
+# Cache Configuration for different environments
+if 'test' in sys.argv:
+    # Use local memory cache for testing
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
         }
     }
-}
+    SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+else:
+    # Use Redis cache for development and production
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'PASSWORD': os.getenv('REDIS_PASSWORD', None),
+                'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+                'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
+                'CONNECTION_POOL_CLASS_KWARGS': {
+                    'max_connections': 50,
+                    'timeout': 20,
+                }
+            },
+            'TIMEOUT': 3600,
+        },
+        'session': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/2'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'PASSWORD': os.getenv('REDIS_PASSWORD', None),
+            }
+        }
+    }
 
-# Use Redis for sessions
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'session'
+    # Use Redis for sessions outside of testing
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'session'
 
 
 # Cache key prefixes for different types of data
