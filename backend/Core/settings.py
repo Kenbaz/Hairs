@@ -48,6 +48,60 @@ INSTALLED_APPS = [
 ]
 
 
+# Cache settings
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PASSWORD': os.getenv('REDIS_PASSWORD', None),
+            # Enable compression
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            # Enable connection pooling
+            'CONNECTION_POOL_CLASS': 'redis.BlockingconnectionPool',
+            'CONNECTION_POOL_CLASS_KWARGS': {
+                'max_connections': 50,
+                'timeout': 20,
+            }
+        },
+        # Cache timeout in seconds (1 hour)
+        'TIMEOUT': 3600,
+    },
+    'session': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/2'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PASSWORD': os.getenv('REDIS_PASSWORD', None),
+        }
+    }
+}
+
+# Use Redis for sessions
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'session'
+
+
+# Cache key prefixes for different types of data
+CACHE_KEYS = {
+    'PRODUCT_DETAIL': 'product_detail_{}', # {} will be replaced with product ID
+    'PRODUCT_LIST': 'product_list_{}', # {} will be replaced with page number
+    'CATEGORY_DETAIL': 'category_detail_{}',
+    'CATEGORY_LIST': 'category_list_{}',
+    'FEATURED_PRODUCTS': 'featured_products',
+}
+
+
+# Cache timeouts in seconds
+CACHE_TIMEOUTS = {
+    'PRODUCT': 3600,          # 1 hour
+    'CATEGORY': 86400,        # 24 hours
+    'FEATURED': 1800,         # 30 minutes
+    'SEARCH': 300,            # 5 minutes
+}
+
+
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 12,  # Number of items per page

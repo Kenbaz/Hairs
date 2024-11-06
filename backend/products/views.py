@@ -7,6 +7,10 @@ from .serializers import (CategorySerializer, ProductListSerializer, ProductDeta
 from .pagination import ProductPagination
 from currencies.utils import convert_price
 from decimal import Decimal
+from django.core.cache import cache
+from django.conf import settings
+from utils.cache import cache_response, invalidate_product_cache
+from rest_framework.decorators import action
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -14,6 +18,20 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
+
+    @cache_response(
+        timeout=settings.CACHE_TIMEOUTS['CATEGORY'],
+        key_prefix='category_list'
+    )
+    def list_cached(self, request, *args, **kwargs):
+        return super().list_cached(request, *args, **kwargs)
+    
+    @cache_response(
+        timeout=settings.CACHE_TIMEOUTS['CATEGORY'],
+        key_prefix='category_detail'
+    )
+    def retrieve_cached(self, request, *args, **kwargs):
+        return super().retrieve_cached(request, *args, **kwargs)
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
@@ -37,7 +55,24 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ['-created_at']
 
 
+    @cache_response(timeout=settings.CACHE_TIMEOUTS['PRODUCT'])
+    def retrieve_cache_products(self, request, *args, **kwargs):
+        return super().retrieve_cache_products(request, *args, **kwargs)
+    
+
+    @cache_response(
+            timeout=settings.CACHE_TIMEOUTS['PRODUCT'],
+            key_prefix='product_list'
+    )
+    def list_cached(self, request, *args, **kwargs):
+        return super().list_cached(request, *args, **kwargs)
+    
+
     @action(detail=False)
+    @cache_response(
+        timeout=settings.CACHE_TIMEOUTS['SEARCH'],
+        key_prefix='instant_search'
+    )
     def instant_search(self, request):
         """ Endpoint for instant search with minimal data """
         query = request.query_params.get('query', '')
@@ -96,6 +131,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     
     
     @action(detail=False)
+    @cache_response(
+        timeout=settings.CACHE_TIMEOUTS['FEATURED'],
+        key_prefix='featured_products'
+    )
     def featured(self, request):
         """ Endpoint for fetching featured products """
 
