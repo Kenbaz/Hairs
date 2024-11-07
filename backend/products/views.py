@@ -10,6 +10,7 @@ from decimal import Decimal
 from django.conf import settings
 from utils.cache import cache_response
 from rest_framework.decorators import action
+import decimal
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -68,10 +69,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     
 
     @action(detail=False)
-    @cache_response(
-        timeout=settings.CACHE_TIMEOUTS['SEARCH'],
-        key_prefix='instant_search'
-    )
     def instant_search(self, request):
         """ Endpoint for instant search with minimal data """
         query = request.query_params.get('query', '')
@@ -100,48 +97,53 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-
-        # Handle price filtering in the requested currency
+        queryset = Product.objects.filter(is_available=True)
         min_price = self.request.query_params.get('min_price')
         max_price = self.request.query_params.get('max_price')
         currency = self.request.query_params.get('currency', 'USD')
 
-        if min_price or max_price:
-            # Convert filter prices from requested currency to USD for database filtering
-            if min_price:
-                min_priced_usd = convert_price(
+        if min_price:
+            try:
+                min_price_usd = convert_price(
                     Decimal(min_price),
                     from_currency=currency,
                     to_currency='USD'
                 )
-                queryset = queryset.filter(price__gte=min_priced_usd)
-            
+                queryset = queryset.filter(price__gte=min_price_usd)
+            except (ValueError, TypeError, decimal.InvalidOperation):
+                pass
 
-            if max_price:
+        if max_price:
+            try:
                 max_price_usd = convert_price(
-                    Decimal(max_price), 
-                    from_currency=currency, 
+                    Decimal(max_price),
+                    from_currency=currency,
                     to_currency='USD'
                 )
                 queryset = queryset.filter(price__lte=max_price_usd)
-        
+            except (ValueError, TypeError, decimal.InvalidOperation):
+                pass
+
         return queryset
     
     
     @action(detail=False)
-    @cache_response(
-        timeout=settings.CACHE_TIMEOUTS['FEATURED'],
-        key_prefix='featured_products'
-    )
     def featured(self, request):
         """ Endpoint for fetching featured products """
 
         featured_products = self.get_queryset().filter(is_featured=True)
         page = self.paginate_queryset(featured_products)
         if page is not None:
-            serializer = ProductListSerializer(page, many=True)
+            serializer = ProductListSerializer(
+                page,
+                many=True,
+                context={'request': request}
+            )
             return self.get_paginated_response(serializer.data)
         
-        serializer = ProductListSerializer(featured_products, many=True)
+        serializer = ProductListSerializer(
+            featured_products,
+            many=True,
+            context={'request': request}
+        )
         return Response(serializer.data)

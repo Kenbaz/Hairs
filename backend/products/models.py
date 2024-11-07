@@ -3,6 +3,9 @@ from django.utils.text import slugify
 from currencies.utils import convert_price
 from django.core.mail import send_mail
 from django.conf import settings
+from django.core.validators import MinValueValidator
+from django.db import transaction
+from decimal import Decimal
 
 
 class Category(models.Model):
@@ -69,6 +72,7 @@ class Product(models.Model):
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
         help_text="Price in USD (base currency)"
     )
     discount_price = models.DecimalField(
@@ -89,6 +93,10 @@ class Product(models.Model):
         help_text="Notify when stock falls below this number"
     )
     last_stock_update = models.DateTimeField(auto_now=True)
+    notify_low_stock = models.BooleanField(
+        default=True,
+        help_text="Send notification when stock falls below threshold"
+    )
 
 
     def update_stock(self, quantity_changed, transaction_type, order=None, user=None, notes=''):
@@ -190,6 +198,16 @@ class ProductImage(models.Model):
 
     class Meta:
         ordering = ['-is_primary', '-created_at']
+    
+    def save(self, *args, **kwargs):
+        if self.is_primary:
+            with transaction.atomic():
+                # Set all other images of this product to non-primary
+                ProductImage.objects.filter(
+                    product=self.product,
+                    is_primary=True
+                ).update(is_primary=False)
+        super().save(*args, **kwargs)
 
 
 

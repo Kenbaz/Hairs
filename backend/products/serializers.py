@@ -15,6 +15,19 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug', 'description']
+        read_only_fields = ['slug']
+    
+    def validate_name(self, value):
+        """
+        Check that the category name is unique
+        """
+        if (
+            Category.objects.filter(name__iexact=value)
+            .exclude(id=getattr(self.instance, 'id', None))
+            .exists()
+        ):
+            raise serializers.ValidationError("A category with this name already exists.")
+        return value
 
 
 
@@ -28,7 +41,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'slug', 'category', 'price_data', 'is_featured', 'primary_image'
+            'id', 'name', 'slug', 'category', 'price_data', 'is_featured', 'primary_image', 'hair_type'
         ]
 
 
@@ -40,8 +53,8 @@ class ProductListSerializer(serializers.ModelSerializer):
     
 
     def get_price_data(self, obj):
-        request = self.context.get('request')
-        currency = request.GET.get('currency', 'USD')
+        request = self.context.get('request', None)
+        currency = request.GET.get('currency', 'USD') if request else 'USD'
         currencies = get_active_currencies()
 
         if currency not in currencies:
@@ -58,7 +71,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             'is_discounted': bool(discount_price),
             'discount_amount': discount_price,
             'discount_formatted': f"{symbol}{discount_price}" if discount_price else None,
-            'saving_percentage': None
+            'savings_percentage': None
         }
 
         # Calculate savings percentage if discounted
@@ -85,14 +98,14 @@ class ProductDetailsSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'category', 'description',
             'hair_type', 'length', 'price_data',
             'stock', 'care_instructions', 'is_featured',
-            'is_available', 'images', 'created_at', 'updated_at'
+            'is_available', 'images', 'created_at', 'updated_at', 'available_currencies'
         ]
     
 
 
     def get_price_data(self, obj):
-        request = self.context.get('request')
-        currency = request.GET.get('currency', 'USD')
+        request = self.context.get('request', None)
+        currency = request.GET.get('currency', 'USD') if request else 'USD'
         currencies = get_active_currencies()
         
         if currency not in currencies:
