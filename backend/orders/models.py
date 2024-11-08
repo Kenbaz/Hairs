@@ -26,6 +26,9 @@ class Order(models.Model):
     class Meta:
         ordering = ['-created_at']
     
+    def __str__(self):
+        return f"Order #{self.id}"
+    
 
     def update_stock_on_status_change(self):
         """ Update product stock based on order status change """
@@ -58,6 +61,9 @@ class OrderItem(models.Model):
     product = models.ForeignKey('products.Product', on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        unique_together = ['order', 'product']
 
 
     def __str__(self):

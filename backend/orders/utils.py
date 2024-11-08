@@ -22,18 +22,22 @@ def send_order_email(order, template_name, subject, extra_content=None):
     if extra_content:
         context.update(extra_content)
 
-        # Render Html email template
-        html_message = render_to_string(f'emails/{template_name},html', context)
+        try:
+            # Render HTML email template
+            html_message = render_to_string(f'emails/{template_name}.html', context)
 
-        # Send email
-        send_mail(
-            subject=subject,
-            message='', #Plain text message if needed
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[order.user.email],
-            html_message=html_message,
-            fail_silently=False
-        )
+            # Send email
+            send_mail(
+                subject=subject,
+                message='',  # Plain text message if needed
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[order.user.email],
+                html_message=html_message,
+                fail_silently=True
+            )
+        except Exception:
+            # Log the error or handle it as needed
+            pass
 
 
 def send_order_status_email(order):
@@ -46,9 +50,9 @@ def send_order_status_email(order):
         'shipped': {
             'template': 'order_shipped',
             'subject': f'Your Order #{order.id} Has Been Shipped',
-            'extra_context': {
+            'extra_content': {
                 'tracking_url': f'https://trackingservice.com/{order.tracking_number}'
-            }
+            } if order.tracking_number else None
         },
         'delivered': {
             'template': 'order_delivered',
@@ -63,9 +67,17 @@ def send_order_status_email(order):
     # Get email configuration for the current status
     email_config = status_config.get(order.order_status)
     if email_config:
+        context = {
+            'order': order,
+            'site_url': settings.FRONTEND_URL
+        }
+        
+        if email_config.get('extra_content'):
+            context.update(email_config['extra_content'])
+            
         send_order_email(
             order,
             template_name=email_config['template'],
             subject=email_config['subject'],
-            extra_content=email_config.get('extra_content')
+            extra_content=context
         )
