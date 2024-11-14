@@ -1,16 +1,26 @@
 from rest_framework import serializers
 from .models import Review
 from users.serializers import UserProfileSerializer
+from products.serializers import ProductListSerializer
+from products.models import Product
+
+
+class SimpleProductSerializer(serializers.ModelSerializer):
+    """A simplified product serializer that doesn't depend on currency conversion"""
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'description', 'price']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     user = UserProfileSerializer(read_only=True)
+    product = ProductListSerializer(read_only=True)
     product_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = Review
         fields = [
-            'id', 'user', 'product_id', 'rating',
+            'id', 'user', 'product', 'product_id', 'rating',
             'comment', 'verified_purchase',
             'created_at'
         ]
@@ -24,26 +34,45 @@ class ReviewSerializer(serializers.ModelSerializer):
     
 
     def validate(self, attrs):
-        user = self.context['request'].user
-        product_id = attrs['product_id']
-
-        # Check if user has already reviewed this product
-        if self.context['request'].method == 'POST':
-            if Review.objects.filter(user=user, product_id=product_id).exists():
-                raise serializers.ValidationError(
-                    "You have already reviewed this product"
-                )
-            
-        # Check if this a verified purchase
-        has_purchased = user.order_set.filter(
-            items__product_id=product_id,
-            order_status = 'delivered'
-        ).exists()
-
-        if has_purchased:
-            attrs['verified_purchase'] = True
+        # Only validate user and unique review for authenticated users during creation
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            if self.instance is None:  # Create operation
+                if 'product_id' not in attrs:
+                    raise serializers.ValidationError(
+                        {"product_id": "Product ID is required for creating a review"}
+                    )
+                
+                # Check if user has already reviewed this product
+                if Review.objects.filter(
+                    user=request.user,
+                    product_id=attrs['product_id']
+                ).exists():
+                    raise serializers.ValidationError(
+                        "You have already reviewed this product"
+                    )
+                
+                #Check if product exits
+                try:
+                    product = Product.objects.get(id=attrs['product_id'])
+                except product.DoesNotExist:
+                    raise serializers.ValidationError(
+                        {"product_id": "Product does not exists"}
+                    )
 
         return attrs
+
+    def create(self, validated_data):
+       product_id = validated_data.pop('product_id')
+       try:
+           product = Product.objects.get(id=product_id)
+           return Review.objects.create(
+               product=product, **validated_data
+           )
+       except Product.DoesNotExist:
+           raise serializers.ValidationError(
+               {'product_id': 'Product does not exists'}
+           )
     
 
 class ProductReviewsSerializer(serializers.Serializer):

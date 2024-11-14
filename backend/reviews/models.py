@@ -1,4 +1,6 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 
 
 class Review(models.Model):
@@ -9,7 +11,10 @@ class Review(models.Model):
         on_delete=models.CASCADE
     )
     rating = models.IntegerField(
-        choices=[(i, i) for i in range(1, 6)]
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(5)
+        ]
     )
     comment = models.TextField()
     verified_purchase = models.BooleanField(default=False)
@@ -17,4 +22,18 @@ class Review(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        unique_together = ['user', 'product'] # one review per user per product
+        unique_together = ['user', 'product']  # one review per user per product
+
+
+    def __str__(self):
+        return f"{self.user.username}'s review for {self.product.name}"
+
+
+    def save(self, *args, **kwargs):
+        # Check for verified purchase before saving
+        if not self.pk:  # Only check on creation
+            self.verified_purchase = self.user.order_set.filter(
+                items__product=self.product,
+                order_status='delivered'
+            ).exists()
+        super().save(*args, **kwargs)
