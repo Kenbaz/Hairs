@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_filters',
+    'channels',
 
     # Local apps
     'users',
@@ -76,6 +77,7 @@ INSTALLED_APPS = [
     'cart',
     'currencies',
     'wishlist',
+    'admin_api.apps.AdminApiConfig',
 ]
 
 
@@ -222,6 +224,18 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Core.wsgi.application'
+
+# Channels configuration
+ASGI_APPLICATION = 'Core.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [(os.getenv('REDIS_HOST', 'localhost'), 6379)],
+        },
+    },
+}
 
 
 # Database
