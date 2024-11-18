@@ -84,12 +84,19 @@ INSTALLED_APPS = [
 # Cache Configuration for different environments
 if 'test' in sys.argv:
     # Use local memory cache for testing
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
+
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
             'LOCATION': 'unique-snowflake',
         }
     }
+    
     SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 else:
     # Use Redis cache for development and production
@@ -229,12 +236,17 @@ WSGI_APPLICATION = 'Core.wsgi.application'
 ASGI_APPLICATION = 'Core.asgi.application'
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [(os.getenv('REDIS_HOST', 'localhost'), 6379)],
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    } if 'test' in sys.argv else {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(os.getenv('REDIS_HOST', 'localhost'), 6379)],
+            "symmetric_encryption_keys": [SECRET_KEY],
+            "capacity": 1500,
+            "expiry": 10,
         },
-    },
+    }
 }
 
 

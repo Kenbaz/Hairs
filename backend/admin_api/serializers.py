@@ -4,6 +4,7 @@ from orders.models import Order
 from users.models import User
 from django.db.models import Sum, Count
 from reviews.models import Review
+from products.models import StockHistory
 
 
 class AdminProductSerializer(serializers.ModelSerializer):
@@ -21,12 +22,11 @@ class AdminProductSerializer(serializers.ModelSerializer):
         return obj.stock * obj.price
 
     def get_total_sales(self, obj):
-        return obj.order_items.count()
+        return obj.orderitem_set.count()
 
     def get_revenue_generated(self, obj):
-        total = obj.order_items.aggregate(
-            total=Sum('price'))['total']
-        return total if total else 0
+        items = obj.orderitem_set.all()
+        return sum(item.quantity * item.price for item in items)
 
 
 class AdminOrderSerializer(serializers.ModelSerializer):
@@ -88,6 +88,20 @@ class AdminUserSerializer(serializers.ModelSerializer):
         return last_order.created_at if last_order else None
 
 
+class StockHistorySerializer(serializers.ModelSerializer):
+    created_by = serializers.StringRelatedField()
+    product = serializers.StringRelatedField()
+    reference_order = serializers.StringRelatedField()
+
+    class Meta:
+        model = StockHistory
+        fields = [
+            'id', 'product', 'transaction_type', 'quantity_changed',
+            'previous_stock', 'new_stock', 'reference_order',
+            'notes', 'created_at', 'created_by'
+        ]
+
+
 class DashboardStatsSerializer(serializers.Serializer):
     # Basic stats
     total_orders = serializers.IntegerField()
@@ -136,7 +150,9 @@ class CustomerAnalyticsSerializer(serializers.Serializer):
     new_vs_returning = serializers.DictField()
     customer_growth = serializers.ListField(child=serializers.DictField())
     top_customers = serializers.ListField(child=serializers.DictField())
-    customer_locations = serializers.DictField()
+    customer_locations = serializers.DictField(
+        child=serializers.IntegerField()
+    )
 
 
 class ProductAnalyticsSerializer(serializers.Serializer):
@@ -152,11 +168,7 @@ class OrderItemSerializer(serializers.Serializer):
     price = serializers.DecimalField(max_digits=10, decimal_places=2)
     subtotal = serializers.DecimalField(max_digits=10, decimal_places=2)
 
+    class Meta:
+        model = 'orders.OrderItem'
+        fields = ['product_name', 'quantity', 'price', 'subtotal']
 
-class StockHistorySerializer(serializers.Serializer):
-    date = serializers.DateTimeField()
-    transaction_type = serializers.CharField()
-    quantity_changed = serializers.IntegerField()
-    previous_stock = serializers.IntegerField()
-    new_stock = serializers.IntegerField()
-    notes = serializers.CharField()

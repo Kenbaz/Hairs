@@ -14,7 +14,8 @@ from .serializers import (
     ProductAnalyticsSerializer,
     CustomerAnalyticsSerializer,
     AdminProductSerializer,
-    AdminUserSerializer
+    AdminUserSerializer,
+    AdminOrderSerializer
 )
 from products.models import Product, Category
 from orders.models import Order
@@ -23,13 +24,20 @@ from reviews.models import Review
 import csv
 import xlsxwriter
 from io import BytesIO
-from utils.pdf_generator import PDFGenerator
-from utils.data_formatters import PDFDataFormatter
+from .utils.pdf_generator import PDFGenerator
+from .utils.data_formatters import PDFDataFormatter
 
 
 class DashboardViewSet(viewsets.ViewSet):
     permission_classes = [IsAdminUser]
-    
+
+    def get_permissions(self):
+        if self.action in ['statistics', 'sales_analytics', 'product_analytics', 'export_data']:
+            permission_classes = [IsAdminUser]
+        else:
+            permission_classes = [IsAdminUser]
+        return [permission() for permission in permission_classes]
+
 
     @action(detail=False, methods=['get'])
     def statistics(self, request):
@@ -149,14 +157,14 @@ class DashboardViewSet(viewsets.ViewSet):
 
         # Best sellers
         best_sellers = Product.objects.annotate(
-            total_sold=Count('order_items')
+            total_sold=Count('orderitem')
         ).order_by('-total_sold')[:10]
 
         # Low stock alerts
         low_stock = Product.objects.filter(
             stock__lte=F('low_stock_threshold')
         ).annotate(
-            days_to_stockout=F('stock') / (Count('order_items') / 30.0)
+            days_to_stockout=F('stock') / (Count('orderitem') / 30.0)
         )
 
         # Category distribution
@@ -166,7 +174,11 @@ class DashboardViewSet(viewsets.ViewSet):
 
         # Revenue by category
         revenue_by_category = Category.objects.annotate(
-            revenue=Sum('products__order_items__price')
+            revenue=Sum(
+                F('products__orderitem__quantity') *
+                F('products__orderitem__price'),
+                default=0
+            )
         ).values('name', 'revenue')
 
         data = {
@@ -180,7 +192,8 @@ class DashboardViewSet(viewsets.ViewSet):
             }
         }
 
-        serializer = ProductAnalyticsSerializer(data)
+        serializer = ProductAnalyticsSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
         return Response(serializer.data)
     
 
@@ -284,21 +297,20 @@ class DashboardViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
     
-
     def _get_export_data(self, data_type, date_from=None, date_to=None):
-        """ Get data for export based on type and date range """
+        """Get data for export based on type and date range"""
         if date_to:
             date_to = datetime.combine(date_to, datetime.max.time())
         if date_from:
             date_from = datetime.combine(date_from, datetime.min.time())
-        
+
         if data_type == 'sales':
             queryset = Order.objects.filter(payment_status=True)
             if date_from:
                 queryset = queryset.filter(created_at__gte=date_from)
             if date_to:
                 queryset = queryset.filter(created_at__lte=date_to)
-            
+
             data = queryset.values(
                 'id', 'created_at', 'user__email',
                 'total_amount', 'order_status'
@@ -318,15 +330,15 @@ class DashboardViewSet(viewsets.ViewSet):
                 'Status': item['order_status'],
                 'Items': item['items_count']
             } for item in data]
-        
+
         elif data_type == 'products':
             queryset = Product.objects.all()
             data = queryset.values(
                 'id', 'name', 'category__name',
                 'price', 'discount_price', 'stock', 'created_at'
             ).annotate(
-                total_sold=Count('order_items'),
-                revenue=Sum('order_items__price')
+                total_sold=Count('orderitem'),
+                revenue=Sum('orderitem__price')
             )
 
             return [{
@@ -340,15 +352,15 @@ class DashboardViewSet(viewsets.ViewSet):
                 'Revenue': item['revenue'] or 0,
                 'Created At': item['created_at'].strftime('%Y-%m-%d')
             } for item in data]
-        
+
         elif data_type == 'orders':
             queryset = Order.objects.all()
             if date_from:
                 queryset = queryset.filter(created_at__gte=date_from)
             if date_to:
                 queryset = queryset.filter(created_at__lte=date_to)
-            
-            data = queryset.prefetch_related('items__product').values(
+
+            data = queryset.values(
                 'id', 'created_at', 'user__email', 'total_amount',
                 'order_status', 'payment_status', 'shipping_address'
             )
@@ -362,42 +374,10 @@ class DashboardViewSet(viewsets.ViewSet):
                 'Payment Status': 'Paid' if item['payment_status'] else 'Pending',
                 'Shipping Address': item['shipping_address']
             } for item in data]
-        
-        elif data_type == 'customers':
-            queryset = User.objects.all()
-            if date_from:
-                queryset = queryset.filter(date_joined__gte=date_from)
-            if date_to:
-                queryset = queryset.filter(date_joined__lte=date_to)
 
-            data = queryset.annotate(
-                total_orders=Count('order'),
-                total_spent=Sum('order__total_amount'),
-                average_order_value=Avg('order__total_amount')
-            ).values(
-                'id',
-                'email',
-                'first_name',
-                'last_name',
-                'date_joined',
-                'total_orders',
-                'total_spent',
-                'average_order_value'
-            )
-
-            return [{
-                'Customer ID': item['id'],
-                'Email': item['email'],
-                'Name': f"{item['first_name']} {item['last_name']}",
-                'Joined Date': item['date_joined'].strftime('%Y-%m-%d'),
-                'Total Orders': item['total_orders'],
-                'Total Spent': item['total_spent'] or 0,
-                'Average Order Value': round(item['average_order_value'] or 0, 2)
-            } for item in data]
-        
         else:
             raise ValueError(f"Unsupported data type: {data_type}")
-    
+
     def _export_csv(self, data, data_type):
         """Export data as CSV"""
         if not data:
@@ -481,4 +461,180 @@ class DashboardViewSet(viewsets.ViewSet):
             f'attachment; filename="{data_type}_report_{datetime.now().strftime("%Y%m%d")}.pdf"'
         )
         return response
-    
+
+
+class AdminProductViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing products in admin panel"""
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminProductSerializer
+    queryset = Product.objects.all()
+
+    def get_queryset(self):
+        queryset = Product.objects.all().select_related('category')
+
+        # Filter by category
+        category = self.request.query_params.get('category')
+        if category:
+            queryset = queryset.filter(category__slug=category)
+
+        # Filter by stock status
+        stock_status = self.request.query_params.get('stock_status')
+        if stock_status == 'low':
+            queryset = queryset.filter(stock__lte=F('low_stock_threshold'))
+        elif stock_status == 'out':
+            queryset = queryset.filter(stock=0)
+
+        # Filter by featured status
+        is_featured = self.request.query_params.get('is_featured')
+        if is_featured is not None:
+            queryset = queryset.filter(
+                is_featured=is_featured.lower() == 'true')
+
+        return queryset
+
+    @action(detail=True, methods=['post'])
+    def toggle_featured(self, request, pk=None):
+        """Toggle featured status of a product"""
+        product = self.get_object()
+        product.is_featured = not product.is_featured
+        product.save()
+        return Response({
+            'status': 'success',
+            'is_featured': product.is_featured
+        })
+
+    @action(detail=True, methods=['post'])
+    def update_stock(self, request, pk=None):
+        """Update product stock"""
+        product = self.get_object()
+        new_stock = request.data.get('stock')
+        if new_stock is not None:
+            try:
+                new_stock = int(new_stock)
+                if new_stock < 0:
+                    return Response(
+                        {'error': 'Stock cannot be negative'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                product.update_stock(
+                    quantity_changed=new_stock - product.stock,
+                    transaction_type='adjustment',
+                    user=request.user,
+                    notes=request.data.get(
+                        'notes', 'Stock adjusted via admin panel')
+                )
+                return Response({
+                    'status': 'success',
+                    'new_stock': product.stock
+                })
+            except ValueError:
+                return Response(
+                    {'error': 'Invalid stock value'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        return Response(
+            {'error': 'Stock value not provided'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class AdminOrderViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing orders in admin panel"""
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminOrderSerializer
+    queryset = Order.objects.all()
+
+    def get_queryset(self):
+        queryset = Order.objects.all().select_related('user')
+
+        # Filter by status
+        status = self.request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(order_status=status)
+
+        # Filter by payment status
+        payment_status = self.request.query_params.get('payment_status')
+        if payment_status is not None:
+            queryset = queryset.filter(
+                payment_status=payment_status.lower() == 'true'
+            )
+
+        # Filter by date range
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+        if date_from:
+            queryset = queryset.filter(created_at__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created_at__lte=date_to)
+
+        return queryset.order_by('-created_at')
+
+    @action(detail=True, methods=['post'])
+    def update_status(self, request, pk=None):
+        """Update order status"""
+        order = self.get_object()
+        new_status = request.data.get('status')
+        if new_status in dict(Order.ORDER_STATUS_CHOICES):
+            order.order_status = new_status
+            order.save()
+            return Response({
+                'status': 'success',
+                'new_status': order.order_status
+            })
+        return Response(
+            {'error': 'Invalid status'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class AdminUserViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing users in admin panel"""
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminUserSerializer
+    queryset = User.objects.all()
+
+    def get_queryset(self):
+        queryset = User.objects.all()
+
+        # Filter by active status
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == 'true')
+
+        # Filter by verified email status
+        verified_email = self.request.query_params.get('verified_email')
+        if verified_email is not None:
+            queryset = queryset.filter(
+                verified_email=verified_email.lower() == 'true'
+            )
+
+        # Filter by join date
+        date_joined_after = self.request.query_params.get('joined_after')
+        if date_joined_after:
+            queryset = queryset.filter(date_joined__gte=date_joined_after)
+
+        return queryset.order_by('-date_joined')
+
+    @action(detail=True, methods=['post'])
+    def toggle_active(self, request, pk=None):
+        """Toggle user active status"""
+        user = self.get_object()
+        user.is_active = not user.is_active
+        user.save()
+        return Response({
+            'status': 'success',
+            'is_active': user.is_active
+        })
+
+    @action(detail=True, methods=['get'])
+    def purchase_history(self, request, pk=None):
+        """Get user's purchase history"""
+        user = self.get_object()
+        orders = Order.objects.filter(user=user).order_by('-created_at')
+        return Response({
+            'total_orders': orders.count(),
+            'total_spent': orders.filter(payment_status=True).aggregate(
+                total=Sum('total_amount')
+            )['total'] or 0,
+            'orders': AdminOrderSerializer(orders, many=True).data
+        })
