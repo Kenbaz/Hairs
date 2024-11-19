@@ -3,7 +3,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios, {AxiosError} from 'axios';
 import { AuthState, LoginCredentials, AuthResponse, RootState, ApiError } from './types';
-import axiosInstance from '../_axios';
+import axiosInstance from '../../utils/_axios';
+import {toast} from 'react-hot-toast';
 
 
 // Helper function to safely access LocalStorage (client-side only)
@@ -149,6 +150,7 @@ const authSlice = createSlice({
             state.accessToken = action.payload.access;
             state.refreshToken = action.payload.refresh;
             state.error = null;
+            toast.success('Logged in successfully');
         });
         builder.addCase(login.rejected, (state, action) => {
             state.isLoading = false;
@@ -165,6 +167,7 @@ const authSlice = createSlice({
             state.user = null;
             state.accessToken = null;
             state.refreshToken = null;
+            toast.error('Session expired. Please login again');
         });
 
         // Logout cases
@@ -174,6 +177,7 @@ const authSlice = createSlice({
             state.accessToken = null;
             state.refreshToken = null;
             state.error = null;
+            toast.success('Logged out successfully');
         });
 
         // Load user cases

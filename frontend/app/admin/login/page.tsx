@@ -1,6 +1,6 @@
 'use client';
-import { AdminLoginForm } from "@/app/_components/_admin/AdminLoginForm";
-import { AuthLayout } from "@/app/_components/_admin/AuthLayout";
+import { AdminLoginForm } from "@/app/_components/_authForms/AdminLoginForm";
+import { AuthLayout } from "@/app/_components/_authForms/AuthLayout";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/src/libs/_redux/hooks";
