@@ -29,6 +29,15 @@ export async function middleware(request: NextRequest) {
 
     const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
     const isAdminLoginRoute = request.nextUrl.pathname === '/admin/login';
+    const isPasswordResetRoute = request.nextUrl.pathname.startsWith('/admin/password-reset');
+    const isResetPasswordConfirmRoute = request.nextUrl.pathname.match(
+      /^\/admin\/reset-password\/[^/]+$/
+    );
+    
+    
+    // Public routes that dont require authentication
+    const isPublicRoute = isAdminLoginRoute || isPasswordResetRoute || isResetPasswordConfirmRoute;
+    
 
     const redirectToLogin = (request: NextRequest) => {
         const loginUrl = new URL('/admin/login', request.url);
@@ -37,7 +46,12 @@ export async function middleware(request: NextRequest) {
     };
 
     if (isAdminRoute) {
-        // if both tokens are present
+        // Allow access to public routes without authentication 
+        if (isPublicRoute) {
+          return NextResponse.next();
+        }
+        
+        // Check authentication for protected routes
         if (accessToken && refreshToken) {
           // if access token is expired try to refresh
           if (JWTUtil.isTokenExpired(accessToken)) {
