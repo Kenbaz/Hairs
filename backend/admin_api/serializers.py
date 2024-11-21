@@ -5,6 +5,7 @@ from users.models import User
 from django.db.models import Sum, Count
 from reviews.models import Review
 from products.models import StockHistory
+from .models import AdminNotification
 
 
 class AdminProductSerializer(serializers.ModelSerializer):
@@ -172,3 +173,9 @@ class OrderItemSerializer(serializers.Serializer):
         model = 'orders.OrderItem'
         fields = ['product_name', 'quantity', 'price', 'subtotal']
 
+
+class AdminNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdminNotification
+        fields = ['id', 'type', 'title', 'message',
+                  'link', 'is_read', 'created_at']

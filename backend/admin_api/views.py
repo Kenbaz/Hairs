@@ -26,6 +26,7 @@ import xlsxwriter
 from io import BytesIO
 from .utils.pdf_generator import PDFGenerator
 from .utils.data_formatters import PDFDataFormatter
+from .serializers import AdminNotificationSerializer, AdminNotification
 
 
 class DashboardViewSet(viewsets.ViewSet):
@@ -638,3 +639,28 @@ class AdminUserViewSet(viewsets.ModelViewSet):
             )['total'] or 0,
             'orders': AdminOrderSerializer(orders, many=True).data
         })
+
+
+class AdminNotificationViewSet(viewsets.ModelViewSet):
+    serializer_class = AdminNotificationSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return AdminNotification.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['post'])
+    def mark_all_read(self, request):
+        self.get_queryset().update(is_read=True)
+        return Response({'status': 'success'})
+
+    @action(detail=True, methods=['post'])
+    def mark_read(self, request, pk=None):
+        notification = self.get_object()
+        notification.is_read = True
+        notification.save()
+        return Response({'status': 'success'})
+
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        count = self.get_queryset().filter(is_read=False).count()
+        return Response({'count': count})
