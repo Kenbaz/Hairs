@@ -71,6 +71,7 @@ frontend/yarn-error.log*
 frontend/build
 frontend/.next
 frontend/coverage
+frontend/.env*
 
 # Editor directories and files
 .idea/

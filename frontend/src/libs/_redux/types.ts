@@ -37,3 +37,20 @@ export interface ApiError {
 export interface RootState {
     auth: AuthState;
 }
+
+export interface AdminNotification {
+    id: string;
+    type: 'order' | 'inventory' | 'user' | 'system';
+    title: string;
+    message: string;
+    is_read: boolean;
+    created_at: string;
+    link?: string;
+}
+
+export interface NotificationState {
+    notifications: AdminNotification[];
+    unreadCount: number;
+    isLoading: boolean;
+    error: string | null;
+}
