@@ -11,7 +11,7 @@ router.register(r'products', views.AdminProductViewSet,
 router.register(r'orders', views.AdminOrderViewSet, basename='admin-orders')
 router.register(r'users', views.AdminUserViewSet, basename='admin-users')
 router.register(r'notifications', AdminNotificationViewSet,
-                basename='admin-notification')
+                basename='admin-notifications')
 
 urlpatterns = [
     path('', include(router.urls)),
