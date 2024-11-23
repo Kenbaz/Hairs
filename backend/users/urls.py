@@ -6,11 +6,11 @@ from . import views
 urlpatterns = [
     # Authentication endpoints
     path('register/', views.RegisterView.as_view(), name='register'),
-    path('login/', TokenObtainPairView.as_view(), name='login'),
+    path('login/', views.CustomTokenObtainPairView.as_view(), name='login'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
      path('change-password/', views.ChangePasswordView.as_view(), name='change-password'),
     path('reset-password/', views.ResetPasswordEmailView.as_view(), name='reset-password'),
-    path('reset-password-confirm/<str:uidb64>/<str:token>/', 
+    path('reset-password-confirm/', 
          views.ResetPasswordConfirmView.as_view(), 
          name='reset-password-confirm'),
     path('send-verification-email/', 

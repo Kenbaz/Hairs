@@ -1,5 +1,8 @@
+from typing import Dict
 from rest_framework import status, generics
 from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import UserRegisterSerializer, UserProfileSerializer, ChangePasswordSerializer, ResetPasswordEmailSerializer, ResetPasswordSerializer, EmailVerificationSerializer
 from django.contrib.auth.tokens import default_token_generator
@@ -59,16 +62,24 @@ class ResetPasswordEmailView(generics.GenericAPIView):
 
         try:
             user = User.objects.get(email=email)
+            # Generate raw token without '-' since we'll add it later
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-            reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
+            # Create reset token
+            reset_token = f"{uid}-{token}"  # Format: uid-token
 
-            
+            # Construct reset URL with the combined token
+            reset_url = f"{
+                settings.FRONTEND_URL}/admin/password-reset/{reset_token}"
+
+            print(f"Debug - Reset URL: {reset_url}")  # Debug log
+
             # Send email
             send_mail(
                 'Password Reset Request',
-                f'Please click the following link to reset your password: {reset_url}',
+                f'Please click the following link to reset your password: {
+                    reset_url}',
                 settings.DEFAULT_FROM_EMAIL,
                 [email],
                 fail_silently=False,
@@ -79,8 +90,6 @@ class ResetPasswordEmailView(generics.GenericAPIView):
                 status=status.HTTP_200_OK
             )
         except User.DoesNotExist:
-             # Return the same message even if the email doesn't exist
-            # This prevents email enumeration attacks
             return Response(
                 {"message": "Password reset email has been sent."},
                 status=status.HTTP_200_OK
@@ -90,28 +99,43 @@ class ResetPasswordEmailView(generics.GenericAPIView):
 
 class ResetPasswordConfirmView(generics.GenericAPIView):
     serializer_class = ResetPasswordSerializer
+    permission_classes = [AllowAny]  # Allow unauthenticated access
 
-    def post(self, request, uidb64, token, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                {"error": "Invalid data provided.", "details": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
+            # Get data from request
+            uidb64 = request.data.get('uidb64')
+            token = request.data.get('token')
+
+            # Decode the uid
             uid = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=uid)
 
             if default_token_generator.check_token(user, token):
-                serializer = self.get_serializer(data=request.data)
-                serializer.is_valid(raise_exception=True)
-
-                user.set_password(serializer.validated_data.get('new_password'))
+                # Set the new password
+                user.set_password(serializer.validated_data.get('password'))
                 user.save()
 
                 return Response(
                     {"message": "Password has been reset successfully."},
                     status=status.HTTP_200_OK
                 )
+
             return Response(
-                {"error": "Invalid reset link."},
+                {"error": "Invalid or expired reset link."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+
+        except Exception as e:
+            print(f"Password reset error: {str(e)}")  # Debug log
             return Response(
                 {"error": "Invalid reset link."},
                 status=status.HTTP_400_BAD_REQUEST
@@ -178,3 +202,28 @@ class VerifyEmailView(generics.GenericAPIView):
                 {"error": "Invalid verification token."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # Add user data to response
+        user = self.user
+        data['user'] = {
+            'id': user.id,
+            'email': user.email,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_staff': user.is_staff,
+            'is_superuser': user.is_superuser,
+            'verified_email': user.verified_email
+        }
+
+        return data
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+    

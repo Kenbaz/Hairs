@@ -79,15 +79,31 @@ class ResetPasswordEmailSerializer(serializers.Serializer):
 
 
 class ResetPasswordSerializer(serializers.Serializer):
+    uidb64 = serializers.CharField(required=True)
     token = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True, validators=[validate_password])
-    new_password_repeat = serializers.CharField(required=True)
-
+    password = serializers.CharField(
+        required=True,
+        style={'input_type': 'password'},
+        write_only=True,
+        min_length=8
+    )
+    password_confirmation = serializers.CharField(
+        required=True,
+        style={'input_type': 'password'},
+        write_only=True
+    )
 
     def validate(self, attrs):
-        if attrs['new_password'] != attrs['new_password_repeat']:
-            raise serializers.ValidationError({"new password": "password field didn't match."})
+        if attrs['password'] != attrs['password_confirmation']:
+            raise serializers.ValidationError({
+                "password": "Password fields didn't match."
+            })
         return attrs
+
+    def create(self, validated_data):
+        # Remove password_confirmation from validated data
+        validated_data.pop('password_confirmation', None)
+        return validated_data
     
 
 class EmailVerificationSerializer(serializers.Serializer):
