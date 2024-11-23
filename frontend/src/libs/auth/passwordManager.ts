@@ -36,15 +36,47 @@ export class PasswordManager {
 
     static async confirmReset(data: PasswordResetConfirm): Promise<boolean> {
         try {
-            await axiosInstance.post('/api/v1/users/reset-password-confirm/', data);
-            toast.success('Password reset successfull');
-            return true;
+            // Split the token only on the first occurrence of '-'
+            const [uidb64, token] = data.token.split(/-(.+)/);
+            
+            const payload = {
+                uidb64,
+                token,
+                password: data.password,
+                password_confirmation: data.password_confirmation
+            };
+
+            console.log('Debug - Sending reset request with:', {
+                ...payload,
+                password: '***hidden***',
+                password_confirmation: '***hidden***'
+            });
+
+            const response = await axiosInstance.post(
+                '/api/v1/users/reset-password-confirm/',
+                payload
+            );
+
+            if (response.data?.message) {
+                toast.success(response.data.message);
+                return true;
+            }
+
+            return false;
         } catch (error) {
             const err = error as AxiosError<ApiError>;
-            const errorMessage =
-              err.response?.data?.detail ||
-              err.response?.data?.message ||
-              "Failed to reset password";
+            console.error('Reset error:', {
+                status: err.response?.status,
+                data: err.response?.data,
+                error: err.message
+            });
+            
+            const errorMessage = 
+                // err.response?.data?.errors || 
+                // err.response?.data?.detail || 
+                // err.response?.data?.message || 
+                'Failed to reset password. Please try again.';
+            
             toast.error(errorMessage);
             return false;
         }

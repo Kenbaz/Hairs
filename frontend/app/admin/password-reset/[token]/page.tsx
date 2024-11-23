@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { PasswordResetConfirmation } from '@/app/_components/_authForms/PasswordResetConfirmationForm';
 import { AuthLayout } from '@/app/_components/_authForms/AuthLayout';
 import { Alert } from '@/app/_components/UI/Alert';
@@ -10,60 +10,62 @@ import { Loader2 } from 'lucide-react';
 
 
 interface PasswordResetConfirmProps {
-    params: {
-        token: string;
-    };
+  params: Promise<{
+    token: string;
+  }>;
 }
 
+export default function PasswordResetConfirmPage({
+  params,
+}: PasswordResetConfirmProps) {
+  // React.use to unwrap the params promise
+  const { token } = use(params);
+  const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
 
-export default function PasswordResetConfirmPage({ params }: PasswordResetConfirmProps) {
-    const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
-    const { token } = params;
+  useEffect(() => {
+    // Basic validation - check if token exists and has the expected format
+    const validateToken = () => {
+      if (!token) return false;
 
-    useEffect(() => {
-        // Basic token validation, (checking for JWT structure)
-        const validateToken = () => {
-            if (!token) return false;
-            // Check if it has 3 parts separated by dots (header.payload.signature)
-            const parts = token.split('.');
-            return parts.length === 3;
-        };
-
-        setIsValidToken(validateToken());
-    }, [token]);
-
-    if (isValidToken === null) {
-        // Loading state 
-        return (
-            <AuthLayout>
-                <div className='flex justify-center, items-center'>
-                    <Loader2 className='animate-spin' />
-                </div>
-            </AuthLayout>
-        );
+      // Check if token contains uid-token format (should have at least one dash)
+      const hasValidFormat = token.includes("-");
+      return hasValidFormat;
     };
 
-    if (!isValidToken) {
-        return (
-          <AuthLayout>
-            <div className="space-y-6">
-              <Alert
-                type="error"
-                message="Invalid or expired password reset link."
-              />
-              <div className="text-center">
-                <Link href="/admin/password-reset">
-                  <Button variant="outline">Request New Reset Link</Button>
-                </Link>
-              </div>
-            </div>
-          </AuthLayout>
-        );
-    };
+    setIsValidToken(validateToken());
+  }, [token]);
 
+  if (isValidToken === null) {
     return (
-        <AuthLayout>
-            <PasswordResetConfirmation token={ token } />
-        </AuthLayout>
-    )
+      <AuthLayout>
+        <div className="flex justify-center items-center">
+          <Loader2 className="animate-spin" />
+        </div>
+      </AuthLayout>
+    );
+  }
+
+  if (!isValidToken) {
+    return (
+      <AuthLayout>
+        <div className="space-y-6">
+          <Alert
+            type="error"
+            message="Invalid or expired password reset link."
+          />
+          <div className="text-center">
+            <Link href="/admin/password-reset">
+              <Button variant="outline">Request New Reset Link</Button>
+            </Link>
+          </div>
+        </div>
+      </AuthLayout>
+    );
+  }
+
+  return (
+    <AuthLayout>
+      <PasswordResetConfirmation token={token} />
+    </AuthLayout>
+  );
 }

@@ -4,6 +4,7 @@ import { DashboardLayout } from "../../_components/dashboardUI/DashboardLayout";
 import { useEffect } from "react";
 import { notificationService } from "@/src/libs/services/notificationService";
 
+
 export default function AdminLayout({
   children,
 }: {
@@ -18,7 +19,7 @@ export default function AdminLayout({
 
     return (
         <DashboardLayout>
-            {children}
+          {children}
         </DashboardLayout>
     );
 }

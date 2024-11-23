@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
     const isAdminLoginRoute = request.nextUrl.pathname === '/admin/login';
     const isPasswordResetRoute = request.nextUrl.pathname.startsWith('/admin/password-reset');
     const isResetPasswordConfirmRoute = request.nextUrl.pathname.match(
-      /^\/admin\/reset-password\/[^/]+$/
+      /^\/admin\/password-reset\/[^/]+$/
     );
     
     

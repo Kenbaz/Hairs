@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/src/libs/_redux/hooks";
-import { login, selectAuth } from "@/src/libs/_redux/authSlice";
+import { login, selectAuth, clearError } from "@/src/libs/_redux/authSlice";
 import { Button } from "../UI/Button";
 import { Input } from "../UI/Input";
 import { Alert } from "../UI/Alert";
@@ -19,16 +19,29 @@ export function AdminLoginForm() {
 
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+      e.preventDefault();
+      dispatch(clearError());
+
         try {
-            const result = await dispatch(login({ email, password })).unwrap();
+          const result = await dispatch(login({ email, password })).unwrap();
+
+          // Check if user is admin or staff
             if (result.user.is_staff || result.user.is_superuser) {
+              console.log('Redirecting to dashboard')
                 router.push('/admin/dashboard');
             } else {
-                throw new Error('Unauthorized: Admin access required');
+               // For non-admin users, login will succeed but we need to redirect them away
+                dispatch(login.rejected(
+                    {
+                        name: 'AccessDenied',
+                        message: 'Access denied. Admin privileges required.'
+                    },
+                    'login/rejected',
+                    { email, password }
+                ));
             }
         } catch {
-
+          
             // console.error('Login failed', err);
         }
     };

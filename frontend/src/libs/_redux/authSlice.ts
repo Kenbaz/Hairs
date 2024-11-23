@@ -154,7 +154,12 @@ const authSlice = createSlice({
         });
         builder.addCase(login.rejected, (state, action) => {
             state.isLoading = false;
-            state.error = action.payload ?? 'Login failed';
+            state.error = action.payload ?? 'Login failed. Please check your credentials.';
+            // Clear the partial auth state
+            state.isAuthenticated = false;
+            state.user = null;
+            state.accessToken = null;
+            state.refreshToken = null;
         });
         
         // Refresh cases
@@ -202,7 +207,7 @@ export const { clearError } = authSlice.actions;
 export const selectAuth = (state: RootState) => state.auth;
 export const selectUser = (state: RootState) => state.auth.user;
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
-export const selectIsAdmin = (state: RootState) => state.auth.user?.is_staff || state.auth.user?.is_superuser;
+export const selectIsAdmin = (state: RootState) => Boolean(state.auth.user?.is_staff || state.auth.user?.is_superuser);
 
 
 export default authSlice.reducer;

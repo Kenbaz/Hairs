@@ -40,16 +40,21 @@ export function PasswordResetConfirmation({ token }: PasswordResetConfirmationPr
         if (!validatePassword()) return;
 
         setIsLoading(true);
-        const success = await PasswordManager.confirmReset({
+        try {
+          const success = await PasswordManager.confirmReset({
             token,
             password,
-            password_confirmation: passwordConfirmation
-        });
+            password_confirmation: passwordConfirmation,
+          });
 
-        if (success) {
-            router.push('/admin/login');
+          if (success) {
+            router.push("/admin/login");
+          }
+        } catch {
+          setError("Failed to reset password. The link may have expired.");
+        } finally {
+          setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
 
