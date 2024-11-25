@@ -4,10 +4,8 @@ from django.conf import settings
 
 class AdminNotification(models.Model):
     NOTIFICATION_TYPES = [
-        ('order', 'Order Update'),
-        ('inventory', 'Inventory Alert'),
-        ('user', 'User Activity'),
-        ('system', 'System Update'),
+        ('order', 'New Order'),
+        ('inventory', 'Low Stock Alert'),
     ]
 
     user = models.ForeignKey(
@@ -18,6 +16,10 @@ class AdminNotification(models.Model):
     type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
     title = models.CharField(max_length=255)
     message = models.TextField()
+    reference_id = models.IntegerField(
+        help_text="ID of the related order or product",
+        null=True
+    )
     link = models.CharField(max_length=255, blank=True, null=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -68,8 +68,10 @@ def order_notification(sender, instance, created, **kwargs):
                 type='order',
                 title='New Order Received',
                 message=f'Order #{instance.id} has been placed',
+                reference_id=instance.id,
                 link=f'/admin/orders/{instance.id}'
             )
+
 
 @receiver(post_save, sender=Product)
 def product_stock_notification(sender, instance, **kwargs):
@@ -85,5 +87,6 @@ def product_stock_notification(sender, instance, **kwargs):
                 type='inventory',
                 title='Low Stock Alert',
                 message=f'Product {instance.name} is running low on stock (currently {instance.stock})',
+                reference_id=instance.id,
                 link=f'/admin/products/{instance.id}'
             )

@@ -4,9 +4,20 @@ from ..models import AdminNotification
 from ..serializers import AdminNotificationSerializer
 
 
-def create_admin_notification(user, type, title, message, link=None):
+def create_admin_notification(user, type, title, message, reference_id=None, link=None):
     """
     Create an admin notification and send it through WebSocket
+
+     Args:
+        user: The admin user to receive the notification
+        type: Type of notification ('order' or 'inventory')
+        title: Notification title
+        message: Notification message
+        reference_id: ID of the related order or product (optional)
+        link: URL to navigate to when notification is clicked (optional)
+
+    Returns:
+        The created notification instance
     """
     # Verify user is admin
     if not user.is_staff:
@@ -17,6 +28,7 @@ def create_admin_notification(user, type, title, message, link=None):
         type=type,
         title=title,
         message=message,
+        reference_id=reference_id,
         link=link
     )
 

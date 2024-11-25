@@ -40,12 +40,13 @@ export interface RootState {
 
 export interface AdminNotification {
     id: string;
-    type: 'order' | 'inventory' | 'user' | 'system';
+    type: 'order' | 'inventory';
     title: string;
     message: string;
     is_read: boolean;
     created_at: string;
     link?: string;
+    reference_id?: number;
 }
 
 export interface NotificationState {

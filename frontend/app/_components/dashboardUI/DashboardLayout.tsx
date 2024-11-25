@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Menu, ChevronDown, Search } from 'lucide-react';
-import { useAppSelector } from '@/src/libs/_redux/hooks';
-import { selectUser } from '@/src/libs/_redux/authSlice';
+import { useAppSelector, useAppDispatch } from '@/src/libs/_redux/hooks';
+import { selectUser, loadUser } from '@/src/libs/_redux/authSlice';
 import Link from 'next/link';
 import { DashboardNav } from '../UI/AdminNavItems';
 import { NotificationCenter } from './NotificationCenter';
+import { notificationService } from '@/src/libs/services/notificationService';
 
 
 interface DashboardLayoutProps {
@@ -18,15 +19,42 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const pathname = usePathname();
+    const dispatch = useAppDispatch();
     const user = useAppSelector(selectUser);
 
+    
+    // Effect to load user data on mount
+  useEffect(() => {
+      const initializeUser = async () => {
+        try {
+          await dispatch(loadUser()).unwrap();
+        } catch (error) {
+          console.error('Failed to load user data:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+    initializeUser();
+    }, [dispatch]);
+    
+    
+    useEffect(() => {
+      notificationService.connect();
+      return () => notificationService.disconnect();
+    }, []);
 
     // Close mobile menu on path change
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [pathname]);
 
+  
+    if (isLoading) {
+      return <div></div>
+    }
 
     return (
       <div className="min-h-screen bg-customWhite2 flex">
