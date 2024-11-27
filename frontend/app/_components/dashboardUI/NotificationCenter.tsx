@@ -9,7 +9,7 @@ import {
     markAsRead,
     fetchNotifications,
 } from '@/src/libs/_redux/notificationSlice';
-import { AdminNotification } from '@/src/libs/_redux/types';
+import { AdminNotification } from '@/src/types';
 import { Bell, ShoppingBag, Package } from 'lucide-react';
 // import Link from 'next/link';
 import { useRouter } from 'next/navigation';

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from "./store";
-import { NotificationState, AdminNotification, ApiError } from "./types";
+import { NotificationState, AdminNotification, ApiError } from "../../types";
 import axiosInstance from "@/src/utils/_axios";
 import { AxiosError } from "axios";
 

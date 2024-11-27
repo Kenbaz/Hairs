@@ -2,7 +2,7 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios, {AxiosError} from 'axios';
-import { AuthState, LoginCredentials, AuthResponse, RootState, ApiError } from './types';
+import { AuthState, LoginCredentials, AuthResponse, RootState, ApiError } from '../../types';
 import axiosInstance from '../../utils/_axios';
 import {toast} from 'react-hot-toast';
 

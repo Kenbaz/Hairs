@@ -1,7 +1,7 @@
 import axiosInstance from "../../utils/_axios";
 import { toast } from 'react-hot-toast';
 import { AxiosError } from "axios";
-import { ApiError } from "../_redux/types";
+import { ApiError } from "../../types";
 
 
 export interface PasswordResetRequest {

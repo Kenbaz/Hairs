@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { ReduxProvider } from "@/src/libs/_redux/Provider";
+import { QueryProvider } from "./_components/_providers/QueryProvider";
+
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,18 +32,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ReduxProvider>
-          {children}
-           <Toaster 
-          position="top-right"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              minWidth: '250px',
-            },
-          }}
-        />
-        </ReduxProvider>
+        <QueryProvider>
+          <ReduxProvider>
+            {children}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  minWidth: "250px",
+                },
+              }}
+            />
+          </ReduxProvider>
+        </QueryProvider>
       </body>
     </html>
   );

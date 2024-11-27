@@ -167,7 +167,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </header>
 
           {/* Main Content Area */}
-          <main className="p-6">{children}</main>
+          <main className="p-4 md:p-6 max-w-[1920px] mx-auto">
+            {children}
+          </main>
         </div>
       </div>
     );
