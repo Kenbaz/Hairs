@@ -13,6 +13,15 @@ import { Alert } from "../../UI/Alert";
 import { ConfirmModal } from "../../UI/ConfirmModal";
 import { useRouter } from "next/navigation";
 
+const CATEGORY_OPTIONS = [
+  { value: "straight", label: "Straight Hairs" },
+  { value: "curly", label: "Curly Hairs" },
+  { value: "wavy", label: "Wavy Hairs" },
+  { value: "bouncy", label: "Bouncy Hairs" },
+  { value: "braiding", label: "Braiding Extensions" },
+  { value: "care", label: "Hair Care Products" },
+  { value: "tools", label: "Styling Tools" },
+] as const;
 
 const ProductList = () => {
   const [filterOpen, setFilterOpen] = useState(false);
@@ -160,9 +169,12 @@ const ProductList = () => {
     filterKey: K,
     value: ProductFilters[K]
   ) => {
+    // Clear empty values to avoid redundant URL parameters
+    const newValue = value === '' ? undefined : value;
+
     setFilters((prev) => ({
       ...prev,
-      [filterKey]: value,
+      [filterKey]: newValue,
       page: 1,
     }));
   };
@@ -226,17 +238,15 @@ const ProductList = () => {
               </label>
               <select
                 className="w-full rounded-lg border-gray-300 shadow-sm"
-                value={filters.category}
+                value={filters.category || ""}
                 onChange={(e) => handleFilterChange("category", e.target.value)}
               >
                 <option value="">All Categories</option>
-                <option value="straight">Straight Hairs</option>
-                <option value="curly">Curly Hairs</option>
-                <option value="wavy">Wavy Hairs</option>
-                <option value="bouncy">Bouncy Hairs</option>
-                <option value="braiding">Braiding Extensions</option>
-                <option value="care">Hair Care Products</option>
-                <option value="tools">Styling Tools</option>
+                {CATEGORY_OPTIONS.map((category) => (
+                  <option key={category.value} value={category.value}>
+                    {category.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -246,10 +256,12 @@ const ProductList = () => {
               <select
                 className="w-full rounded-lg border-gray-300 shadow-sm"
                 value={filters.stock_status || ""}
-                onChange={(e) => {
-                  const value = e.target.value as StockStatus | "";
-                  handleFilterChange("stock_status", value ? value : undefined);
-                }}
+                onChange={(e) =>
+                  handleFilterChange(
+                    "stock_status",
+                    e.target.value as StockStatus
+                  )
+                }
               >
                 <option value="">All</option>
                 <option value="in_stock">In Stock</option>
@@ -267,7 +279,10 @@ const ProductList = () => {
                   placeholder="Min"
                   value={filters.min_price || ""}
                   onChange={(e) =>
-                    handleFilterChange("min_price", e.target.valueAsNumber)
+                    handleFilterChange(
+                      "min_price",
+                      e.target.value ? Number(e.target.value) : undefined
+                    )
                   }
                 />
                 <Input
@@ -275,7 +290,10 @@ const ProductList = () => {
                   placeholder="Max"
                   value={filters.max_price || ""}
                   onChange={(e) =>
-                    handleFilterChange("min_price", e.target.valueAsNumber)
+                    handleFilterChange(
+                      "max_price",
+                      e.target.value ? Number(e.target.value) : undefined
+                    )
                   }
                 />
               </div>
@@ -286,7 +304,7 @@ const ProductList = () => {
         {/* Product Grid */}
         <div className="bg-white rounded-lg min-h-screen shadow overflow-y-auto border">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 border border-black">
+            <thead className="bg-gray-50">
               <tr>
                 <th
                   scope="col"

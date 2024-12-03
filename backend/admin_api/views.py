@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -30,6 +30,7 @@ from io import BytesIO
 from .utils.pdf_generator import PDFGenerator
 from .utils.data_formatters import PDFDataFormatter
 from .serializers import AdminNotificationSerializer, AdminNotification
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class DashboardViewSet(viewsets.ViewSet):
@@ -470,30 +471,63 @@ class DashboardViewSet(viewsets.ViewSet):
 class AdminProductViewSet(viewsets.ModelViewSet):
     """ViewSet for managing products in admin panel"""
     permission_classes = [IsAdminUser]
+
     serializer_class = AdminProductSerializer
+
     parser_classes = (MultiPartParser, FormParser)
+
     queryset = Product.objects.all()
+
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter
+    ]
+
+    search_fields = [
+        'name',
+        'description', 
+        'category__name',
+        'hair_type',
+    ]
+
+    filterset_fields = {
+        'hair_type': ['exact'],
+        'is_featured': ['exact'],
+        'is_available': ['exact'],
+        'stock': ['gt', 'lt', 'exact'],
+        'price': ['gt', 'lt', 'exact'],
+    }
+    ordering_fields = ['name', 'price', 'stock', 'created_at']
+    ordering = ['-created_at']
 
     def get_queryset(self):
         queryset = Product.objects.all().select_related('category')
 
-        # Filter by category
-        category = self.request.query_params.get('category')
-        if category:
-            queryset = queryset.filter(category__slug=category)
+        # Handle category filtering explicitly
+        category_name = self.request.query_params.get('category')
+        if category_name:
+            queryset = queryset.filter(category__name__icontains=category_name)
 
         # Filter by stock status
         stock_status = self.request.query_params.get('stock_status')
-        if stock_status == 'low':
+        if stock_status == 'low_stock':
             queryset = queryset.filter(stock__lte=F('low_stock_threshold'))
-        elif stock_status == 'out':
+        elif stock_status == 'out_of_stock':
             queryset = queryset.filter(stock=0)
-
-        # Filter by featured status
-        is_featured = self.request.query_params.get('is_featured')
-        if is_featured is not None:
+        elif stock_status == 'in_stock':
             queryset = queryset.filter(
-                is_featured=is_featured.lower() == 'true')
+                stock__gt=0
+            ).exclude(stock__lte=F('low_stock_threshold'))
+
+        # Price range filtering
+        min_price = self.request.query_params.get('min_price')
+        max_price = self.request.query_params.get('max_price')
+
+        if min_price:
+            queryset = queryset.filter(price__gte=min_price)
+        if max_price:
+            queryset = queryset.filter(price__lte=max_price)
 
         return queryset
     
