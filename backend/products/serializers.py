@@ -3,18 +3,17 @@ from .models import Category, Product, ProductImage, StockHistory
 from currencies.utils import get_active_currencies
 
 
-
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         fields = ['id', 'image', 'is_primary']
-
+        read_only_fields = ['id']
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'description']
+        fields = ['id', 'name', 'slug']
         read_only_fields = ['slug']
     
     def validate_name(self, value):
@@ -41,7 +40,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'slug', 'category', 'price_data', 'is_featured', 'primary_image', 'hair_type'
+            'id', 'name', 'slug', 'category', 'price_data', 'is_featured', 'primary_image'
         ]
 
 

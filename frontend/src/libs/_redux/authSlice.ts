@@ -1,10 +1,11 @@
 'use client';
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios, {AxiosError} from 'axios';
+import {AxiosError} from 'axios';
 import { AuthState, LoginCredentials, AuthResponse, RootState, ApiError } from '../../types';
 import axiosInstance from '../../utils/_axios';
 import {toast} from 'react-hot-toast';
+import { notificationService } from '../services/notificationService';
 
 
 // Helper function to safely access LocalStorage (client-side only)
@@ -57,10 +58,15 @@ export const refreshAccessToken = createAsyncThunk<{ access: string }, void, {
     state: RootState; rejectValue: string
 }>(
     'auth/refreshToken',
-    async (_, { getState, rejectWithValue }) => {
+    async (_, { dispatch, rejectWithValue }) => {
         try {
-            const state = getState();
-            const refreshToken = state.auth.refreshToken;
+            const refreshToken = localStorage.getItem('refreshToken');
+
+            if (!refreshToken) {
+                // No refresh token found, initiate logout
+                dispatch(logout());
+                console.error('No refresh token available');
+            }
 
            const response = await axiosInstance.post<{ access: string }>(
              "/api/v1/users/token/refresh/",
@@ -77,6 +83,9 @@ export const refreshAccessToken = createAsyncThunk<{ access: string }, void, {
             }
             return response.data;
         } catch (error) {
+            // Token refresh failed, log out user
+            dispatch(logout());
+
             const err = error as AxiosError<ApiError>;
             return rejectWithValue(
                 err.response?.data?.detail || err.response?.data?.message || 'Token refresh failed'
@@ -90,9 +99,21 @@ export const logout = createAsyncThunk(
     'auth/logout',
     async () => {
         if (typeof window !== 'undefined') {
+            // Get current path for redirect back after login
+            const currentPath = window.location.pathname;
+
+            // Clear auth states
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
-            delete axios.defaults.headers.common['Authorization'];
+            delete axiosInstance.defaults.headers.common['Authorization'];
+
+            // Disconnect websocket
+            notificationService.disconnect();
+
+            // Redirect to login with return path
+            const loginUrl = new URL('/admin/login', window.location.origin);
+            loginUrl.searchParams.set('from', currentPath);
+            window.location.href = loginUrl.toString();
         }
     }
 );
@@ -173,6 +194,14 @@ const authSlice = createSlice({
             state.accessToken = null;
             state.refreshToken = null;
             toast.error('Session expired. Please login again');
+
+            // Redirect to login with current path
+            if (typeof window !== 'undefined') {
+                const currentPath = window.location.pathname;
+                const loginUrl = new URL('/admin/login', window.location.origin);
+                loginUrl.searchParams.set('from', currentPath);
+                window.location.href = loginUrl.toString();
+            }
         });
 
         // Logout cases

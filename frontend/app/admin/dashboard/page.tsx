@@ -3,7 +3,7 @@
 
 
 import { Breadcrumb } from "@/app/_components/UI/Breadcrumb";
-import DashboardOverview from "@/app/_components/dashboardUI/DashboardOverview";
+import DashboardOverview from "@/app/_components/dashboardUI/overview/DashboardOverview";
 
 export default function DashboardPage() {
   return (

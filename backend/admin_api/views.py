@@ -1,6 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.db import transaction
 from django.http import HttpResponse
 from rest_framework.permissions import IsAdminUser
 from django.db.models import Count, Sum, Avg, F, Value
@@ -17,7 +19,8 @@ from .serializers import (
     AdminUserSerializer,
     AdminOrderSerializer
 )
-from products.models import Product, Category
+from products.models import Product, Category, ProductImage
+from .utils.in_memory_file_upload import process_product_image
 from orders.models import Order
 from users.models import User
 from reviews.models import Review
@@ -468,6 +471,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
     """ViewSet for managing products in admin panel"""
     permission_classes = [IsAdminUser]
     serializer_class = AdminProductSerializer
+    parser_classes = (MultiPartParser, FormParser)
     queryset = Product.objects.all()
 
     def get_queryset(self):
@@ -492,6 +496,186 @@ class AdminProductViewSet(viewsets.ModelViewSet):
                 is_featured=is_featured.lower() == 'true')
 
         return queryset
+    
+
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        try:
+            # Extract image files from request
+            product_images = request.FILES.getlist('product_images')
+
+            # Create product first
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            product = serializer.save()
+
+            # Process and save images
+            for index, image in enumerate(product_images):
+                try:
+                    processed_image = process_product_image(image)
+                    ProductImage.objects.create(
+                        product=product,
+                        image=processed_image,
+                        is_primary=(index == 0)
+                    )
+                   
+                except Exception as img_error:
+                    raise
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            # If something goes wrong, make sure to clean up any saved files
+            if 'product' in locals():
+                product.delete()  # This will also delete associated images
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+
+            # Extract image files
+            product_images = request.FILES.getlist('product_images')
+
+            # Update product data
+            serializer = self.get_serializer(
+                instance,
+                data=request.data,
+                partial=kwargs.pop('partial', False)
+            )
+            serializer.is_valid(raise_exception=True)
+            product = serializer.save()
+
+            # Handle new images
+            if product_images:
+                for index, image in enumerate(product_images):
+                    try:
+                        processed_image = process_product_image(image)
+                        # if there is no existing images, make the first new image primary
+                        is_primary = index == 0 and not product.images.exists()
+                        ProductImage.objects.create(
+                            product=product,
+                            image=processed_image,
+                            is_primary=is_primary
+                        )
+                    except Exception as img_error:
+                        raise
+
+            return Response(serializer.data)
+        
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+
+    @action(detail=True, methods=['post'])
+    def upload_images(self, request, pk=None):
+        """ Endpoint for uploading additional images to existing product """
+        product = self.get_object()
+        product_images = request.FILES.getlist('images')
+
+        if not product_images:
+            return Response(
+                {'error': 'No images provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            with transaction.atomic():
+                saved_images = []
+                for index, image in enumerate(product_images):
+                    processed_image = process_product_image(image)
+                    # Make first image primary if no image exists
+                    is_primary = index == 0 and not product.images.exists()
+
+                    product_image = ProductImage.objects.create(
+                        product=product,
+                        image=processed_image,
+                        is_primary=is_primary
+                    )
+                    saved_images.append(product_image)
+
+                    return Response({
+                        'message': f'{len(saved_images)} images uploaded successfully',
+                        'images': ProductImageSerializer(saved_images, many=True).data
+                    }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+
+    @action(detail=True, methods=['post'])
+    def manage_images(self, request, pk=None):
+        """
+        Manage product images (delete, reorder, set primary)
+        Expects a request body like:
+        {
+            'action': 'delete' | 'set_primary' | 'reorder',
+            'image_ids': [1, 2, 3],  // Used for deletion or reordering
+            'primary_image_id': 1,   // Used for setting primary image
+        }
+        """
+        product = self.get_object()
+        admin_action = request.data.get('action')
+
+        try:
+            with transaction.atomic():
+                if admin_action == 'delete':
+                    image_ids = request.data.get('image_ids', [])
+                    # Ensure the deletion of images that belong to this product
+                    images_to_delete = product.images.filter(id__in=image_ids)
+                    deleted_count = images_to_delete.count()
+                    images_to_delete.delete()
+
+                    # if the primary image was deleted, set a new one
+                    if not product.images.filter(is_primary=True).exists() and product.images.exists():
+                        first_image = product.images.first()
+                        first_image_is_primary = True
+                        first_image.save()
+
+                    return Response({
+                        'message': f'{deleted_count} images deleted successfully'
+                    })
+                
+                elif admin_action == 'set_primary':
+                    image_id = request.data.get('primary_image_id')
+                    if not image_id:
+                        raise ValidationError('Primary_image_id is required')
+                    
+                    # Update primary image
+                    product.images.filter(is_primary=True).update(is_primary=False)
+                    new_primary = product.images.filter(id=image_id).first()
+                    if not new_primary:
+                        raise ValidationError('Image not found')
+                    
+                    new_primary.is_primary = True
+                    new_primary.save()
+
+                    return Response({
+                        'message': 'Primary image saved successfully'
+                    })
+                
+                return Response(
+                    {'error': 'Invalid action'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 
     @action(detail=True, methods=['post'])
     def toggle_featured(self, request, pk=None):

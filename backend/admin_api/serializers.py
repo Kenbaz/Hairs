@@ -5,19 +5,28 @@ from users.models import User
 from django.db.models import Sum, Count
 from reviews.models import Review
 from products.models import StockHistory
+from products.serializers import CategorySerializer, ProductImageSerializer
 from .models import AdminNotification
 
 
 class AdminProductSerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(
-        source='category.name', read_only=True)
+    category = CategorySerializer(read_only=True)
+    images = ProductImageSerializer(many=True, read_only=True)
     stock_value = serializers.SerializerMethodField()
     total_sales = serializers.SerializerMethodField()
     revenue_generated = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = [
+            'id', 'name', 'slug', 'description',
+            'category', 'images',
+            'hair_type', 'length', 'price', 'discount_price',
+            'stock', 'care_instructions', 'is_featured',
+            'is_available', 'low_stock_threshold', 'notify_low_stock',
+            'created_at', 'updated_at', 'stock_value',
+            'total_sales', 'revenue_generated'
+        ]
 
     def get_stock_value(self, obj):
         return obj.stock * obj.price

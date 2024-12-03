@@ -44,7 +44,7 @@ export interface RootState {
 }
 
 
-// Admin dashboard types
+// Admin dashboard overview and notification types
 
 export interface AdminNotification {
     id: string;
@@ -179,4 +179,81 @@ export interface ProductAnalytics {
     best_sellers: TopProduct[];
     category_distribution: Record<string, number>;
     revenue_by_category: Record<string, number>;
+}
+
+// Admin dashboard overview and notification types ends
+
+
+// Admin dashboard product section types
+export interface AdminProduct {
+    id: number;
+    name: string;
+    slug: string;
+    description: string;
+    category: {
+        id: number;
+        name: string;
+        slug: string;
+    };
+    price: number;
+    discount_price?: number;
+    hair_type: string | null;
+    length: number | null;
+    care_instructions: string;
+    is_featured: boolean;
+    is_available: boolean;
+    images: ProductImage[];
+    created_at: string;
+    updated_at: string;
+    stock: number;
+    low_stock_threshold: number;
+    revenue_generated: number
+}
+
+
+export interface ProductImage {
+    id: number;
+    image: string;
+    is_primary: boolean;
+}
+
+
+export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
+
+
+export interface ProductFilters {
+    search?: string;
+    category?: string;
+    stock_status?: StockStatus;
+    min_price?: number;
+    max_price?: number;
+    is_featured?: boolean;
+    ordering?: string;
+    page?: number;
+    page_size?: number;
+}
+
+
+export interface ProductResponse {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: AdminProduct[];
+}
+
+
+export interface ProductFormData {
+    name: string;
+    description: string;
+    category_id: number;
+    hair_type?: string;
+    length?: number;
+    price: number;
+    discount_price?: number;
+    stock: number;
+    care_instructions?: string;
+    is_featured?: boolean;
+    is_available?: boolean;
+    low_stock_threshold?: number;
+    images?: File[];
 }

@@ -2,11 +2,11 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 // import axiosInstance from '@/src/utils/_axios';
-import { DashboardStats } from "@/app/_components/dashboardUI/DashboardStats";
-import { RecentOrders } from "@/app/_components/dashboardUI/RecentOrdersOverview";
-import { LowStockAlerts } from "@/app/_components/dashboardUI/LowStockAlert";
-import { RevenueChart } from "@/app/_components/dashboardUI/RevenueChart";
-import { ProductPerformance } from "@/app/_components/dashboardUI/ProductAnalyticsOverview";
+import { DashboardStats } from "@/app/_components/dashboardUI/overview/DashboardStats";
+import { RecentOrders } from "@/app/_components/dashboardUI/overview/RecentOrdersOverview";
+import { LowStockAlerts } from "@/app/_components/dashboardUI/overview/LowStockAlert";
+import { RevenueChart } from "@/app/_components/dashboardUI/overview/RevenueChart";
+import { ProductPerformance } from "@/app/_components/dashboardUI/overview/ProductAnalyticsOverview";
 import { adminDashboardService } from '@/src/libs/services/adminDashboardService';
 
 

@@ -6,6 +6,8 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from decimal import Decimal
+from django.core.exceptions import ValidationError
+from django.core.files.images import get_image_dimensions
 
 
 class Category(models.Model):
@@ -186,28 +188,51 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+
+def validate_image(image):
+    """ Validate image file size and dimensions """
+    # Check file size (max 5MB)
+    if image.size > 5 * 1024 * 1024:
+        raise ValidationError('Image file too large (greater than 5MB)')
     
+    # Check dimensions
+    width, height = get_image_dimensions(image)
+    if width > 4096 or height > 4096:
+        raise ValidationError("Image dimensions too large")
+
+
 
 class ProductImage(models.Model): 
     product = models.ForeignKey(
-        Product, related_name='images', on_delete=models.CASCADE
+        Product,
+        related_name='images',
+        on_delete=models.CASCADE
     )
-    image = models.ImageField(upload_to='producs/')
+    image = models.ImageField(upload_to='products/', validators=[validate_image])
     is_primary = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
 
     class Meta:
         ordering = ['-is_primary', '-created_at']
     
+
     def save(self, *args, **kwargs):
         if self.is_primary:
-            with transaction.atomic():
-                # Set all other images of this product to non-primary
-                ProductImage.objects.filter(
-                    product=self.product,
-                    is_primary=True
-                ).update(is_primary=False)
+            ProductImage.objects.filter(
+                product=self.product,
+                is_primary=True
+            ).update(is_primary=False)
         super().save(*args, **kwargs)
+    
+
+    def delete(self, *args, **kwargs):
+        # Delete the image file when deleting the model instance
+        storage = self.image.storage
+        if storage.exists(self.image.name):
+            storage.delete(self.image.name)
+        super().delete(*args, **kwargs)
 
 
 

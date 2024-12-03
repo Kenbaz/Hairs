@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Menu, ChevronDown, Search } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/src/libs/_redux/hooks';
-import { selectUser, loadUser } from '@/src/libs/_redux/authSlice';
+import { selectUser, loadUser, logout } from '@/src/libs/_redux/authSlice';
 import Link from 'next/link';
-import { DashboardNav } from '../UI/AdminNavItems';
+import { DashboardNav } from '../../UI/AdminNavItems';
 import { NotificationCenter } from './NotificationCenter';
 import { notificationService } from '@/src/libs/services/notificationService';
 
@@ -50,6 +50,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [pathname]);
+  
+    const handleLogout = () => {
+      dispatch(logout())
+    }
 
   
     if (isLoading) {
@@ -155,7 +159,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       </Link>
                       <button
                         className="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-600"
-                        // Add logout handler
+                        onClick={handleLogout}
                       >
                         Logout
                       </button>
