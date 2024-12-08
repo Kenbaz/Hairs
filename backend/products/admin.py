@@ -39,8 +39,11 @@ class ProductAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if change and 'stock' in form.changed_data:
+            # Get the original product before changes
             old_product = Product.objects.get(pk=obj.pk)
-            stock_change = obj.stock - old_product.stock
+            old_stock = old_product.stock
+            new_stock = obj.stock
+            stock_change = new_stock - old_stock
 
             super().save_model(request, obj, form, change)
 
@@ -49,12 +52,21 @@ class ProductAdmin(admin.ModelAdmin):
                 product=obj,
                 transaction_type='adjustment',
                 quantity_changed=stock_change,
-                new_stock=obj.stock,
+                previous_stock=old_stock,
+                new_stock=new_stock,
                 notes='Manual stock adjustment for admin panel',
                 created_by=request.user
             )
         else:
             super().save_model(request, obj, form, change)
+    
+
+    def delete_model(self, request, obj):
+        # Clean up associated images before deleting the product
+        for image in obj.images.all():
+            if image.image:
+                image.image.close()
+        super().delete_model(request, obj)
 
 
 @admin.register(StockHistory)

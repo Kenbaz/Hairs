@@ -9,6 +9,8 @@ router.register(r'dashboard', views.DashboardViewSet,
 router.register(r'products', views.AdminProductViewSet,
                 basename='admin-products')
 router.register(r'orders', views.AdminOrderViewSet, basename='admin-orders')
+router.register(r'categories', views.AdminCategoryViewSet,
+                basename='admin-categories')
 router.register(r'users', views.AdminUserViewSet, basename='admin-users')
 router.register(r'notifications', AdminNotificationViewSet,
                 basename='admin-notifications')

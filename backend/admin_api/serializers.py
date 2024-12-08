@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from products.models import Product
+from products.models import Product, Category
 from orders.models import Order
 from users.models import User
 from django.db.models import Sum, Count
@@ -11,6 +11,7 @@ from .models import AdminNotification
 
 class AdminProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
+    category_id = serializers.IntegerField(write_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
     stock_value = serializers.SerializerMethodField()
     total_sales = serializers.SerializerMethodField()
@@ -20,13 +21,16 @@ class AdminProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'slug', 'description',
-            'category', 'images',
+            'category', 'category_id', 'images',
             'hair_type', 'length', 'price', 'discount_price',
             'stock', 'care_instructions', 'is_featured',
             'is_available', 'low_stock_threshold', 'notify_low_stock',
             'created_at', 'updated_at', 'stock_value',
             'total_sales', 'revenue_generated'
         ]
+        read_only_fields = ['slug', 'created_at', 'updated_at', 'stock_value',
+                            'total_sales', 'revenue_generated']
+    
 
     def get_stock_value(self, obj):
         return obj.stock * obj.price
@@ -37,6 +41,29 @@ class AdminProductSerializer(serializers.ModelSerializer):
     def get_revenue_generated(self, obj):
         items = obj.orderitem_set.all()
         return sum(item.quantity * item.price for item in items)
+
+
+class AdminCategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
+        fields = [
+            'id',
+            'name',
+            'slug',
+        ]
+        read_only_fields = ['slug']  # Slug will be auto-generated
+
+    def validate_name(self, value):
+        """
+        Check that the category name is unique (case-insensitive)
+        """
+        if Category.objects.filter(name__iexact=value)\
+            .exclude(id=getattr(self.instance, 'id', None))\
+                .exists():
+            raise serializers.ValidationError(
+                "A category with this name already exists.")
+        return value
 
 
 class AdminOrderSerializer(serializers.ModelSerializer):

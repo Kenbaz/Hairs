@@ -5,7 +5,7 @@ import { Plus, Filter, Download, Search, Loader2 } from "lucide-react";
 import { Button } from "@/app/_components/UI/Button";
 import { Input } from "@/app/_components/UI/Input";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import ProductRow from "./ProductRows";
+import ProductRow from "./AdminProductRows";
 import { adminProductService } from "@/src/libs/services/adminProductService";
 import type { AdminProduct, ProductFilters, ProductResponse, StockStatus } from "@/src/types";
 // import { toast } from "react-hot-toast";
@@ -27,7 +27,7 @@ const ProductList = () => {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<ProductFilters>({
     page: 1,
-    page_size: 10,
+    page_size: 5,
     search: '',
     category: '',
   });
@@ -56,7 +56,10 @@ const ProductList = () => {
   // Fetch products
   const { data, isLoading, error } = useQuery({
     queryKey: QUERY_KEYS.products.list(filters),
-    queryFn: () => adminProductService.getProducts(filters),
+    queryFn: () => {
+      console.log("Sending filters to backend:", filters);
+      return adminProductService.getProducts(filters)
+    },
     placeholderData: (previousData) => previousData,
   });
 
@@ -382,6 +385,68 @@ const ProductList = () => {
               )}
             </tbody>
           </table>
+          {/* Pagination Controls */}
+          {data && (
+            <div className="flex items-center justify-between px-6 py-4 bg-white border-t">
+              <div className="text-sm text-gray-500">
+                Showing {((filters.page || 1) - 1) * filters.page_size + 1} to{" "}
+                {Math.min((filters.page || 1) * filters.page_size, data.count)}{" "}
+                of {data.count} products
+              </div>
+
+              <nav className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setFilters(prev => ({
+                      ...prev, page: (prev.page || 1) - 1
+                    }))
+                  }
+                  disabled={!data?.previous || isLoading}
+                >
+                  Previous
+                </Button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from(
+                    { length: Math.ceil(data.count / filters.page_size) },
+                    (_, i) => i + 1
+                  ).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setFilters(prev => ({
+                        ...prev,
+                        page: pageNum
+                      }))}
+                      className={`px-3 py-1 text-sm rounded-md ${
+                        pageNum === filters.page
+                          ? "bg-blue-50 text-blue-600 font-medium"
+                          : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setFilters(prev => ({
+                      ...prev,
+                      page: (prev.page || 1) + 1
+                    }))
+                  }
+                  disabled={!data.next || isLoading}
+                >
+                  Next
+                </Button>
+              </nav>
+            </div>
+          )}
         </div>
         {deleteModalOpen && (
           <ConfirmModal

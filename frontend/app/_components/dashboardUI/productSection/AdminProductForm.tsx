@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -13,13 +13,14 @@ import type { AdminProduct } from "@/src/types";
 import { ImageUpload } from "../../UI/ImageUpload";
 import { ApiError } from "next/dist/server/api-utils";
 import { AxiosError } from "axios";
+import { Category } from "@/src/types";
 
 
 // Form validation schema
 const productSchema = z.object({
     name: z.string().min(1, 'Product name is required'),
     description: z.string().min(1, 'Description is required'),
-    category: z.string({
+    category_id: z.number({
         required_error: 'Please select a category',
     }),
     hair_type: z.string().optional(),
@@ -44,6 +45,8 @@ interface ProductFormProps {
 export const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
     const router = useRouter();
     const queryClient = useQueryClient();
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
     const [images, setImages] = useState<File[]>([]);
     const [imageError, setImageError] = useState<string | null>(null);
     const [alert, setAlert] = useState<{
@@ -65,12 +68,32 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
             is_featured: product.is_featured,
             is_available: product.is_available,
             low_stock_threshold: product.low_stock_threshold,
-            category: product.category.slug,
+            category_id: product.category.id,
         } : {
             is_available: true,
             low_stock_threshold: 5,
         }
     });
+  
+  
+  useEffect(() => {
+      const loadCategories = async () => {
+        try {
+          setIsLoadingCategories(true);
+          // setCategoryError(null);
+          const data = await adminProductService.getCategories();
+          console.log("Loaded categories:", data); // Debug log
+          setCategories(data);
+        } catch (error) {
+          console.error("Failed to load categories:", error);
+          // setCategoryError("Failed to load categories");
+        } finally {
+          setIsLoadingCategories(false);
+        }
+      };
+      
+    loadCategories();
+    }, []);
 
 
     const showAlert = (type: 'success' | 'error', message: string) => {
@@ -94,23 +117,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
         mutationFn: async (data: ProductFormValues) => {
           const formData = new FormData();
 
+          console.log("Form data before processing:", data);
+
           console.log("Images to upload:", images);
 
-          Object.entries(data).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-              // Convert boolean values to string
-              if (typeof value === "boolean") {
-                formData.append(key, value ? "true" : "false");
-              } else {
-                formData.append(key, String(value));
-              }
-            }
-          });
+           Object.entries(data).forEach(([key, value]) => {
+             if (value !== undefined && value !== null) {
+               // Special handling for category_id to ensure correct field name
+               if (key === "category_id") {
+                 formData.append("category_id", value.toString());
+               } else if (typeof value === "boolean") {
+                 formData.append(key, value.toString());
+               } else {
+                 formData.append(key, value.toString());
+               }
+             }
+           });
 
           // Append images with logging
           images.forEach((image) => {
             formData.append("product_images", image);
           });
+        
 
           // Generate slug from name
           const slug = data.name
@@ -142,8 +170,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
     const onSubmit = async (data: ProductFormValues) => {
       try {
         await mutation.mutateAsync(data);
-      } catch {
-        //
+      } catch (error) {
+        console.error("Form submission error:", error);
       }
     };
 
@@ -175,21 +203,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
                   Category
                 </label>
                 <select
-                  {...register("category")}
+                  {...register("category_id", {
+                    required: true,
+                    valueAsNumber: true, // Important: convert string value to number
+                  })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                  disabled={isLoadingCategories}
                 >
                   <option value="">Select Category</option>
-                  <option value={1}>Straight Hairs</option>
-                  <option value={2}>Curly Hairs</option>
-                  <option value={3}>Wavy Hairs</option>
-                  <option value={4}>Bouncy Hairs</option>
-                  <option value={5}>Braiding Extensions</option>
-                  <option value={6}>Hair Care Products</option>
-                  <option value={7}>Styling Tools</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
-                {errors.category && (
+                {errors.category_id && (
                   <p className="mt-1 text-sm text-red-600">
-                    {errors.category.message}
+                    {errors.category_id.message}
                   </p>
                 )}
               </div>

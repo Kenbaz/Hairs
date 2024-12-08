@@ -1,7 +1,7 @@
 "use client";
 
 import { Breadcrumb } from "@/app/_components/UI/Breadcrumb";
-import ProductList from "@/app/_components/dashboardUI/productSection/ProductList";
+import ProductList from "@/app/_components/dashboardUI/productSection/AdminProductList";
 
 
 export default function ProductPage() {

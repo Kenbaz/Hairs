@@ -18,9 +18,14 @@ class AdminDashboardService {
 
 
     async getProductAnalytics(): Promise<ProductAnalytics> {
-        const response = await axiosInstance.get('/api/v1/admin/dashboard/product_analytics/');
-        return response.data;
-    };
+        try {
+            const response = await axiosInstance.get('/api/v1/admin/dashboard/product_analytics/');
+            return response.data;
+        } catch (error) {
+            console.error('Failed to fetch product analytics:', error);
+            throw error;
+        }
+    }
 
 
     async getCustomerAnalytics() {

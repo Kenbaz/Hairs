@@ -6,6 +6,8 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from decimal import Decimal
+from django.core.files.storage import default_storage
+import os
 from django.core.exceptions import ValidationError
 from django.core.files.images import get_image_dimensions
 
@@ -113,6 +115,8 @@ class Product(models.Model):
                 notes (str, optional): Additional notes
         """
         previous_stock = self.stock
+        
+        # Update stock
         self.stock += quantity_changed
         self.save()
 
@@ -228,11 +232,24 @@ class ProductImage(models.Model):
     
 
     def delete(self, *args, **kwargs):
-        # Delete the image file when deleting the model instance
-        storage = self.image.storage
-        if storage.exists(self.image.name):
-            storage.delete(self.image.name)
+        # Store the image path before deletion
+        image_path = self.image.path if self.image else None
+
+        # Close any open file handlers
+        if self.image:
+            self.image.close()
+        
+        #Call parent class delete method
         super().delete(*args, **kwargs)
+
+        # Delete the physical file after the model instance is deleted
+        if image_path and os.path.isfile(image_path):
+            try:
+                default_storage.delete(image_path)
+            except (OSError, PermissionError) as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error deleting file {image_path}: {str(e)}")
 
 
 
@@ -269,6 +286,13 @@ class StockHistory(models.Model):
         null=True,
         blank=True
     )
+
+    def clean(self):
+        super().clean()
+        if self.previous_stock is None:
+            raise ValidationError({'Previous_stock:' 'Previous stock value is required'})
+        if self.new_stock is None:
+            raise ValidationError({'new_stock:' 'New stock value is required'})
 
     class Meta:
         ordering = ['-created_at']

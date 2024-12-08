@@ -1,6 +1,6 @@
 import axiosInstance from "@/src/utils/_axios";
 import axios from "axios";
-import { AdminProduct, ProductFilters, ProductResponse } from "@/src/types";
+import { AdminProduct, ProductFilters, ProductResponse, Category } from "@/src/types";
 import { deleteImages, setPrimaryImage, uploadAdditionalImages } from "./productImageMgt";
 
 
@@ -20,6 +20,19 @@ class AdminProductService {
     async getProduct(id: number): Promise<AdminProduct> {
     const response = await axiosInstance.get(`/api/v1/admin/products/${id}/`);
     return response.data;
+    };
+    
+  
+    async getCategories(): Promise<Category[]> {
+      try {
+        console.log('get categories')
+        const response = await axiosInstance.get<Category[]>('api/v1/admin/categories/');
+        return response.data;
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+        throw error;
+      }
+      
     }
 
 

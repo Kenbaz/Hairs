@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db import transaction
 from django.http import HttpResponse
 from rest_framework.permissions import IsAdminUser
@@ -29,8 +29,15 @@ import xlsxwriter
 from io import BytesIO
 from .utils.pdf_generator import PDFGenerator
 from .utils.data_formatters import PDFDataFormatter
-from .serializers import AdminNotificationSerializer, AdminNotification
+from .serializers import AdminNotificationSerializer, AdminNotification, AdminCategorySerializer
 from django_filters.rest_framework import DjangoFilterBackend
+from .serializers import ProductImageSerializer
+import logging
+from django.db.models.functions import Greatest
+from .pagination import AdminPagination
+
+
+logger = logging.getLogger(__name__)
 
 
 class DashboardViewSet(viewsets.ViewSet):
@@ -159,47 +166,55 @@ class DashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def product_analytics(self, request):
         """ Get product performance analytics """
+        try :
+            # Best sellers
+            best_sellers = Product.objects.annotate(
+                total_sold=Count('orderitem')
+            ).order_by('-total_sold')[:10]
 
-        # Best sellers
-        best_sellers = Product.objects.annotate(
-            total_sold=Count('orderitem')
-        ).order_by('-total_sold')[:10]
-
-        # Low stock alerts
-        low_stock = Product.objects.filter(
-            stock__lte=F('low_stock_threshold')
-        ).annotate(
-            days_to_stockout=F('stock') / (Count('orderitem') / 30.0)
-        )
-
-        # Category distribution
-        category_distribution = Category.objects.annotate(
-            product_count=Count('products')
-        ).values('name', 'product_count')
-
-        # Revenue by category
-        revenue_by_category = Category.objects.annotate(
-            revenue=Sum(
-                F('products__orderitem__quantity') *
-                F('products__orderitem__price'),
-                default=0
+            # Low stock alerts
+            low_stock = Product.objects.filter(
+                stock__lte=F('low_stock_threshold')
+            ).annotate(
+                days_to_stockout=F('stock') /
+                (Greatest(Count('orderitem'), 1) / 30.0)
             )
-        ).values('name', 'revenue')
 
-        data = {
-            'best_sellers': AdminProductSerializer(best_sellers, many=True).data,
-            'low_stock_alerts': AdminProductSerializer(low_stock, many=True).data,
-            'category_distribution': {
-                item['name']: item['product_count'] for item in category_distribution
-            },
-            'revenue_by_category': {
-                item['name']: item['revenue'] or 0 for item in revenue_by_category
+            # Category distribution
+            category_distribution = Category.objects.annotate(
+                product_count=Count('products')
+            ).values('name', 'product_count')
+
+            # Revenue by category
+            revenue_by_category = Category.objects.annotate(
+                revenue=Sum(
+                    F('products__orderitem__quantity') *
+                    F('products__orderitem__price'),
+                    default=0
+                )
+            ).values('name', 'revenue')
+
+            data = {
+                'best_sellers': AdminProductSerializer(best_sellers, many=True).data,
+                'low_stock_alerts': AdminProductSerializer(low_stock, many=True).data,
+                'category_distribution': {
+                    item['name']: item['product_count'] for item in category_distribution
+                },
+                'revenue_by_category': {
+                    item['name']: item['revenue'] or 0 for item in revenue_by_category
+                }
             }
-        }
 
-        serializer = ProductAnalyticsSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data)
+            serializer = ProductAnalyticsSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            return Response(serializer.data)
+        except Exception as e:
+            # Add logging here
+            logger.error(f"Error in product_analytics: {str(e)}")
+            return Response(
+                {"error": "Internal server error"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
 
     @action(detail=False, methods=['get'])
@@ -468,13 +483,44 @@ class DashboardViewSet(viewsets.ViewSet):
         return response
 
 
+class AdminCategoryViewSet(viewsets.ModelViewSet):
+    print('Categories views')
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminCategorySerializer
+    queryset = Category.objects.all()
+    pagination_class = None
+
+    def get_queryset(self):
+        queryset = Category.objects.all()
+
+        # Add search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+
+        return queryset.order_by('name')
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    @action(detail=True, methods=['get'])
+    def products(self, request, pk=None):
+        """Get products in this category"""
+        category = self.get_object()
+        products = category.products.all()
+        serializer = AdminProductSerializer(products, many=True)
+        return Response(serializer.data)
+
+
 class AdminProductViewSet(viewsets.ModelViewSet):
     """ViewSet for managing products in admin panel"""
     permission_classes = [IsAdminUser]
 
     serializer_class = AdminProductSerializer
 
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    pagination_class = AdminPagination
 
     queryset = Product.objects.all()
 
@@ -533,7 +579,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
     
 
     @transaction.atomic
-    def create(self, request, *args, **kwargs):
+    def create(self, request):
         try:
             # Extract image files from request
             product_images = request.FILES.getlist('product_images')
@@ -612,8 +658,14 @@ class AdminProductViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def upload_images(self, request, pk=None):
         """ Endpoint for uploading additional images to existing product """
+        
+        logger.info(f"Received upload request for product {pk}")
+        logger.info(f"Files in request: {request.FILES.keys()}")
+
         product = self.get_object()
-        product_images = request.FILES.getlist('images')
+        product_images = request.FILES.getlist('product_images')
+
+        logger.info(f"Found {len(product_images)} images to process")
 
         if not product_images:
             return Response(
@@ -625,6 +677,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 saved_images = []
                 for index, image in enumerate(product_images):
+                    print(f"Processing image: {image.name}")  # Debug print
                     processed_image = process_product_image(image)
                     # Make first image primary if no image exists
                     is_primary = index == 0 and not product.images.exists()
@@ -635,10 +688,12 @@ class AdminProductViewSet(viewsets.ModelViewSet):
                         is_primary=is_primary
                     )
                     saved_images.append(product_image)
+                    print(f"Saved {len(saved_images)} images")  # Debug print
 
+                    serializer = ProductImageSerializer(saved_images, many=True)
                     return Response({
                         'message': f'{len(saved_images)} images uploaded successfully',
-                        'images': ProductImageSerializer(saved_images, many=True).data
+                        'images': serializer.data
                     }, status=status.HTTP_200_OK)
         
         except Exception as e:
@@ -647,67 +702,107 @@ class AdminProductViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
     
-
     @action(detail=True, methods=['post'])
-    def manage_images(self, request, pk=None):
+    def manage_image(self, request, pk=None):
         """
-        Manage product images (delete, reorder, set primary)
-        Expects a request body like:
-        {
-            'action': 'delete' | 'set_primary' | 'reorder',
-            'image_ids': [1, 2, 3],  // Used for deletion or reordering
-            'primary_image_id': 1,   // Used for setting primary image
-        }
+        Manage product images (delete, set primary)
         """
-        product = self.get_object()
-        admin_action = request.data.get('action')
+        
+        logger.info("Starting manage_image function")
+        logger.info(f"Content-Type: {request.content_type}")
+        logger.info(f"Request data: {request.data}")  # Keep only this data logging
 
         try:
-            with transaction.atomic():
-                if admin_action == 'delete':
-                    image_ids = request.data.get('image_ids', [])
-                    # Ensure the deletion of images that belong to this product
-                    images_to_delete = product.images.filter(id__in=image_ids)
-                    deleted_count = images_to_delete.count()
-                    images_to_delete.delete()
+            product = self.get_object()
+            logger.info("Product retrieved successfully")
 
-                    # if the primary image was deleted, set a new one
-                    if not product.images.filter(is_primary=True).exists() and product.images.exists():
-                        first_image = product.images.first()
-                        first_image_is_primary = True
-                        first_image.save()
+            # Make a copy of request.data for logging
+            request_data = request.data.copy()
+            logger.info(f"Processed request data: {request_data}")
 
-                    return Response({
-                        'message': f'{deleted_count} images deleted successfully'
-                    })
-                
-                elif admin_action == 'set_primary':
-                    image_id = request.data.get('primary_image_id')
-                    if not image_id:
-                        raise ValidationError('Primary_image_id is required')
-                    
-                    # Update primary image
-                    product.images.filter(is_primary=True).update(is_primary=False)
-                    new_primary = product.images.filter(id=image_id).first()
-                    if not new_primary:
-                        raise ValidationError('Image not found')
-                    
-                    new_primary.is_primary = True
-                    new_primary.save()
-
-                    return Response({
-                        'message': 'Primary image saved successfully'
-                    })
-                
+            # Check if request.data is empty or None
+            if not request_data:
+                logger.error("No data provided in request")
                 return Response(
-                    {'error': 'Invalid action'},
+                    {'error': 'No data provided'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        
+
+            action = request_data.get('action')
+            logger.info(f"Action extracted: {action}")
+
+            if not action:
+                logger.error("No action specified in request data")
+                return Response(
+                    {'error': 'Action not specified'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if action == 'delete':
+                image_ids = request_data.get('image_ids', [])
+                logger.info(f"Image IDs to delete: {image_ids}")
+
+                if not isinstance(image_ids, list):
+                    image_ids = [image_ids]  # Convert single ID to list
+
+                if not image_ids:
+                    return Response(
+                        {'error': 'No images specified for deletion'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                deleted_count = 0
+                for image_id in image_ids:
+                    try:
+                        image = product.images.get(id=image_id)
+                        logger.info(f"Found image {image_id}, preparing to delete")
+                        if image.image:
+                            image.image.close()
+                        image.delete()
+                        deleted_count += 1
+                        logger.info(f"Successfully deleted image {image_id}")
+                    except ProductImage.DoesNotExist:
+                        logger.warning(f"Image {image_id} not found")
+                        continue
+
+                return Response({
+                    'message': f'{deleted_count} images deleted successfully'
+                })
+
+            elif action == 'set_primary':
+                image_id = request_data.get('primary_image_id')
+                if not image_id:
+                    return Response(
+                        {'error': 'Primary image ID is required'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                with transaction.atomic():
+                    product.images.filter(is_primary=True).update(is_primary=False)
+                    try:
+                        new_primary = product.images.get(id=image_id)
+                        new_primary.is_primary = True
+                        new_primary.save()
+                    except ProductImage.DoesNotExist:
+                        return Response(
+                            {'error': 'Image not found'},
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+
+                return Response({
+                    'message': 'Primary image updated successfully'
+                })
+
+            return Response(
+                {'error': 'Invalid action'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         except Exception as e:
+            logger.error(f"Exception in manage_image: {str(e)}", exc_info=True)
             return Response(
                 {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 

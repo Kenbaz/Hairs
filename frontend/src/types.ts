@@ -218,6 +218,13 @@ export interface ProductImage {
 }
 
 
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+
 export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 
 
@@ -229,8 +236,8 @@ export interface ProductFilters {
     max_price?: number;
     is_featured?: boolean;
     ordering?: string;
-    page?: number;
-    page_size?: number;
+    page: number;
+    page_size: number;
 }
 
 
