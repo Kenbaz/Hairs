@@ -167,12 +167,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
     });
 
   
-    const onSubmit = async (data: ProductFormValues) => {
-      try {
-        await mutation.mutateAsync(data);
-      } catch (error) {
-        console.error("Form submission error:", error);
-      }
+    const onSubmit = (data: ProductFormValues) => {
+      mutation.mutate(data);
     };
 
 

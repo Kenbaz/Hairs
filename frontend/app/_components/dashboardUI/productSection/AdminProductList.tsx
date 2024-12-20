@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Plus, Filter, Download, Search, Loader2 } from "lucide-react";
 import { Button } from "@/app/_components/UI/Button";
 import { Input } from "@/app/_components/UI/Input";
@@ -12,6 +12,7 @@ import type { AdminProduct, ProductFilters, ProductResponse, StockStatus } from 
 import { Alert } from "../../UI/Alert";
 import { ConfirmModal } from "../../UI/ConfirmModal";
 import { useRouter } from "next/navigation";
+import { ProductBulkActions } from "./ProductBulkAction";
 
 const CATEGORY_OPTIONS = [
   { value: "straight", label: "Straight Hairs" },
@@ -34,6 +35,7 @@ const ProductList = () => {
   const [searchValue, setSearchValue] = useState('')
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<AdminProduct | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [alert, setAlert] = useState<{
         type: 'success' | 'error';
         message: string;
@@ -104,6 +106,38 @@ const ProductList = () => {
   });
 
 
+  const handleSelectAll = (checked: boolean) => { 
+    if (checked && data) {
+      setSelectedIds(data.results.map((product) => product.id));
+    } else {
+      setSelectedIds([]);
+    }
+  }
+
+
+  const handleSelectOne = (productId: number) => {
+    setSelectedIds(prev => {
+      if (prev.includes(productId)) {
+        return prev.filter(id => id !== productId);
+      }
+      return [...prev, productId];
+    });
+  };
+
+
+  const isAllSelected = Boolean(
+    data?.results &&
+      data.results.length > 0 &&
+      data.results.length === selectedIds.length
+  );
+
+
+  // Clear selection when filters change
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [filters]);
+
+
   const handleCreateProduct = () => {
     router.push('/admin/products/create');
   }
@@ -166,6 +200,15 @@ const ProductList = () => {
       }));
     }, 300); // 300ms debounce
   };
+
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
 
   const handleFilterChange = <K extends keyof ProductFilters>(
@@ -309,6 +352,15 @@ const ProductList = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="p-4 w-4">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300"
+                    checked={isAllSelected || false}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    disabled={!data?.results?.length}
+                  />
+                </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -374,13 +426,27 @@ const ProductList = () => {
                 </tr>
               ) : (
                 data?.results.map((product) => (
-                  <ProductRow
+                  <tr
                     key={product.id}
-                    product={product}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onToggleFeatured={handleToggleFeatured}
-                  />
+                    className={
+                      selectedIds.includes(product.id) ? "bg-blue-50" : ""
+                    }
+                  >
+                    <td className="p-4 w-4">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300"
+                        checked={selectedIds.includes(product.id) || false}
+                        onChange={() => handleSelectOne(product.id)}
+                      />
+                    </td>
+                    <ProductRow
+                      product={product}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onToggleFeatured={handleToggleFeatured}
+                    />
+                  </tr>
                 ))
               )}
             </tbody>
@@ -399,8 +465,9 @@ const ProductList = () => {
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    setFilters(prev => ({
-                      ...prev, page: (prev.page || 1) - 1
+                    setFilters((prev) => ({
+                      ...prev,
+                      page: (prev.page || 1) - 1,
                     }))
                   }
                   disabled={!data?.previous || isLoading}
@@ -416,10 +483,12 @@ const ProductList = () => {
                   ).map((pageNum) => (
                     <button
                       key={pageNum}
-                      onClick={() => setFilters(prev => ({
-                        ...prev,
-                        page: pageNum
-                      }))}
+                      onClick={() =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          page: pageNum,
+                        }))
+                      }
                       className={`px-3 py-1 text-sm rounded-md ${
                         pageNum === filters.page
                           ? "bg-blue-50 text-blue-600 font-medium"
@@ -435,9 +504,9 @@ const ProductList = () => {
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    setFilters(prev => ({
+                    setFilters((prev) => ({
                       ...prev,
-                      page: (prev.page || 1) + 1
+                      page: (prev.page || 1) + 1,
                     }))
                   }
                   disabled={!data.next || isLoading}
@@ -448,6 +517,11 @@ const ProductList = () => {
             </div>
           )}
         </div>
+        <ProductBulkActions
+          selectedIds={selectedIds}
+          onClearSelection={() => setSelectedIds([])}
+          queryKey={QUERY_KEYS.products.list(filters)}
+        />
         {deleteModalOpen && (
           <ConfirmModal
             isOpen={deleteModalOpen}

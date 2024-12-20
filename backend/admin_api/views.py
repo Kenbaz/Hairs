@@ -850,6 +850,82 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             {'error': 'Stock value not provided'},
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_delete(self, request):
+        """ Handle bulk deletion of products with transaction support """
+        logger.info(f"Received bulk delete request. Data: {request.data}")
+        product_ids = request.data.get('product_ids', [])
+
+        logger.info(f"Extracted product_ids: {product_ids}")
+        
+        if not product_ids:
+            logger.warning("No product_ids provided in request")
+            return Response(
+                {'error': 'No products specified for deletion'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Get products that exists and are deletable
+            products = Product.objects.filter(id__in=product_ids).select_related('category')
+            found_count = products.count()
+
+            if found_count == 0:
+                return Response(
+                    {'error': 'None of the specified products were found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            logger.info(
+                f"Attempting to delete {found_count} products: {[product.id for product in products]}"
+            )
+
+            # Check if any of the products are associated with orders
+            products_with_orders = products.filter(orderitem__isnull=False).distinct()
+            if products_with_orders.exists():
+                logger.warning(
+                    f"Deletion blocked - Products with orders exists: {[product.id for product in products_with_orders]}"
+                )
+                return Response({
+                    'error': 'Some products cannot be deleted as they have associated orders',
+                    'products': AdminProductSerializer(products_with_orders, many=True).data
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Store product details for logging
+            deletion_details = [
+                {
+                    'id': product.id,
+                    'name': product.name,
+                    'category': product.category.name if product.category else None
+                } for product in products
+            ]
+
+            # Delete products
+            deletion_count = products.count()
+            products.delete()
+
+            logger.info(
+                f"Successfully deleted {deletion_count} products: {deletion_details}"
+            )
+
+            return Response({
+                'message': f'{deletion_count} products deleted successfully',
+                'deleted_products': deletion_count,
+                'details': deletion_details
+            })
+        
+        except Exception as e:
+            logger.error(f"Bulk deletion failed: {str(e)}", exc_info=True)
+            return Response(
+                {
+                    'error': 'Failed to delete products',
+                    'details': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class AdminOrderViewSet(viewsets.ModelViewSet):

@@ -56,7 +56,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
 
 
     return (
-      <tr className="hover:bg-gray-50">
+      <>
         {/* Product Info */}
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="flex items-center">
@@ -203,7 +203,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
             )}
           </div>
         </td>
-      </tr>
+      </>
     );
 };
 

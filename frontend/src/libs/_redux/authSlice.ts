@@ -8,7 +8,7 @@ import {toast} from 'react-hot-toast';
 import { notificationService } from '../services/notificationService';
 
 
-// Helper function to safely access LocalStorage (client-side only)
+// Helper function to safely access LocalStorage
 const getStorageItem = (key: string): string | null => {
     if (typeof window !== 'undefined') {
         return localStorage.getItem(key);

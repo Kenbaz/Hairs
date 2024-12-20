@@ -14,7 +14,6 @@ def get_user_from_token(token_key):
         user_id = access_token.payload.get('user_id')
 
         # Get user from database
-        from django.contrib.auth import get_user_model
         User = get_user_model()
         user = User.objects.get(id=user_id)
 

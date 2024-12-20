@@ -249,6 +249,14 @@ export interface ProductResponse {
 }
 
 
+export interface BulkOperationResponse { 
+    message: string;
+    deleted_count?: number;
+    error?: string;
+    products?: AdminProduct[];
+}
+
+
 export interface ProductFormData {
     name: string;
     description: string;
