@@ -1,11 +1,10 @@
-# wishlist/urls.py
-
+# currencies/urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 
 router = DefaultRouter()
-router.register(r'wishlist', views.WishlistViewSet, basename='wishlist')
+router.register(r'currencies', views.CurrencyViewSet, basename='currency')
 
 urlpatterns = [
     path('', include(router.urls)),

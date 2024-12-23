@@ -1,3 +1,5 @@
+# products/views.py
+
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,12 +7,15 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Category, Product
 from .serializers import (CategorySerializer, ProductListSerializer, ProductDetailsSerializer)
 from .pagination import ProductPagination
-from currencies.utils import convert_price
+from currencies.utils import CurrencyConverter
 from decimal import Decimal
 from django.conf import settings
 from utils.cache import cache_response
 from rest_framework.decorators import action
 import decimal
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -102,27 +107,27 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         max_price = self.request.query_params.get('max_price')
         currency = self.request.query_params.get('currency', 'USD')
 
-        if min_price:
+        if min_price or max_price:
             try:
-                min_price_usd = convert_price(
-                    Decimal(min_price),
-                    from_currency=currency,
-                    to_currency='USD'
-                )
-                queryset = queryset.filter(price__gte=min_price_usd)
-            except (ValueError, TypeError, decimal.InvalidOperation):
-                pass
+                # Convert filter prices to USD for database filtering
+                if min_price:
+                    min_price_usd = CurrencyConverter.convert_price(
+                        amount=Decimal(min_price),
+                        from_currency=currency,
+                        to_currency='USD'
+                    )
+                    queryset = queryset.filter(price__gte=min_price_usd)
 
-        if max_price:
-            try:
-                max_price_usd = convert_price(
-                    Decimal(max_price),
-                    from_currency=currency,
-                    to_currency='USD'
-                )
-                queryset = queryset.filter(price__lte=max_price_usd)
-            except (ValueError, TypeError, decimal.InvalidOperation):
-                pass
+                if max_price:
+                    max_price_usd = CurrencyConverter.convert_price(
+                        amount=Decimal(max_price),
+                        from_currency=currency,
+                        to_currency='USD'
+                    )
+                    queryset = queryset.filter(price__lte=max_price_usd)
+
+            except (ValueError, decimal.InvalidOperation) as e:
+                logger.error(f"Price filter conversion failed: {str(e)}")
 
         return queryset
     

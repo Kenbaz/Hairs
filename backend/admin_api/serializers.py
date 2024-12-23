@@ -1,3 +1,5 @@
+# admin_api/serializers.py
+
 from rest_framework import serializers
 from products.models import Product, Category
 from orders.models import Order
@@ -7,6 +9,8 @@ from reviews.models import Review
 from products.models import StockHistory
 from products.serializers import CategorySerializer, ProductImageSerializer
 from .models import AdminNotification
+from currencies.models import Currency
+from currencies.utils import CurrencyConverter
 
 
 class AdminProductSerializer(serializers.ModelSerializer):
@@ -215,3 +219,55 @@ class AdminNotificationSerializer(serializers.ModelSerializer):
         model = AdminNotification
         fields = ['id', 'type', 'title', 'message',
                   'link', 'is_read', 'created_at']
+
+
+class CurrencySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Currency
+        fields = ['id', 'code', 'name', 'symbol', 'exchange_rate', 'is_active', 'last_updated']
+        read_only_fields = ['last_updated']
+
+        def validate_exchange_rate(self, value):
+            if value <= 0:
+                raise serializers.ValidationError("Exchange rate must be greater than 0")
+            return value
+        
+        def validate_code(self, data):
+            if self.instance is None and Currency.objects.filter(code=data).exists():
+                raise serializers.ValidationError("Currency with this code already exists")
+            return data
+
+
+class CurrencyConversionSerializer(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    from_currency = serializers.CharField(max_length=3)
+    to_currency = serializers.CharField(max_length=3)
+
+    def validate(self, data):
+        """
+        Validate currency codes exist and are active
+        """
+        currencies = CurrencyConverter.get_active_currencies()
+
+        if data['from_currency'] not in currencies:
+            raise serializers.ValidationError(
+                f"{data['from_currency']} is an Invalid currency")
+
+        if data['to_currency'] not in currencies:
+            raise serializers.ValidationError(
+                f"{data['to_currency']} is an Invalid target currency")
+        
+        return data
+
+
+class CurrencyInfoSerializer(serializers.Serializer):
+    """Serializer for currency info returned by get_active_currencies"""
+    code = serializers.CharField()
+    symbol = serializers.CharField()
+    rate = serializers.DecimalField(max_digits=10, decimal_places=6)
+    name = serializers.CharField()
+    example = serializers.CharField()
+
+
+class ExchangeRateUpdateSerializer(serializers.Serializer):
+    exchange_rate = serializers.DecimalField(max_digits=10, decimal_places=6)

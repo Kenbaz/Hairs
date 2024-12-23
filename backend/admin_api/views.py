@@ -1,3 +1,5 @@
+# admin_api/views.py
+
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -35,6 +37,9 @@ from .serializers import ProductImageSerializer
 import logging
 from django.db.models.functions import Greatest
 from .pagination import AdminPagination
+from currencies.utils import CurrencyConverter
+from .serializers import CurrencyConversionSerializer, CurrencySerializer, ExchangeRateUpdateSerializer
+from currencies.models import Currency
 
 
 logger = logging.getLogger(__name__)
@@ -1053,3 +1058,56 @@ class AdminNotificationViewSet(viewsets.ModelViewSet):
     def unread_count(self, request):
         count = self.get_queryset().filter(is_read=False).count()
         return Response({'count': count})
+
+
+class AdminCurrencyViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAdminUser]
+    serializer_class = CurrencySerializer
+    queryset = Currency.objects.all()
+
+    @action(detail=False)
+    def active(self, request):
+        currencies = CurrencyConverter.get_active_currencies()
+        return Response(currencies)
+    
+    @action(detail=False, methods=['post'])
+    def convert(self, request):
+        serializer = CurrencyConversionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            result = CurrencyConverter.convert(
+                amount = serializer.validated_data['amount'],
+                from_currency = serializer.validated_data['from_currency'],
+                to_currency = serializer.validated_data['to_currency']
+            )
+            return Response(result)
+        except ValueError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+
+    @action(detail=False, methods=['patch'])
+    def update_rate(self, request, pk=None):
+        """ Update exchange rate for a specific currency """
+        currency = self.get_object()
+        serializer = ExchangeRateUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            currency.exchange_rate = serializer.validated_data['exchange_rate']
+            currency.save()
+            
+            # Clear currency cache
+            cache.delete('active_currencies')
+
+            return Response({
+                CurrencySerializer(currency).data
+            })
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

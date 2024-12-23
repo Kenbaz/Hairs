@@ -1,3 +1,5 @@
+# wishlist/views.py
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Wishlist, WishlistItem
 from .serializers import WishlistSerializer
 from products.models import Product
+
 
 class WishlistViewSet(viewsets.GenericViewSet):
     serializer_class = WishlistSerializer

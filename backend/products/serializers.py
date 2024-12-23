@@ -1,6 +1,10 @@
+# products/serializers.py
 from rest_framework import serializers
 from .models import Category, Product, ProductImage, StockHistory
-from currencies.utils import get_active_currencies
+from currencies.utils import CurrencyConverter
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -54,35 +58,77 @@ class ProductListSerializer(serializers.ModelSerializer):
     def get_price_data(self, obj):
         request = self.context.get('request', None)
         currency = request.GET.get('currency', 'USD') if request else 'USD'
-        currencies = get_active_currencies()
+        
+        try:
+            currencies = CurrencyConverter.get_active_currencies()
+            if currency not in currencies:
+                currency = 'USD'
+            
+            # Get the currency info
+            currency_info = currencies[currency]
 
-        if currency not in currencies:
-            currency = 'USD'
+            # Convert the price to the requested currency
+            regular_price = CurrencyConverter.convert_price(
+                amount=obj.price,
+                from_currency='USD',
+                to_currency=currency
+            )
 
-        regular_price = obj.get_price_in_currency(currency)
-        discount_price = obj.get_discount_price_in_currency(currency)
-        symbol = currencies[currency]['symbol']
+            # Handle discount price
+            discount_price = None
+            if obj.discount_price:
+                discount_price = CurrencyConverter.convert_price(
+                    amount=obj.discount_price,
+                    from_currency='USD',
+                    to_currency=currency
+                )
+            
+            data = {
+                'amount': regular_price,
+                'currency': currency,
+                'formatted': CurrencyConverter.format_price(
+                    amount=regular_price,
+                    currency_code=currency,
+                    include_symbol=True
+                ),
+                'is_discounted': bool(discount_price),
+                'discount_amount': discount_price,
+                'discount_formatted': (
+                    CurrencyConverter.format_price(
+                        amount=discount_price,
+                        currency_code=currency,
+                        include_symbol=True
+                    ) if discount_price else None
+                ),
+                'savings_percentage': None
+            }
 
-        data = {
-            'amount': regular_price,
-            'currency': currency,
-            'formatted': f"{symbol}{regular_price}",
-            'is_discounted': bool(discount_price),
-            'discount_amount': discount_price,
-            'discount_formatted': f"{symbol}{discount_price}" if discount_price else None,
+            # Calculate savings percentage if discounted
+            if discount_price:
+                savings = ((regular_price - discount_price) / regular_price) * 100
+                data['savings_percentage'] = round(savings, 2)
+            
+            return data
+        
+        except ValueError as e:
+            logger.error(f"Price conversion failed: {str(e)}")
+
+        # Return USD prices as fallback
+        return {
+            'amount': obj.price,
+            'currency': 'USD',
+            'formatted': CurrencyConverter.format_price(obj.price, 'USD'),
+            'is_discounted': bool(obj.discount_price),
+            'discount_amount': obj.discount_price,
+            'discount_formatted': (
+                CurrencyConverter.format_price(
+                    obj.discount_price, 'USD') if obj.discount_price else None,
+            ),
             'savings_percentage': None
         }
 
-        # Calculate savings percentage if discounted
-        if discount_price:
-            savings = ((regular_price - discount_price) / regular_price) * 100
-            data['savings_percentage'] = round(savings, 2)
 
-        return data
-    
-
-
-class ProductDetailsSerializer(serializers.ModelSerializer):
+class ProductDetailsSerializer(ProductListSerializer):
     """ Serializer for detailed product view """
     category = CategorySerializer(read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
@@ -101,48 +147,38 @@ class ProductDetailsSerializer(serializers.ModelSerializer):
         ]
     
 
-
-    def get_price_data(self, obj):
-        request = self.context.get('request', None)
-        currency = request.GET.get('currency', 'USD') if request else 'USD'
-        currencies = get_active_currencies()
-        
-        if currency not in currencies:
-            currency = 'USD'
-            
-        regular_price = obj.get_price_in_currency(currency)
-        discount_price = obj.get_discount_price_in_currency(currency)
-        symbol = currencies[currency]['symbol']
-        
-        data = {
-            'amount': regular_price,
-            'currency': currency,
-            'formatted': f"{symbol}{regular_price}",
-            'is_discounted': bool(discount_price),
-            'discount_amount': discount_price,
-            'discount_formatted': f"{symbol}{discount_price}" if discount_price else None,
-            'savings_percentage': None
-        }
-        
-        if discount_price:
-            savings = ((regular_price - discount_price) / regular_price) * 100
-            data['savings_percentage'] = round(savings, 2)
-        
-        return data
-    
-
-
     def get_available_currencies(self, obj):
-        """ Get list of currencies with thier symbols """
-        currencies = get_active_currencies()
-        return [
-            {
-                'code': code,
-                'symbol': data['symbol'],
-                'name': data['name']
-            }
-            for code, data in currencies.items()
-        ]
+        """ Get list of currencies with their symbols and rates """
+        try:
+            currencies = CurrencyConverter.get_active_currencies()
+            available_currencies = []
+
+            for currency_code, currency_info in currencies.items():
+                available_currencies.append({
+                    'code': currency_code,
+                    'symbol': currency_info.symbol,
+                    'name': currency_info.name,
+                    # Convert Decimal to float for JSON serialization
+                    'rate': float(currency_info.rate),
+                    'example': CurrencyConverter.format_price(
+                        amount=100,  # Example amount
+                        currency_code=currency_code,
+                        include_symbol=True
+                    )
+                })
+
+            return available_currencies
+
+        except Exception as e:
+            logger.error(f"Failed to get available currencies: {str(e)}")
+            # Return at least USD as fallback
+            return [{
+                'code': 'USD',
+                'symbol': '$',
+                'name': 'US Dollar',
+                'rate': 1.0,
+                'example': '$100.00'
+            }]
 
 
 
@@ -163,7 +199,6 @@ class ProductPriceSerializer(serializers.Serializer):
         decimal_places=2,
         allow_null=True
     )
-
 
 
 class StockHistorySerializer(serializers.ModelSerializer):

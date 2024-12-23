@@ -1,3 +1,5 @@
+#admin_api/urls.py
+
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
@@ -14,6 +16,8 @@ router.register(r'categories', views.AdminCategoryViewSet,
 router.register(r'users', views.AdminUserViewSet, basename='admin-users')
 router.register(r'notifications', AdminNotificationViewSet,
                 basename='admin-notifications')
+router.register(r'currencies', views.AdminCurrencyViewSet,
+                basename='admin-currency')
 
 urlpatterns = [
     path('', include(router.urls)),

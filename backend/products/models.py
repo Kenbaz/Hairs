@@ -1,15 +1,21 @@
+# products/models.py
+
 from django.db import models
 from django.utils.text import slugify
-from currencies.utils import convert_price
+from currencies.utils import CurrencyConverter
 from django.core.mail import send_mail
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from decimal import Decimal
+from django.core.cache import cache
 from django.core.files.storage import default_storage
 import os
 from django.core.exceptions import ValidationError
 from django.core.files.images import get_image_dimensions
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Category(models.Model):
@@ -165,20 +171,143 @@ class Product(models.Model):
 
 
     def get_price_in_currency(self, currency_code='USD'):
-        """ Get price in specified currency """
-        if currency_code == 'USD':
+        """
+            Get price in specified currency
+            
+            Args:
+                currency_code: Target currency code
+                
+            Returns:
+                Decimal: Converted price
+                
+            Raises:
+                ValueError: If currency code is invalid
+        """
+
+        try:
+            if currency_code == 'USD':
+                return self.price
+            
+            # Try to get from cache first
+            cache_key = f'product_price_{self.id}_{currency_code}'
+            cached_price = cache.get(cache_key)
+            if cached_price is not None:
+                return cached_price
+            
+            # Convert price
+            converted_price = CurrencyConverter.convert_price(
+                amount=self.price,
+                from_currency='USD',
+                to_currency=currency_code,
+                round_digits=2
+            )
+
+            # Cache the converted price
+            cache.set(
+                cache_key,
+                converted_price,
+                timeout=settings.CACHE_TIMEOUTS['PRODUCT']
+            )
+
+            return converted_price
+        
+        except ValueError as e:
+            logger.error(f"Price conversion failed for product {self.id}: {str(e)}")
             return self.price
-        return convert_price(self.price, 'USD', currency_code)
     
 
     def get_discount_price_in_currency(self, currency_code='USD'):
-        """ Get discount price in specified currency """
+        """
+            Get discount price in specified currency
+            
+            Args:
+                currency_code: Target currency code
+                
+            Returns:
+                Optional[Decimal]: Converted discount price or None if no discount
+        """
+
         if not self.discount_price:
             return None
-        if currency_code == 'USD':
-            return self.discount_price
-        return convert_price(self.discount_price, 'USD', currency_code)
+        
+        try:
+            if currency_code == 'USD':
+                return self.discount_price
+            
+            # Try to get from cache first
+            cache_key = f'product_discount_price_{self.id}_{currency_code}'
+            cached_price = cache.get(cache_key)
+            if cached_price is not None:
+                return cached_price
+            
+            # Convert discount_price
+            converted_price = CurrencyConverter.convert_price(
+                amount=self.discount_price,
+                from_currency='USD',
+                to_currency=currency_code,
+                round_digits=2
+            )
 
+            # Cache the converted price
+            cache.set(
+                cache_key,
+                converted_price,
+                timeout=settings.CACHE_TIMEOUTS['PRODUCT']
+            )
+
+            return converted_price
+        
+        except ValueError as e:
+            logger.error(f"Discount price conversion failed for product {self.id}: {str(e)}")
+            return self.discount_price
+    
+
+    def format_price(self, currency_code='USD', include_symbol=True):
+        """
+            Get formatted price in specified currency
+            
+            Args:
+                currency_code: Target currency code
+                include_symbol: Include currency symbol in output
+                
+            Returns:
+                str: Formatted price string
+        """
+        price = self.get_price_in_currency(currency_code)
+        return CurrencyConverter.format_price(
+            amount=price,
+            currency_code=currency_code,
+            include_symbol=include_symbol
+        )
+    
+
+    def format_discount_price(self, currency_code='USD', include_symbol=True):
+        """
+            Get formatted discount price in specified currency
+            
+            Args:
+                currency_code: Target currency code
+                include_symbol: Include currency symbol in output
+                
+            Returns:
+                Optional[str]: Formatted discount price string or None if no discount
+        """
+        discount_price = self.get_discount_price_in_currency(currency_code)
+        if discount_price is None:
+            return None
+        return CurrencyConverter.format_price(
+            amount=discount_price,
+            currency_code=currency_code,
+            include_symbol=include_symbol
+        )
+    
+
+    def clear_price_cache(self):
+        """ Clear cached prices when product is updated """
+        active_currencies = CurrencyConverter.get_active_currencies()
+        for currency in active_currencies:
+            cache.delete(f'product_price_{self.id}_{currency}')
+            cache.delete(f'product_discount_price_{self.id}_{currency}')
 
     class Meta:
         ordering = ['-created_at']
@@ -187,6 +316,11 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
+
+        # Clear price cache when product is updated
+        if self.id:
+            self.clear_price_cache()
+
         super().save(*args, **kwargs)
 
 
