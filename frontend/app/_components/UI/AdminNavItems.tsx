@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, Tags, ShoppingBag, Users, ClipboardList, Boxes, BarChart3, DollarSign, Receipt, Heart, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Package, Tags, ShoppingBag, Users, ClipboardList, BarChart3, DollarSign, Receipt, Heart, Settings, ChevronDown, } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -119,12 +119,6 @@ export function DashboardNav() {
             label="Categories"
             isActive={pathname === "/admin/products/categories"}
           />
-          <NavItem
-            href="/admin/products/inventory"
-            icon={<Boxes className="h-5 w-5" />}
-            label="Inventory"
-            isActive={pathname === "/admin/products/inventory"}
-          />
         </NavGroup>
 
         {/* Order Management */}
@@ -178,6 +172,16 @@ export function DashboardNav() {
             icon={<DollarSign className="h-5 w-5" />}
             label="Revenue Report"
             isActive={pathname === "/admin/analytics/revenue"}
+          />
+        </NavGroup>
+
+        {/* Settings & configuration */}
+        <NavGroup title='Settings' icon={<Settings className='h-5 w-5' />}>
+          <NavItem
+            href='/admin/currencies'
+            icon={<DollarSign className='h-5 w-5' />}
+            label='Currency Management'
+            isActive={pathname === '/admin/currencies'}
           />
         </NavGroup>
       </nav>

@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { DashboardNav } from '../../UI/AdminNavItems';
 import { NotificationCenter } from './NotificationCenter';
 import { notificationService } from '@/src/libs/services/notificationService';
+import { SessionManager } from '@/src/libs/auth/sessionManager';
+import { CurrencySelector } from '../../UI/CurrencySelector';
 
 
 interface DashboardLayoutProps {
@@ -27,24 +29,37 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     
     // Effect to load user data on mount
   useEffect(() => {
-      const initializeUser = async () => {
+      const initializeDashboard = async () => {
         try {
+          // Load user data
           await dispatch(loadUser()).unwrap();
+
+          // Start session manager
+          SessionManager.getInstance().startSession();
+
+          // Connect notification service
+          notificationService.connect();
         } catch (error) {
           console.error('Failed to load user data:', error);
+          // If initialization fails, logout user
+          dispatch(logout());
         } finally {
           setIsLoading(false);
         }
       };
       
-    initializeUser();
+    initializeDashboard();
+
+    // Cleanup function
+    return () => { 
+      // End session monitoring
+      SessionManager.getInstance().endSession();
+      
+      // Disconnect notification service
+      notificationService.disconnect();
+    }
     }, [dispatch]);
     
-    
-    useEffect(() => {
-      notificationService.connect();
-      return () => notificationService.disconnect();
-    }, []);
 
     // Close mobile menu on path change
     useEffect(() => {
@@ -65,13 +80,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Sidebar */}
         <aside
           className={`
-    fixed inset-y-0 left-0 z-50 h-screen
-    w-64 bg-white border-r border-gray-200
-    transition-transform duration-300 ease-in-out
-    ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-    lg:translate-x-0 lg:static
-    flex flex-col
-  `}
+            fixed inset-y-0 left-0 z-50 h-screen
+            w-64 bg-white border-r border-gray-200
+            transition-transform duration-300 ease-in-out
+            ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+            lg:translate-x-0 lg:static
+            flex flex-col
+          `}
         >
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-4 border-b">
@@ -118,6 +133,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       className="w-full md:w-72 pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    <CurrencySelector />
                   </div>
                 </div>
               </div>
@@ -125,7 +141,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               {/* Right Side Items */}
               <div className="flex items-center space-x-4">
                 {/* Notifications */}
-                <NotificationCenter/>
+                <NotificationCenter />
 
                 {/* User Menu */}
                 <div className="relative">
@@ -171,9 +187,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </header>
 
           {/* Main Content Area */}
-          <main className="p-4 md:p-6 max-w-[1920px] mx-auto">
-            {children}
-          </main>
+          <main className="p-4 md:p-6 max-w-[1920px] mx-auto">{children}</main>
         </div>
       </div>
     );

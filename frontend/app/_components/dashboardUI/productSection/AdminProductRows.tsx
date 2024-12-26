@@ -3,6 +3,7 @@ import { MoreVertical, Edit, Trash, Star, Share, Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { AdminProduct } from "@/src/types";
+import { PriceDisplay } from "../../UI/PriceDisplay";
 
 
 interface ProductRowProps {
@@ -22,12 +23,12 @@ const ProductRow: React.FC<ProductRowProps> = ({
     const [showActions, setShowActions] = useState(false);
 
 
-    const formatPrice = (price: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(price);
-    };
+    // const formatPrice = (price: number) => {
+    //     return new Intl.NumberFormat('en-US', {
+    //         style: 'currency',
+    //         currency: 'USD'
+    //     }).format(price);
+    // };
 
 
     const getStockStatus = () => {
@@ -106,11 +107,17 @@ const ProductRow: React.FC<ProductRowProps> = ({
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="text-sm">
             <div className="font-medium text-gray-900">
-              {formatPrice(product.price)}
+              <PriceDisplay
+                amount={product.price}
+                sourceCurrency="USD"
+              />
             </div>
             {product.discount_price && (
               <div className="text-gray-500 line-through">
-                {formatPrice(product.discount_price)}
+                <PriceDisplay
+                  amount={product.discount_price}
+                  sourceCurrency="USD"
+                />
               </div>
             )}
           </div>

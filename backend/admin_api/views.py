@@ -37,9 +37,16 @@ from .serializers import ProductImageSerializer
 import logging
 from django.db.models.functions import Greatest
 from .pagination import AdminPagination
-from currencies.utils import CurrencyConverter
-from .serializers import CurrencyConversionSerializer, CurrencySerializer, ExchangeRateUpdateSerializer
+from currencies.utils import CurrencyConverter, CurrencyConversionError
+from .serializers import (
+    CurrencySerializer,
+    CurrencyConversionSerializer,
+    ExchangeRateUpdateSerializer,
+    CurrencyInfoSerializer
+)
 from currencies.models import Currency
+from decimal import Decimal
+from django.core.cache import cache
 
 
 logger = logging.getLogger(__name__)
@@ -1061,53 +1068,150 @@ class AdminNotificationViewSet(viewsets.ModelViewSet):
 
 
 class AdminCurrencyViewSet(viewsets.ModelViewSet):
+    """ ViewSet for managing currencies in admin panel """
     permission_classes = [IsAdminUser]
     serializer_class = CurrencySerializer
     queryset = Currency.objects.all()
 
+    def get_queryset(self):
+        """ Filter queryset based on active status """
+        queryset = Currency.objects.all()
+        is_active = self.request.query_params.get('is_active')
+
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == 'true')
+        
+        return queryset.order_by('code')
+
+
     @action(detail=False)
     def active(self, request):
-        currencies = CurrencyConverter.get_active_currencies()
-        return Response(currencies)
+        """ Get active currencies with their info """
+        try:
+            currencies = CurrencyConverter.get_active_currencies()
+            serializer = CurrencyInfoSerializer(currencies.values(), many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in fetching active currencies: {e}")
+            return Response(
+                {'error': 'Failed to fetch active currencies'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
+
     @action(detail=False, methods=['post'])
     def convert(self, request):
+        """ Convert amount from one currency to another """
         serializer = CurrencyConversionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            result = CurrencyConverter.convert(
-                amount = serializer.validated_data['amount'],
-                from_currency = serializer.validated_data['from_currency'],
-                to_currency = serializer.validated_data['to_currency']
+            result = CurrencyConverter.convert_price(
+                amount=serializer.validated_data['amount'],
+                from_currency=serializer.validated_data['from_currency'],
+                to_currency=serializer.validated_data['to_currency']
             )
-            return Response(result)
-        except ValueError as e:
+
+            formatted = CurrencyConverter.format_price(
+                amount=result,
+                currency_code=serializer.validated_data['to_currency']
+            )
+
+            return Response({
+                'amount': result,
+                'formatted': formatted
+            })
+        except CurrencyConversionError as e:
             return Response(
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        except Exception as e:
+            logger.error(f"Currency conversion failed: {e}")
+            return Response(
+                {'error': 'Currency conversion failed'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
 
-    @action(detail=False, methods=['patch'])
+    @action(detail=True, methods=['patch'])
     def update_rate(self, request, pk=None):
         """ Update exchange rate for a specific currency """
         currency = self.get_object()
+        
+        # Prevent updating USD exchange rate
+        if currency.code == 'USD':
+            return Response(
+                {'error': 'Cannot modify USD exchange rate'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         serializer = ExchangeRateUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            currency.exchange_rate = serializer.validated_data['exchange_rate']
+            # Validate new exchange rate
+            new_rate = Decimal(str(serializer.validated_data['exchange_rate']))
+            CurrencyConverter.validate_exchange_rate(new_rate)
+
+            # Update exchange rate
+            currency.exchange_rate = new_rate
             currency.save()
-            
+
             # Clear currency cache
             cache.delete('active_currencies')
 
-            return Response({
-                CurrencySerializer(currency).data
-            })
-        except Exception as e:
+            return Response(CurrencySerializer(currency).data)
+        except CurrencyConversionError as e:
             return Response(
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        except Exception as e:
+            logger.error(f"Failed to update exchange rate: {e}")
+            return Response(
+                {'error': 'Failed to update exchange rate'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+
+    @action(detail=True, methods=['post'])
+    def toggle_status(self, request, pk=None):
+        """ Toggle currency active status """
+        currency = self.get_object()
+
+        # Prevent deactivating USD
+        if currency.code == 'USD':
+            return Response(
+                {'error': 'Cannot deactivate USD currency'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            currency.is_active = not currency.is_active
+            currency.save()
+
+            # Clear currency cache
+            cache.delete('active_currencies')
+
+            return Response({
+                'status': 'success',
+                'is_active': currency.is_active
+            })
+        except Exception as e:
+            logger.error(f"Failed to toggle currency status: {e}")
+            return Response(
+                {'error': 'Failed to toggle currency status'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+
+    def destroy(self, request, *args, **kwargs):
+        """ Prevent deletion of USD """
+        currency = self.get_object()
+        if currency.code == 'USD':
+            return Response(
+                {'error': 'Cannot delete USD currency'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)

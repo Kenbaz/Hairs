@@ -13,6 +13,7 @@ import { ImageUpload } from "../../UI/ImageUpload";
 import { ConfirmModal } from "../../UI/ConfirmModal";
 import { adminProductService } from "@/src/libs/services/adminProductService";
 import axios from 'axios';
+import {PriceDisplay} from '../../UI/PriceDisplay';
 
 
 export default function ProductDetailsPage() {
@@ -37,14 +38,6 @@ export default function ProductDetailsPage() {
         queryKey: ['products', productId],
         queryFn: () => adminProductService.getProduct(productId),
     });
-
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
-    };
 
 
     // Mutation for adding images
@@ -287,11 +280,17 @@ export default function ProductDetailsPage() {
                     <div>
                       <p className="text-sm text-gray-500">Price</p>
                       <p className="font-medium">
-                        {formatCurrency(product.price)}
+                        <PriceDisplay
+                          amount={product.price}
+                          sourceCurrency="USD"
+                        />
                       </p>
                       {product.discount_price && (
                         <p className="text-sm text-gray-500 line-through">
-                          {formatCurrency(product.discount_price)}
+                          <PriceDisplay
+                          amount={product.discount_price}
+                          sourceCurrency="USD"
+                        />
                         </p>
                       )}
                     </div>

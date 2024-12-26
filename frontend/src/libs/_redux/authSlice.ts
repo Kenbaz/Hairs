@@ -6,6 +6,7 @@ import { AuthState, LoginCredentials, AuthResponse, RootState, ApiError } from '
 import axiosInstance from '../../utils/_axios';
 import {toast} from 'react-hot-toast';
 import { notificationService } from '../services/notificationService';
+import { SessionManager } from '../auth/sessionManager';
 
 
 // Helper function to safely access LocalStorage
@@ -43,6 +44,10 @@ export const login = createAsyncThunk<AuthResponse, LoginCredentials, { rejectVa
                  "Authorization"
                ] = `Bearer ${response.data.access}`;
             }
+
+            // Start session manager
+            SessionManager.getInstance().startSession();
+
             return response.data;
         } catch (error) {
             const err = error as AxiosError<ApiError>
@@ -81,6 +86,10 @@ export const refreshAccessToken = createAsyncThunk<{ access: string }, void, {
                    "Authorization"
                  ] = `Bearer ${response.data.access}`;
             }
+
+            // Reset session timeout since token has been refreshed
+            SessionManager.getInstance().startSession();
+
             return response.data;
         } catch (error) {
             // Token refresh failed, log out user
@@ -101,6 +110,9 @@ export const logout = createAsyncThunk(
         if (typeof window !== 'undefined') {
             // Get current path for redirect back after login
             const currentPath = window.location.pathname;
+
+            // Clean up session
+            SessionManager.getInstance().endSession();
 
             // Clear auth states
             localStorage.removeItem('accessToken');
@@ -137,6 +149,10 @@ export const loadUser = createAsyncThunk<
              const response = await axiosInstance.get<AuthResponse["user"]>(
                "/api/v1/users/profile/"
              );
+
+             // Start session management if user is successfully loaded
+             SessionManager.getInstance().startSession();
+             
              return response.data;
         } catch (error) {
             if (error instanceof Error) {
@@ -172,6 +188,9 @@ const authSlice = createSlice({
             state.refreshToken = action.payload.refresh;
             state.error = null;
             toast.success('Logged in successfully');
+
+            // Start session monitoring
+            SessionManager.getInstance().startSession();
         });
         builder.addCase(login.rejected, (state, action) => {
             state.isLoading = false;
@@ -181,6 +200,9 @@ const authSlice = createSlice({
             state.user = null;
             state.accessToken = null;
             state.refreshToken = null;
+
+            // End session if login fails
+            SessionManager.getInstance().endSession();
         });
         
         // Refresh cases
@@ -194,6 +216,9 @@ const authSlice = createSlice({
             state.accessToken = null;
             state.refreshToken = null;
             toast.error('Session expired. Please login again');
+
+            // End session on refresh failure
+            SessionManager.getInstance().endSession();
 
             // Redirect to login with current path
             if (typeof window !== 'undefined') {
@@ -226,6 +251,9 @@ const authSlice = createSlice({
         builder.addCase(loadUser.rejected, (state, action) => {
             state.isLoading = false;
             state.error = action.payload ?? 'Failed to load user';
+
+            // End session if user load fails
+            SessionManager.getInstance().endSession();
         });
     },
 });

@@ -4,13 +4,13 @@ from rest_framework import serializers
 from products.models import Product, Category
 from orders.models import Order
 from users.models import User
-from django.db.models import Sum, Count
-from reviews.models import Review
+from django.db.models import Sum
 from products.models import StockHistory
 from products.serializers import CategorySerializer, ProductImageSerializer
 from .models import AdminNotification
 from currencies.models import Currency
-from currencies.utils import CurrencyConverter
+from currencies.utils import CurrencyConverter, CurrencyInfo
+from decimal import Decimal
 
 
 class AdminProductSerializer(serializers.ModelSerializer):
@@ -222,6 +222,7 @@ class AdminNotificationSerializer(serializers.ModelSerializer):
 
 
 class CurrencySerializer(serializers.ModelSerializer):
+    """ Serializer for Currency model """
     class Meta:
         model = Currency
         fields = ['id', 'code', 'name', 'symbol', 'exchange_rate', 'is_active', 'last_updated']
@@ -232,13 +233,17 @@ class CurrencySerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Exchange rate must be greater than 0")
             return value
         
-        def validate_code(self, data):
-            if self.instance is None and Currency.objects.filter(code=data).exists():
+        def validate_code(self, value):
+            """ Ensure currency code is unique (case-insensitive) """
+            value = value.upper()
+
+            if self.instance is None and Currency.objects.filter(code=value).exists():
                 raise serializers.ValidationError("Currency with this code already exists")
-            return data
+            return value
 
 
 class CurrencyConversionSerializer(serializers.Serializer):
+    """ Serializer for currency conversion requests """
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
     from_currency = serializers.CharField(max_length=3)
     to_currency = serializers.CharField(max_length=3)
@@ -247,15 +252,12 @@ class CurrencyConversionSerializer(serializers.Serializer):
         """
         Validate currency codes exist and are active
         """
-        currencies = CurrencyConverter.get_active_currencies()
+        data['from_currency'] = data['from_currency'].upper()
+        data['to_currency'] = data['to_currency'].upper()
 
-        if data['from_currency'] not in currencies:
-            raise serializers.ValidationError(
-                f"{data['from_currency']} is an Invalid currency")
-
-        if data['to_currency'] not in currencies:
-            raise serializers.ValidationError(
-                f"{data['to_currency']} is an Invalid target currency")
+        # Validate amount
+        if data['amount'] < 0:
+            raise serializers.ValidationError({'amount': 'Amount must be a positive number'})
         
         return data
 
@@ -266,8 +268,22 @@ class CurrencyInfoSerializer(serializers.Serializer):
     symbol = serializers.CharField()
     rate = serializers.DecimalField(max_digits=10, decimal_places=6)
     name = serializers.CharField()
-    example = serializers.CharField()
+
+    def to_representation(self, instance: CurrencyInfo):
+        """ Add formatted example to output """
+        data = super().to_representation(instance)
+
+        # Add formatted example
+        example_amount = 100.00
+        data['example'] = f"{instance.symbol}{example_amount:.2f}"
+        return data
 
 
 class ExchangeRateUpdateSerializer(serializers.Serializer):
-    exchange_rate = serializers.DecimalField(max_digits=10, decimal_places=6)
+    """ Serializer for updating exchange rates """
+    exchange_rate = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=6,
+        min_value=Decimal('0.000001'),
+        max_value=Decimal('999999')
+    )

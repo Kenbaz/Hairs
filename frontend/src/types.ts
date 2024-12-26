@@ -272,3 +272,57 @@ export interface ProductFormData {
     low_stock_threshold?: number;
     images?: File[];
 }
+
+
+// Currency types
+export interface Currency {
+  id: number;
+  code: string;
+  name: string;
+  symbol: string;
+  exchange_rate: number;
+  is_active: boolean;
+  last_updated?: string;
+}
+
+export interface CreateCurrencyData {
+  code: string;
+  name: string;
+  symbol: string;
+  exchange_rate: number;
+  is_active?: boolean;
+}
+
+export interface UpdateCurrencyData {
+  name?: string;
+  symbol?: string;
+  exchange_rate?: number;
+  is_active?: boolean;
+}
+
+export interface CurrencyResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Currency[];
+}
+
+export interface CurrencyConversion {
+    amount: number;
+    formatted: string;
+    currency: string;
+}
+
+export interface UpdateCurrencyData {
+  name?: string;
+  symbol?: string;
+  exchange_rate?: number;
+  is_active?: boolean;
+}
+
+export interface CurrencyState { 
+    currencies: Currency[];
+    currentCurrency: Currency | null;
+    isLoading: boolean;
+    error: string | null;
+}
