@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { adminCurrencyService } from "@/src/libs/services/currencyService";
+import { adminCurrencyService } from "@/src/libs/services/adminServices/adminCurrencyService";
 import { Breadcrumb } from "@/app/_components/UI/Breadcrumb";
 import { Button } from "@/app/_components/UI/Button";
 import { Alert } from "@/app/_components/UI/Alert";

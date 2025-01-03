@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/app/_components/UI/Button";
 import { Input } from "@/app/_components/UI/Input";
 import { Alert } from "@/app/_components/UI/Alert";
-import { adminProductService } from "@/src/libs/services/adminProductService";
+import { adminProductService } from "@/src/libs/services/adminServices/adminProductService";
 import type { AdminProduct } from "@/src/types";
 import { ImageUpload } from "../../UI/ImageUpload";
 import { ApiError } from "next/dist/server/api-utils";

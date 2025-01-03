@@ -5,7 +5,7 @@ import {AxiosError} from 'axios';
 import { AuthState, LoginCredentials, AuthResponse, RootState, ApiError } from '../../types';
 import axiosInstance from '../../utils/_axios';
 import {toast} from 'react-hot-toast';
-import { notificationService } from '../services/notificationService';
+import { notificationService } from '../services/adminServices/notificationService';
 import { SessionManager } from '../auth/sessionManager';
 
 

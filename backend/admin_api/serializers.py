@@ -11,6 +11,8 @@ from .models import AdminNotification
 from currencies.models import Currency
 from currencies.utils import CurrencyConverter, CurrencyInfo
 from decimal import Decimal
+from orders.models import OrderItem, Order
+from returns.models import Return, ReturnItem, ReturnHistory, ReturnImage
 
 
 class AdminProductSerializer(serializers.ModelSerializer):
@@ -70,8 +72,30 @@ class AdminCategorySerializer(serializers.ModelSerializer):
         return value
 
 
+class AdminOrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name')
+    product_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderItem
+        fields = [
+            'id', 'product_name', 'product_image', 'quantity',
+            'price', 'product'
+        ]
+
+    def get_product_image(self, obj):
+        try:
+            if obj.product.images.filter(is_primary=True).exists():
+                return obj.product.images.filter(is_primary=True).first().image.url
+            return None
+        except:
+            return None
+
+
 class AdminOrderSerializer(serializers.ModelSerializer):
     customer_name = serializers.SerializerMethodField()
+    items = AdminOrderItemSerializer(many=True, read_only=True)
+    customer_email = serializers.SerializerMethodField()
     items_count = serializers.SerializerMethodField()
     order_items = serializers.SerializerMethodField()
 
@@ -81,6 +105,9 @@ class AdminOrderSerializer(serializers.ModelSerializer):
 
     def get_customer_name(self, obj):
         return f"{obj.user.first_name} {obj.user.last_name}"
+    
+    def get_customer_email(self, obj):
+        return obj.user.email
 
     def get_items_count(self, obj):
         return obj.items.count()
@@ -287,3 +314,58 @@ class ExchangeRateUpdateSerializer(serializers.Serializer):
         min_value=Decimal('0.000001'),
         max_value=Decimal('999999')
     )
+
+
+class ReturnImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReturnImage
+        fields = ['id', 'image', 'created_at']
+
+
+class ReturnItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    images = ReturnImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ReturnItem
+        fields = [
+            'id', 'product', 'product_name', 'quantity',
+            'reason', 'condition', 'images'
+        ]
+
+
+class ReturnHistorySerializer(serializers.ModelSerializer):
+    created_by_name = serializers.CharField(
+        source='created_by.get_full_name',
+        read_only=True
+    )
+
+    class Meta:
+        model = ReturnHistory
+        fields = [
+            'id', 'status', 'notes', 'created_at',
+            'created_by_name'
+        ]
+
+
+class ReturnSerializer(serializers.ModelSerializer):
+    items = ReturnItemSerializer(many=True, read_only=True)
+    history = ReturnHistorySerializer(many=True, read_only=True)
+    customer_name = serializers.CharField(
+        source='user.get_full_name',
+        read_only=True
+    )
+    order_number = serializers.CharField(
+        source='order.id',
+        read_only=True
+    )
+
+    class Meta:
+        model = Return
+        fields = [
+            'id', 'order_number', 'customer_name', 'reason',
+            'return_status', 'refund_status', 'refund_amount',
+            'admin_notes', 'created_at', 'updated_at',
+            'items', 'history'
+        ]
+        read_only_fields = ['created_at', 'updated_at']

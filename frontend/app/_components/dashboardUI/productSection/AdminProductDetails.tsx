@@ -11,7 +11,7 @@ import { Button } from "../../UI/Button";
 import { Alert } from "../../UI/Alert";
 import { ImageUpload } from "../../UI/ImageUpload";
 import { ConfirmModal } from "../../UI/ConfirmModal";
-import { adminProductService } from "@/src/libs/services/adminProductService";
+import { adminProductService } from "@/src/libs/services/adminServices/adminProductService";
 import axios from 'axios';
 import {PriceDisplay} from '../../UI/PriceDisplay';
 

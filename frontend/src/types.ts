@@ -326,3 +326,205 @@ export interface CurrencyState {
     isLoading: boolean;
     error: string | null;
 }
+
+
+// Order Types
+export interface OrderItem {
+  id: number;
+  product_name: string;
+  product_image?: string | null;
+  quantity: number;
+  price: number;
+  subtotal: number;
+  product: number;
+}
+
+export interface AdminOrder {
+    id: number;
+    customer_name: string;
+    customer_email: string;
+    shipping_address: string;
+    total_amount: number;
+    tracking_number?: string;
+    order_status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+    payment_status: boolean;
+    cancelled_at?: string;
+    refund_status: OrderRefund['status'];
+    refund_amount: number;
+    items_count: number;
+    created_at: string;
+    updated_at: string;
+    history: OrderHistory[];
+    items: OrderItem[];
+}
+
+export interface OrderRefund {
+    status: 'none' | 'pending' | 'processing' | 'completed' | 'failed';
+    amount: number;
+}
+
+export interface OrderStatus {
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  timestamp: string;
+  notes?: string;
+  updated_by?: string;
+}
+
+export interface OrderHistory {
+    id: number;
+    status: string;
+    notes: string;
+    created_at: string;
+    created_by: string;
+}
+
+export interface OrderResponse {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: AdminOrder[];
+}
+
+export interface OrderFilters {
+    page?: number;
+    page_size?: number;
+    status?: string;
+    payment_status?: string;
+    search?: string;
+    date_from?: string;
+    date_to?: string;
+}
+
+
+// Return types
+export interface ReturnItem {
+  id: number;
+  product_id: number;
+  product_name: string;
+  quantity: number;
+  reason: string;
+  condition: "unopened" | "opened" | "damaged";
+  images: { id: number; image: string }[];
+}
+
+export interface ReturnHistory {
+  id: number;
+  status: string;
+  notes: string;
+  created_at: string;
+  created_by_name: string;
+}
+
+export interface ReturnRequest {
+  id: number;
+  order_number: string;
+  customer_name: string;
+  reason: string;
+  return_status: "pending" | "approved" | "received" | "rejected" | "completed";
+  refund_status: "pending" | "processing" | "completed" | "failed";
+  refund_amount?: number;
+  items_received: boolean;
+  admin_notes?: string;
+  created_at: string;
+  updated_at: string;
+  items: ReturnItem[];
+  history: ReturnHistory[];
+}
+
+export interface ReturnFiltersType {
+  status?: string;
+  refund_status?: string;
+  date_from?: string;
+  date_to?: string;
+  search?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface ReturnResponse {
+  count: number;
+  results: ReturnRequest[];
+}
+
+export interface ReturnRequestForm {
+  order_id: number;
+  reason: string;
+  items: {
+    product_id: number;
+    quantity: number;
+    reason: string;
+    condition: "unopened" | "opened" | "damaged";
+  }[];
+  images?: File[];
+}
+
+export interface OrderItemForReturn {
+  id: number;
+  product_name: string;
+  quantity: number;
+  price: number;
+}
+
+export interface EligibleOrder {
+  id: number;
+  order_date: string;
+  total_amount: number;
+  items: OrderItemForReturn[];
+}
+
+export interface ReturnFormResponse {
+  id: number;
+  order_number: string;
+  return_status: string;
+  created_at: string;
+}
+
+export interface ReturnPolicy {
+  return_window_days: number;
+  requires_receipt: boolean;
+  allow_partial_returns: boolean;
+  restocking_fee_percentage: number;
+  free_returns: boolean;
+  shipping_paid_by: "customer" | "store";
+  return_instructions: string;
+}
+
+export interface ProductReturnPolicy {
+  id: number;
+  product: number;
+  product_name: string;
+  is_returnable: boolean;
+  return_window_days: number | null;
+  restocking_fee_percentage: number | null;
+  special_instructions: string;
+  global_policy: {
+    return_window_days: number;
+    restocking_fee_percentage: number;
+    free_returns: boolean;
+    shipping_paid_by: "customer" | "store";
+  };
+}
+
+export interface EffectivePolicy {
+  is_returnable: boolean;
+  return_window_days: number;
+  restocking_fee_percentage: number;
+  free_returns: boolean;
+  shipping_paid_by: "customer" | "store";
+  instructions: string;
+}
+
+export interface CreateProductPolicyData {
+  product: number;
+  is_returnable: boolean;
+  return_window_days?: number | null;
+  restocking_fee_percentage?: number | null;
+  special_instructions?: string;
+}
+
+export interface PolicyResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: ReturnPolicy[];
+}

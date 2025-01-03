@@ -6,7 +6,7 @@ import { Button } from "@/app/_components/UI/Button";
 import { Input } from "@/app/_components/UI/Input";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import ProductRow from "./AdminProductRows";
-import { adminProductService } from "@/src/libs/services/adminProductService";
+import { adminProductService } from "@/src/libs/services/adminServices/adminProductService";
 import type { AdminProduct, ProductFilters, ProductResponse, StockStatus } from "@/src/types";
 // import { toast } from "react-hot-toast";
 import { Alert } from "../../UI/Alert";
@@ -138,6 +138,12 @@ const ProductList = () => {
   }, [filters]);
 
 
+  const showAlert = (type: "success" | "error", message: string) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 5000);
+  };
+
+
   const handleCreateProduct = () => {
     router.push('/admin/products/create');
   }
@@ -146,12 +152,6 @@ const ProductList = () => {
   const handleEdit = (product: AdminProduct) => {
     router.push(`/admin/products/${product.id}/edit`);
   };
-
-
-  const showAlert = (type: 'success' | 'error', message: string) => {
-        setAlert({ type, message });
-        setTimeout(() => setAlert(null), 5000);
-    };
 
 
   const confirmDelete = async () => {

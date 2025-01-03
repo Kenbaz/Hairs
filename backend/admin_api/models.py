@@ -8,6 +8,7 @@ class AdminNotification(models.Model):
     NOTIFICATION_TYPES = [
         ('order', 'New Order'),
         ('inventory', 'Low Stock Alert'),
+        ('return_request', 'Return Request'),
     ]
 
     user = models.ForeignKey(

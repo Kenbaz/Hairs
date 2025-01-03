@@ -1,6 +1,6 @@
 import { useCurrency } from "../_providers/CurrencyContext";
 import { useQuery } from "@tanstack/react-query";
-import { adminCurrencyService } from "@/src/libs/services/currencyService";
+import { adminCurrencyService } from "@/src/libs/services/adminServices/adminCurrencyService";
 import { Loader2 } from "lucide-react";
 
 
@@ -22,19 +22,25 @@ export function PriceDisplay({
 
     // Only query if currencies are different
     const { data: convertedPrice, isLoading } = useQuery({
-        queryKey: ['price-conversion', amount, sourceCurrency, selectedCurrency],
-        queryFn: () => adminCurrencyService.convertPrice(
-            amount,
-            sourceCurrency,
-            selectedCurrency
+      queryKey: ["price-conversion", amount, sourceCurrency, selectedCurrency],
+      queryFn: () =>
+        adminCurrencyService.convertPrice(
+          amount,
+          sourceCurrency,
+          selectedCurrency
         ),
-        // Only convert if currencies are different or the amount is valid
-        enabled: sourceCurrency !== selectedCurrency && amount > 0,
-        // Cache result for 5 minutes
-        staleTime: 5 * 60 * 1000,
-        // Don't refetch on window focus
-        refetchOnWindowFocus: false,
+      // Only convert if currencies are different or the amount is valid
+      enabled:
+        sourceCurrency !== selectedCurrency && amount != null && amount > 0,
+      // Cache result for 5 minutes
+      staleTime: 5 * 60 * 1000,
+      // Don't refetch on window focus
+      refetchOnWindowFocus: false,
     });
+
+    if (amount == null) {
+      return <span className={className}>-</span>;
+    }
 
     if (isLoading && showLoader) {
         return <Loader2 className="h-4 w-4 animate-spin" />;

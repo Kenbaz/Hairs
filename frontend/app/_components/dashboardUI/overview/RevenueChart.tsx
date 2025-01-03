@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { Loader2, TrendingUp, DollarSign, ShoppingBag } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { adminDashboardService } from '@/src/libs/services/adminDashboardService';
+import { adminDashboardService } from '@/src/libs/services/adminServices/adminDashboardService';
 import type { RevenueData } from '@/src/types';
 
 

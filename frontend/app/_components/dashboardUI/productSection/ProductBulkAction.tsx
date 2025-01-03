@@ -1,7 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { Button } from "../../UI/Button";
 import { ConfirmModal } from "../../UI/ConfirmModal";
-import { adminProductService } from "@/src/libs/services/adminProductService";
+import { adminProductService } from "@/src/libs/services/adminServices/adminProductService";
 import { Alert } from "../../UI/Alert";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";

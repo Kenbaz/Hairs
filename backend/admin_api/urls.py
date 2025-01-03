@@ -18,6 +18,9 @@ router.register(r'notifications', AdminNotificationViewSet,
                 basename='admin-notifications')
 router.register(r'currencies', views.AdminCurrencyViewSet,
                 basename='admin-currency')
+router.register(r'returns', views.AdminReturnViewSet, basename='admin-returns')
+router.register(r'return-policies', views.AdminReturnPolicyViewset,
+                basename='admin-return-policy')
 
 urlpatterns = [
     path('', include(router.urls)),

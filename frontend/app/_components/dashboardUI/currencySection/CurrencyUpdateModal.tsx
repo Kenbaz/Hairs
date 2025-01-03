@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { adminCurrencyService } from "@/src/libs/services/currencyService";
+import { adminCurrencyService } from "@/src/libs/services/adminServices/adminCurrencyService";
 import { Button } from "../../UI/Button";
 import { Input } from "../../UI/Input";
 import { Alert } from "../../UI/Alert";

@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { Breadcrumb } from "@/app/_components/UI/Breadcrumb";
 import { ProductForm } from '@/app/_components/dashboardUI/productSection/AdminProductForm';
-import { adminProductService } from '@/src/libs/services/adminProductService';
+import {adminProductService} from '@/src/libs/services/adminServices/adminProductService';
 import { use } from 'react';
 
 interface EditProductPageProps {

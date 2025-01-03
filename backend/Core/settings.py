@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'currencies',
     'wishlist',
     'admin_api.apps.AdminApiConfig',
+    'returns',
 ]
 
 

@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useState, useEffect, PropsWithChildren } from "react";
 import type { Currency } from "@/src/types";
 import { useQuery } from "@tanstack/react-query";
-import { adminCurrencyService } from "@/src/libs/services/currencyService";
+import { adminCurrencyService } from "@/src/libs/services/adminServices/adminCurrencyService";
 import { useAppSelector } from "@/src/libs/_redux/hooks";
 import { selectIsAuthenticated } from "@/src/libs/_redux/authSlice";
 

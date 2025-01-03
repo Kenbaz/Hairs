@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2, TrendingUp, TrendingDown, Package, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { adminDashboardService } from '@/src/libs/services/adminDashboardService';
+import { adminDashboardService } from '@/src/libs/services/adminServices/adminDashboardService';
 import { TopProduct, ProductAnalytics } from '@/src/types';
 
 

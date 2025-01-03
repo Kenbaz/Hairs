@@ -9,7 +9,7 @@ import { RecentOrders } from "@/app/_components/dashboardUI/overview/RecentOrder
 import { LowStockAlerts } from "@/app/_components/dashboardUI/overview/LowStockAlert";
 import { RevenueChart } from "@/app/_components/dashboardUI/overview/RevenueChart";
 import { ProductPerformance } from "@/app/_components/dashboardUI/overview/ProductAnalyticsOverview";
-import { adminDashboardService } from '@/src/libs/services/adminDashboardService';
+import { adminDashboardService } from '@/src/libs/services/adminServices/adminDashboardService';
 
 
 // Fetch dashboard statistics 

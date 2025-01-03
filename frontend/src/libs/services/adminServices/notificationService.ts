@@ -1,5 +1,5 @@
-import { addNotification } from "../_redux/notificationSlice";
-import { store } from "../_redux/store";
+import { addNotification } from "../../_redux/notificationSlice";
+import { store } from "../../_redux/store";
 // import { AdminNotification } from "../_redux/types";
 
 class NotificationService {

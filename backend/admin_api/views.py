@@ -31,6 +31,7 @@ import xlsxwriter
 from io import BytesIO
 from .utils.pdf_generator import PDFGenerator
 from .utils.data_formatters import PDFDataFormatter
+from .utils.invoice_generator import InvoiceGenerator
 from .serializers import AdminNotificationSerializer, AdminNotification, AdminCategorySerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import ProductImageSerializer
@@ -44,9 +45,14 @@ from .serializers import (
     ExchangeRateUpdateSerializer,
     CurrencyInfoSerializer
 )
+from rest_framework.filters import SearchFilter, OrderingFilter
+from returns.models import Return, ReturnHistory, ReturnPolicy, ProductReturnPolicy
+from django.shortcuts import get_object_or_404
+from returns.serializers import ReturnSerializer, ProductReturnPolicySerializer, ReturnPolicySerializer
 from currencies.models import Currency
 from decimal import Decimal
 from django.core.cache import cache
+from django.db.models import Q
 
 
 logger = logging.getLogger(__name__)
@@ -944,10 +950,25 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
     """ViewSet for managing orders in admin panel"""
     permission_classes = [IsAdminUser]
     serializer_class = AdminOrderSerializer
+    search_fields = ['id', 'user__email', 'user__first_name', 'user__last_name']
+    ordering_fields = ['created_at', 'total_amount']
+    ordering = ['-created_at']
     queryset = Order.objects.all()
 
     def get_queryset(self):
-        queryset = Order.objects.all().select_related('user')
+        queryset = Order.objects.all().select_related('user').prefetch_related('items', 'items__product')
+
+        # Handle search
+        search = self.request.query_params.get('search')
+        
+        if search:
+            queryset = queryset.filter(
+                Q(id__icontains=search) |
+                Q(user__email__icontains=search) |
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search)
+            )
+
 
         # Filter by status
         status = self.request.query_params.get('status')
@@ -976,6 +997,8 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
         """Update order status"""
         order = self.get_object()
         new_status = request.data.get('status')
+        tracking_number = request.data.get('tracking_number')
+
         if new_status in dict(Order.ORDER_STATUS_CHOICES):
             order.order_status = new_status
             order.save()
@@ -983,11 +1006,87 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
                 'status': 'success',
                 'new_status': order.order_status
             })
+        
+        if tracking_number:
+            order.tracking_number = tracking_number
+            order.save()
+            return Response({
+                'status': 'success',
+                'tracking_number': order.tracking_number
+            })
+        
         return Response(
             {'error': 'Invalid status'},
             status=status.HTTP_400_BAD_REQUEST
         )
+    
 
+    @action(detail=True, methods=['post'])
+    def cancel_order(self, request, pk=None):
+        order = self.get_object()
+
+        try:
+            order.cancel_order(request.user)
+            return Response({
+                'status': 'success',
+                'message': 'Order cancelled successfully'
+            })
+        except ValueError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+
+    @action(detail=True, methods=['post'])
+    def update_order_refund(self, request, pk=None):
+        order = self.get_object()
+        new_status = request.data.get('refund_status')
+
+        if new_status not in dict(Order.REFUND_STATUS_CHOICES):
+            return Response(
+                {'error': 'Invalid refund status'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        order.refund_status = new_status
+        order.save()
+
+        return Response({
+            'status': 'success',
+            'refund_status': new_status
+        })
+    
+
+    @action(detail=True, methods=['get'])
+    def invoice(self, request, pk=None):
+        """ Generate invoice for order """
+        order = self.get_object()
+        logger.info(f"Generating invoice for order {order.id}")
+
+        try:
+            invoice_pdf = InvoiceGenerator(order).generateInvoice()
+
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = f"attachment; filename=invoice_{order.id}.pdf"
+            response.write(invoice_pdf)
+
+            logger.info(f"Successfully generated invoice for order {order.id}")
+            return response
+        except ImportError as e:
+            logger.error(f"Invoice generation failed - Missing dependencies: {str(e)}")
+            return Response(
+                {'error': 'Invoice generation is not available - Missing dependencies'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            logger.error(f"Invoice generation failed for order {order.id}: {str(e)}", 
+                        exc_info=True)
+            return Response(
+                {'error': f'Failed to generate invoice: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
 
 class AdminUserViewSet(viewsets.ModelViewSet):
     """ViewSet for managing users in admin panel"""
@@ -1215,3 +1314,251 @@ class AdminCurrencyViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         return super().destroy(request, *args, **kwargs)
+
+
+class AdminReturnViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAdminUser]
+    serializer_class = ReturnSerializer
+    queryset = Return.objects.all()
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['return_status', 'refund_status']
+    search_fields = [
+        'order__id',
+        'user__email',
+        'user__first_name',
+        'user__last_name'
+    ]
+    ordering_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        queryset = Return.objects.all()
+
+        # Date filtering
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+
+        if date_from:
+            queryset = queryset.filter(created_at__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created_at__lte=date_to)
+
+        return queryset
+
+
+    @action(detail=True, methods=['patch'])
+    def update_status(self, request, pk=None):
+        return_request = self.get_object()
+        new_status = request.data.get('status')
+        print('data', request.data)
+        print('new_status', new_status)
+        notes = request.data.get('notes', '')
+
+        if new_status not in dict(Return.RETURN_STATUS_CHOICES):
+            return Response(
+                {'error': 'Invalid status'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return_request.return_status = new_status
+        return_request.updated_by = request.user
+        return_request.save()
+
+        # Create history entry
+        ReturnHistory.objects.create(
+            return_request=return_request,
+            status=new_status,
+            notes=notes,
+            created_by=request.user
+        )
+
+        serializer = self.get_serializer(return_request)
+        return Response(serializer.data)
+
+
+    @action(detail=True, methods=['patch'])
+    def update_refund(self, request, pk=None):
+        return_request = self.get_object()
+        new_status = request.data.get('refund_status')
+        refund_amount = request.data.get('refund_amount')
+
+        if new_status not in dict(Return.REFUND_STATUS_CHOICES):
+            return Response(
+                {'error': 'Invalid refund status'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if refund_amount:
+            return_request.refund_amount = refund_amount
+        return_request.refund_status = new_status
+        return_request.updated_by = request.user
+        return_request.save()
+
+        # Create history entry
+        ReturnHistory.objects.create(
+            return_request=return_request,
+            status=f"Refund {new_status}",
+            notes=f"Refund amount: ${refund_amount}" if refund_amount else "",
+            created_by=request.user
+        )
+
+        serializer = self.get_serializer(return_request)
+        return Response(serializer.data)
+
+
+    @action(detail=True, methods=['get'])
+    def receive_items(self, request, pk=None):
+        return_request = self.get_object()
+
+        try:
+            return_request.mark_items_received(request.user)
+            return Response({
+                'status': 'success',
+                'message': 'Items marked as received'
+            })
+        except ValueError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class AdminReturnPolicyViewset(viewsets.ModelViewSet):
+    """ Viewset for managing return policies in admin panel """
+    permission_classes = [IsAdminUser]
+    serializer_class = ReturnPolicySerializer
+
+    def get_queryset(self):
+        return ReturnPolicy.objects.all()
+    
+
+    @action(detail=False, methods=['patch'])
+    def global_policy(self, request):
+        """Update global return policy"""
+        policy = ReturnPolicy.objects.first()
+        if not policy:
+            policy = ReturnPolicy.objects.create()
+
+        serializer = self.get_serializer(policy, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
+    
+
+    @action(detail=False)
+    def product_policies(self, request):
+        """Get product-specific return policies"""
+        product_id = request.query_params.get('product_id')
+        queryset = ProductReturnPolicy.objects.all()
+
+        if product_id:
+            queryset = queryset.filter(product_id=product_id)
+
+        serializer = ProductReturnPolicySerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+    @action(detail=False, methods=['patch'])
+    def update_product_policy(self, request):
+        """Update product-specific return policy"""
+        product_id = request.data.get('product')
+        if not product_id:
+            return Response(
+                {'error': 'Product ID is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            product_policy = ProductReturnPolicy.objects.get(product_id=product_id)
+        except ProductReturnPolicy.DoesNotExist:
+            return Response(
+                {'error': 'Product policy not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ProductReturnPolicySerializer(
+            product_policy,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
+    
+
+    @action(detail=False, methods=['post'])
+    def create_global_policy(self, request):
+        """ Create initial global return policy is none exists """
+        if ReturnPolicy.objects.exists():
+            return Response(
+                {'error': 'Global return policy already exists, use update instead'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED
+        )
+    
+
+    @action(detail=False, methods=['post'])
+    def create_product_policy(self, request):
+        """ Create product-specific return policy """
+        product_id = request.data.get('product')
+        if not product_id:
+            return Response(
+                {'error': 'Product ID is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if policy already exists for this product
+        if ProductReturnPolicy.objects.filter(product_id=product_id).exists():
+            return Response(
+                {'error': f'Return policy already exists for product {product_id}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate product exists
+        try:
+            product = Product.objects.get(id=product_id)
+        except product.DoesNotExist:
+            return Response(
+                {'error': 'Product not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = ProductReturnPolicySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED
+        )
+    
+
+    @action(detail=False, methods=['delete'])
+    def delete_product_policy(self, request):
+        """ Delete product-specific return policy """
+        product_id = request.query_params.get('product_id')
+        if not product_id:
+            return Response(
+                {'error': 'Product ID is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            policy = ProductReturnPolicy.objects.get(product_id=product_id)
+            policy.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProductReturnPolicy.DoesNotExist:
+            return Response(
+                {'error': 'Product policy not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )

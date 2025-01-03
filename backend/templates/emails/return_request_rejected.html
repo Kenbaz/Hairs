@@ -1,0 +1,23 @@
+
+{% extends "emails/base_email.html" %} 
+
+{% block content %}
+
+:::: content
+# Return Request Update
+
+Dear {{ return_request.user.full_name }},
+
+Unfortunately, we cannot approve your return request for Order #{{ return_request.order.id }}.
+
+::: return-details
+## Rejection Reason:
+{{ return_request.admin_notes }}
+
+If you have any questions about this decision, please contact our customer support team.
+:::
+
+[Contact Support](%7B%7B%20site_url%20%7D%7D/contact){.button}
+::::
+
+{% endblock %}

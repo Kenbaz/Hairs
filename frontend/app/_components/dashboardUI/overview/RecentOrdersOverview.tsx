@@ -3,11 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Loader2, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import { adminDashboardService } from '@/src/libs/services/adminDashboardService';
-import type { RecentOrder } from '@/src/types';
+import { adminDashboardService } from '@/src/libs/services/adminServices/adminDashboardService';
+import type { AdminOrder } from '@/src/types';
 
 
-const OrderStatusBadge = ({ status }: { status: RecentOrder['order_status'] }) => {
+const OrderStatusBadge = ({ status }: { status: AdminOrder['order_status'] }) => {
     const statusStyles = {
         pending: "bg-yellow-50 text-yellow-600 border-yellow-100",
         processing: "bg-blue-50 text-blue-600 border-blue-100",
@@ -29,7 +29,7 @@ const OrderStatusBadge = ({ status }: { status: RecentOrder['order_status'] }) =
 };
 
 
-const OrderRow = ({ order }: { order: RecentOrder }) => {
+const OrderRow = ({ order }: { order: AdminOrder }) => {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -84,6 +84,7 @@ export function RecentOrders() {
         queryFn: () => adminDashboardService.getRecentOrders(5),
         refetchInterval: 30000, // Refetch every 30 seconds
     });
+    
 
     if (isLoading) {
         return (
@@ -96,7 +97,8 @@ export function RecentOrders() {
     };
 
 
-    if (error || !data) {
+  if (error || !data) {
+      console.error("Recent Orders Error:", error);
       return (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="text-center text-red-500">
@@ -107,7 +109,7 @@ export function RecentOrders() {
     }
     
     // Ensuring there is an orders array even if data.orders is undefined
-  const orders = data.orders || [];
+  const orders = data.results || [];
 
 
     return (

@@ -1,5 +1,5 @@
 import axiosInstance from "@/src/utils/_axios";
-import { DashboardStats, LowStockResponse, OrdersResponse, ProductAnalytics, SalesAnalytics } from "@/src/types";
+import { DashboardStats, LowStockResponse, ProductAnalytics, SalesAnalytics, OrderResponse } from "@/src/types";
 
 
 class AdminDashboardService {
@@ -34,7 +34,7 @@ class AdminDashboardService {
     };
 
 
-    async getRecentOrders(limit: number = 5): Promise<OrdersResponse> {
+    async getRecentOrders(limit: number = 5): Promise<OrderResponse> {
         const response = await axiosInstance.get('/api/v1/admin/orders/', {
             params: {
                 limit,

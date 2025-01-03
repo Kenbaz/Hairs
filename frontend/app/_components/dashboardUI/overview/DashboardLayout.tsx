@@ -8,7 +8,7 @@ import { selectUser, loadUser, logout } from '@/src/libs/_redux/authSlice';
 import Link from 'next/link';
 import { DashboardNav } from '../../UI/AdminNavItems';
 import { NotificationCenter } from './NotificationCenter';
-import { notificationService } from '@/src/libs/services/notificationService';
+import { notificationService } from '@/src/libs/services/adminServices/notificationService';
 import { SessionManager } from '@/src/libs/auth/sessionManager';
 import { CurrencySelector } from '../../UI/CurrencySelector';
 

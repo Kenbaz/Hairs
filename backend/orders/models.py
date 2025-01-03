@@ -1,6 +1,8 @@
 # orders/models.py
 
 from django.db import models
+from django.utils import timezone
+from django.conf import settings
 
 
 class Order(models.Model):
@@ -11,6 +13,27 @@ class Order(models.Model):
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
     ]
+
+    REFUND_STATUS_CHOICES = [
+        ('none', 'No Refund'),
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed')
+    ]
+
+    refund_status = models.CharField(
+        max_length=20,
+        choices=REFUND_STATUS_CHOICES,
+        default='none'
+    )
+    refund_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+    cancelled_at = models.DateTimeField(null=True, blank=True)
 
     user = models.ForeignKey('users.User', on_delete=models.CASCADE)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -30,6 +53,25 @@ class Order(models.Model):
     
     def __str__(self):
         return f"Order #{self.id}"
+    
+
+    def cancel_order(self, user):
+        if self.order_status not in ['pending', 'processing']:
+            raise ValueError("Order cannot be cancelled")
+        
+        self.order_status = 'cancelled'
+        self.cancelled_at = timezone.now()
+        self.refund_status = 'pending'
+        self.refund_amount = self.total_amount
+        self.save()
+
+        # Create order history entry
+        OrderHistory.objects.create(
+            order=self,
+            status='cancelled',
+            notes=f"Order cancelled by {user.email}",
+            created_by=user
+        )
     
 
     def update_stock_on_status_change(self):
@@ -70,3 +112,26 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity}x {self.product.name} in Order #{self.order.id}"
+
+
+class OrderHistory(models.Model):
+    order = models.ForeignKey(
+        'Order',
+        on_delete=models.CASCADE,
+        related_name='history'
+    )
+    status = models.CharField(max_length=20)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Order histories'
+
+    def __str__(self):
+        return f"Status change to {self.status} for Order #{self.order.id}"

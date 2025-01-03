@@ -1,0 +1,29 @@
+
+{% extends "emails/base_email.html" %} 
+
+{% block content %}
+
+:::: content
+# Return Request Approved
+
+Dear {{ return_request.user.full_name }},
+
+Your return request for Order #{{ return_request.order.id }} has been approved.
+
+::: return-details
+## Return Instructions
+
+1. Package the item(s) securely in their original packaging if possible
+2. Include a copy of the return label provided
+3. Drop off the package at any authorized shipping location
+
+### Return Shipping Label
+A return shipping label has been generated for you. Please print and attach it to your package.
+
+[Download Return Label](%7B%7B%20return_label_url%20%7D%7D){.button}
+:::
+
+[View Return Details](%7B%7B%20site_url%20%7D%7D/returns/%7B%7B%20return_request.id%20%7D%7D){.button}
+::::
+
+{% endblock %}

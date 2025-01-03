@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from "../../_components/dashboardUI/overview/DashboardLayout";
 import { useEffect } from "react";
-import { notificationService } from "@/src/libs/services/notificationService";
+import { notificationService } from "@/src/libs/services/adminServices/notificationService";
 
 
 export default function AdminLayout({
