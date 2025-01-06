@@ -1089,13 +1089,17 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
     
 
 class AdminUserViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing users in admin panel"""
+    """ ViewSet for managing users in admin panel """
     permission_classes = [IsAdminUser]
     serializer_class = AdminUserSerializer
     queryset = User.objects.all()
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ['email', 'first_name', 'last_name', 'username']
+    ordering_fields = ['date_joined', 'last_login']
+    ordering = ['-date_joined']
 
     def get_queryset(self):
-        queryset = User.objects.all()
+        queryset = User.objects.filter(is_staff=False, is_superuser=False)
 
         # Filter by active status
         is_active = self.request.query_params.get('is_active')
@@ -1114,11 +1118,12 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         if date_joined_after:
             queryset = queryset.filter(date_joined__gte=date_joined_after)
 
-        return queryset.order_by('-date_joined')
+        return queryset
+
 
     @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
-        """Toggle user active status"""
+        """ Toggle user active status """
         user = self.get_object()
         user.is_active = not user.is_active
         user.save()
@@ -1127,9 +1132,10 @@ class AdminUserViewSet(viewsets.ModelViewSet):
             'is_active': user.is_active
         })
 
+
     @action(detail=True, methods=['get'])
     def purchase_history(self, request, pk=None):
-        """Get user's purchase history"""
+        """ Get user's purchase history """
         user = self.get_object()
         orders = Order.objects.filter(user=user).order_by('-created_at')
         return Response({

@@ -479,6 +479,8 @@ export interface ReturnFormResponse {
   created_at: string;
 }
 
+// Return Policy Types
+
 export interface ReturnPolicy {
   return_window_days: number;
   requires_receipt: boolean;
@@ -527,4 +529,45 @@ export interface PolicyResponse {
   next: string | null;
   previous: string | null;
   results: ReturnPolicy[];
+}
+
+// Admin User types
+export interface AdminUser {
+  id: number;
+  email: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  phone_number?: string;
+  is_active: boolean;
+  verified_email: boolean;
+  date_joined: string;
+  last_login: string;
+  total_orders: number;
+  total_spent: number;
+  average_order_value: number;
+  last_order_date?: string;
+  address: string;
+}
+
+export interface UserFilters {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  is_active?: boolean;
+  verified_email?: boolean;
+  joined_after?: string;
+}
+
+export interface UserResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: AdminUser[];
+}
+
+export interface PurchaseHistory {
+  total_orders: number;
+  total_spent: number;
+  orders: AdminOrder[];
 }
