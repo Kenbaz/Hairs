@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, Tags, ShoppingBag, Users, ClipboardList, BarChart3, DollarSign, Receipt, Heart, Settings, ChevronDown, Package2, } from 'lucide-react';
+import { LayoutDashboard, Package, Tags, ShoppingBag, Users, BarChart3, DollarSign, Receipt, Heart, Settings, ChevronDown, Package2, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -146,10 +146,10 @@ export function DashboardNav() {
             isActive={pathname === "/admin/customers"}
           />
           <NavItem
-            href="/admin/reviews"
-            icon={<ClipboardList className="h-5 w-5" />}
-            label="Reviews"
-            isActive={pathname === "/admin/reviews"}
+            href="/admin/support/emails"
+            icon={<Mail className="h-5 w-5" />}
+            label="Email Support"
+            isActive={pathname === "/admin/support/emails"}
           />
           <NavItem
             href="/admin/wishlist"

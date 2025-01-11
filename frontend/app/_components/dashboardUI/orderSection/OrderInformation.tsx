@@ -18,13 +18,30 @@ export default function OrderInformation({ order }: OrderInformationProps) {
 
 
     // Helper function to get complete image URL
-    const getImageUrl = (relativePath: string | null | undefined): string => {
-        if (!relativePath) {
-            // Return a placeholder image URL or throw an error
-            return '/api/placeholder/400/320'; // Using your placeholder API
+    const getImageUrl = (
+      imageUrl: string | null | undefined
+    ): string | null => {
+      if (!imageUrl) return null;
+
+      // If URL contains cloudinary path multiple times, extract the last valid cloudinary URL
+      if (imageUrl.includes("cloudinary.com")) {
+        // Find the last occurrence of 'https://res.cloudinary.com'
+        const cloudinaryStart = imageUrl.lastIndexOf(
+          "https://res.cloudinary.com"
+        );
+        if (cloudinaryStart !== -1) {
+          return imageUrl.slice(cloudinaryStart);
         }
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        return `${baseUrl}${relativePath}`;
+      }
+
+      // If it's a relative path, append base URL
+      if (imageUrl.startsWith("/")) {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        return `${baseUrl}${imageUrl}`;
+      }
+
+      return null;
     };
 
     return (
@@ -123,22 +140,30 @@ export default function OrderInformation({ order }: OrderInformationProps) {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0">
-                            {item.product_image ? (
-                              <div className="relative h-10 w-10 rounded-lg overflow-hidden">
-                                <Image
-                                  src={getImageUrl(item.product_image)}
-                                  alt={item.product_name}
-                                  fill
-                                  priority
-                                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                  style={{ objectFit: "cover" }}
-                                />
-                              </div>
-                            ) : (
-                              <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                                <Package className="h-5 w-5 text-gray-400" />
-                              </div>
-                            )}
+                            {(() => {
+                              const imageUrl = getImageUrl(item.product_image);
+
+                              if (!imageUrl) {
+                                return (
+                                  <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                    <Package className="h-5 w-5 text-gray-400" />
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <div className="relative h-10 w-10 rounded-lg overflow-hidden">
+                                  <Image
+                                    src={imageUrl}
+                                    alt={item.product_name}
+                                    fill
+                                    priority
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    style={{ objectFit: "cover" }}
+                                  />
+                                </div>
+                              );
+                            })()}
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
@@ -174,10 +199,7 @@ export default function OrderInformation({ order }: OrderInformationProps) {
                 <div className="border-t border-gray-200 pt-2 flex items-center justify-between">
                   <dt className="text-base font-medium text-gray-900">Total</dt>
                   <dd className="text-base font-medium text-gray-900">
-                    <PriceDisplay
-                      amount={total}
-                      sourceCurrency="USD"
-                    />
+                    <PriceDisplay amount={total} sourceCurrency="USD" />
                   </dd>
                 </div>
               </dl>

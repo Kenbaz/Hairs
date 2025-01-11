@@ -5,9 +5,24 @@ from .models import Return, ReturnItem, ReturnImage, ReturnHistory, ReturnPolicy
 
 
 class ReturnImageSerializer(serializers.ModelSerializer):
+    thumbnail_url = serializers.SerializerMethodField()
+    preview_url = serializers.SerializerMethodField()
     class Meta:
         model = ReturnImage
-        fields = ['id', 'image', 'created_at']
+        fields = [
+            'id',
+            'image',
+            'thumbnail_url',
+            'preview_url',
+            'created_at'
+        ]
+        read_only_fields = ['created_at']
+
+    def get_thumbnail_url(self, obj):
+        return obj.get_thumbnail_url()
+
+    def get_preview_url(self, obj):
+        return obj.get_preview_url()
 
 
 class ReturnItemSerializer(serializers.ModelSerializer):

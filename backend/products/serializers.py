@@ -2,16 +2,25 @@
 from rest_framework import serializers
 from .models import Category, Product, ProductImage, StockHistory
 from currencies.utils import CurrencyConverter
+from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductImage
-        fields = ['id', 'image', 'is_primary']
+        fields = ['id', 'url', 'public_id', 'is_primary']
         read_only_fields = ['id']
+    
+    def get_url(self, obj):
+        if obj.image:
+            # Return the complete Cloudinary URL
+            return f"https://res.cloudinary.com/{settings.CLOUDINARY_STORAGE['CLOUD_NAME']}/image/upload/{obj.public_id}"
+        return None
 
 
 class CategorySerializer(serializers.ModelSerializer):

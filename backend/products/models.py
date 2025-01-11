@@ -10,6 +10,9 @@ from django.db import transaction
 from decimal import Decimal
 from django.core.cache import cache
 from django.core.files.storage import default_storage
+from cloudinary_storage.storage import MediaCloudinaryStorage
+from django.conf import settings
+from utils.cloudinary_utils import CloudinaryUploader
 import os
 from django.core.exceptions import ValidationError
 from django.core.files.images import get_image_dimensions
@@ -347,7 +350,11 @@ class ProductImage(models.Model):
         related_name='images',
         on_delete=models.CASCADE
     )
-    image = models.ImageField(upload_to='products/', validators=[validate_image])
+    image = models.ImageField(
+        storage=MediaCloudinaryStorage(),
+        upload_to=settings.CLOUDINARY_STORAGE_FOLDERS['PRODUCT_IMAGES']
+    )
+    public_id = models.CharField(max_length=225, blank=True)
     is_primary = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -366,24 +373,10 @@ class ProductImage(models.Model):
     
 
     def delete(self, *args, **kwargs):
-        # Store the image path before deletion
-        image_path = self.image.path if self.image else None
-
-        # Close any open file handlers
-        if self.image:
-            self.image.close()
-        
-        #Call parent class delete method
+        # Delete from Cloudinary
+        if self.public_id:
+            CloudinaryUploader.delete_file(self.public_id)
         super().delete(*args, **kwargs)
-
-        # Delete the physical file after the model instance is deleted
-        if image_path and os.path.isfile(image_path):
-            try:
-                default_storage.delete(image_path)
-            except (OSError, PermissionError) as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Error deleting file {image_path}: {str(e)}")
 
 
 

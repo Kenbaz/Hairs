@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'channels',
+    'cloudinary_storage',
+    'cloudinary',
 
     # Local apps
     'users',
@@ -50,7 +52,29 @@ INSTALLED_APPS = [
     'wishlist',
     'admin_api.apps.AdminApiConfig',
     'returns',
+    'customer_support.apps.CustomerSupportConfig',
 ]
+
+
+# Cloudinary Configuration
+# CLOUDINARY_STORAGE = os.getenv('CLOUDINARY_URL')
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
+
+# Media settings
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Cloudinary folders configuration
+CLOUDINARY_STORAGE_FOLDERS = {
+    'PRODUCT_IMAGES': 'products',
+    'EDITOR_IMAGES': 'editor_images',
+    'EMAIL_ATTACHMENTS': 'email_attachments',
+    'RETURN_IMAGES': 'returns',
+}
 
 
 MIDDLEWARE = [
@@ -297,6 +321,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+EDITOR_IMAGES_PATH = os.path.join(MEDIA_ROOT, 'editor_images')
+os.makedirs(EDITOR_IMAGES_PATH, exist_ok=True)
 
 
 # File upload settings

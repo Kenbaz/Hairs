@@ -21,7 +21,11 @@ router.register(r'currencies', views.AdminCurrencyViewSet,
 router.register(r'returns', views.AdminReturnViewSet, basename='admin-returns')
 router.register(r'return-policies', views.AdminReturnPolicyViewset,
                 basename='admin-return-policy')
+router.register(r'emails', views.AdminEmailViewSet, basename='admin-email')
+router.register(r'email-templates', views.AdminEmailTemplateViewSet,
+                basename='admin-template')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('upload-image/', views.upload_editor_image, name='upload-editor-image'),
 ]

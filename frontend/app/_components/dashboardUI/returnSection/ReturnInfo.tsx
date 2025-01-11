@@ -21,13 +21,39 @@ export default function ReturnInformation({
   returnRequest,
   onUpdateRefund,
 }: ReturnInformationProps) {
-    const [showRefundUpdate, setShowRefundUpdate] = useState(false);
-    const [refundAmount, setRefundAmount] = useState(returnRequest.refund_amount || 0);
+  const [showRefundUpdate, setShowRefundUpdate] = useState(false);
+  const [refundAmount, setRefundAmount] = useState(
+    returnRequest.refund_amount || 0
+  );
 
-    const handleRefundUpdate = async (status: ReturnRequest['refund_status']) => {
-        await onUpdateRefund(status, refundAmount);
-        setShowRefundUpdate(false);
-    };
+  const handleRefundUpdate = async (status: ReturnRequest["refund_status"]) => {
+    await onUpdateRefund(status, refundAmount);
+    setShowRefundUpdate(false);
+  };
+
+  const getImageUrl = (imageUrl: string | undefined | null): string | null => {
+    if (!imageUrl) return null;
+
+    // If URL contains cloudinary path multiple times, extract the last valid cloudinary URL
+    if (imageUrl.includes("cloudinary.com")) {
+      // Find the last occurrence of 'https://res.cloudinary.com'
+      const cloudinaryStart = imageUrl.lastIndexOf(
+        "https://res.cloudinary.com"
+      );
+      if (cloudinaryStart !== -1) {
+        return imageUrl.slice(cloudinaryStart);
+      }
+    }
+
+    // If it's a relative path, append base URL
+    if (imageUrl.startsWith("/")) {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      return `${baseUrl}${imageUrl}`;
+    }
+
+    return null;
+  };
 
 
   return (
@@ -77,13 +103,20 @@ export default function ReturnInformation({
             Items Being Returned
           </h3>
           <div className="border rounded-lg divide-y divide-gray-200">
-            {returnRequest.items.map((item) => (
+             {returnRequest.items.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">
+              <Package className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+              <p>No return items found</p>
+            </div>
+          ) : (
+            returnRequest.items.map((item) => (
               <div key={item.id} className="p-4">
                 <div className="flex items-start space-x-4">
-                  {item.images.length > 0 ? (
+                  {/* Image handling */}
+                  {item.images && item.images.length > 0 ? (
                     <div className="relative h-16 w-16 rounded-lg overflow-hidden">
                       <Image
-                        src={item.images[0].image}
+                        src={getImageUrl(item.images?.[0]?.image) || ""}
                         alt={item.product_name}
                         fill
                         priority
@@ -108,37 +141,44 @@ export default function ReturnInformation({
                     </div>
 
                     <p className="mt-1 text-sm text-gray-500">
-                      Condition: {item.condition}
+                      Condition:{" "}
+                      {item.condition.charAt(0).toUpperCase() +
+                        item.condition.slice(1)}
                     </p>
 
                     <p className="mt-1 text-sm text-gray-500">
                       Reason: {item.reason}
                     </p>
 
-                    {/* Item Images */}
-                    {item.images.length > 0 && (
+                    {/* Item Images Gallery */}
+                    {item.images && item.images.length > 0 && (
                       <div className="mt-2 flex -space-x-2 overflow-hidden">
-                        {item.images.map((image) => (
-                          <div
-                            key={image.id}
-                            className="relative h-8 w-8 rounded-full border-2 border-white"
-                          >
-                            <Image
-                              src={image.image}
-                              alt={item.product_name}
-                              fill
-                              priority
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              style={{ objectFit: "cover" }}
-                            />
-                          </div>
-                        ))}
+                        {item.images.map((image) => {
+                          const imageUrl = getImageUrl(image.image);
+                          if (!imageUrl) return null;
+
+                          return (
+                            <div
+                              key={image.id}
+                              className="relative h-8 w-8 rounded-full border-2 border-white"
+                            >
+                              <Image
+                                src={imageUrl}
+                                alt={`${item.product_name} image ${image.id}`}
+                                fill
+                                priority
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                style={{ objectFit: "cover" }}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
         <div>

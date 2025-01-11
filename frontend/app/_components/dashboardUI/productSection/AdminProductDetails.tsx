@@ -14,6 +14,7 @@ import { ConfirmModal } from "../../UI/ConfirmModal";
 import { adminProductService } from "@/src/libs/services/adminServices/adminProductService";
 import axios from 'axios';
 import {PriceDisplay} from '../../UI/PriceDisplay';
+import { ProductImage } from '@/src/types';
 
 
 export default function ProductDetailsPage() {
@@ -187,6 +188,17 @@ export default function ProductDetailsPage() {
         };
     };
 
+  
+  const getImageUrl = (image: ProductImage | undefined): string | null => { 
+    if (!image?.url) return null;
+
+    // Handle Cloudinary Urls
+    if (image.url.includes('cloudinary.com')) {
+      return image.url;
+    };
+    return null;
+  }
+
 
     if (isLoading) {
         return (
@@ -242,16 +254,34 @@ export default function ProductDetailsPage() {
             <div className="flex items-start space-x-6">
               <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                 {product.images && product.images.length > 0 ? (
-                  <Image
-                    src={product.images[0].image}
-                    alt={product.name}
-                    fill
-                    priority
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    style={{ objectFit: "cover" }}
-                  />
+                  (() => {
+                    const primaryImage =
+                      product.images.find((img) => img.is_primary) ||
+                      product.images[0];
+                    const imageUrl = getImageUrl(primaryImage);
+
+                    if (!imageUrl) {
+                      return (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                          <Package className="h-12 w-12 text-gray-400" />
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <Image
+                        src={imageUrl}
+                        alt={product.name || "Product image"}
+                        fill
+                        priority
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        style={{ objectFit: "cover" }}
+                        className="rounded-lg"
+                      />
+                    );
+                  })()
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
                     <Package className="h-12 w-12 text-gray-400" />
                   </div>
                 )}
@@ -288,9 +318,9 @@ export default function ProductDetailsPage() {
                       {product.discount_price && (
                         <p className="text-sm text-gray-500 line-through">
                           <PriceDisplay
-                          amount={product.discount_price}
-                          sourceCurrency="USD"
-                        />
+                            amount={product.discount_price}
+                            sourceCurrency="USD"
+                          />
                         </p>
                       )}
                     </div>
@@ -424,53 +454,59 @@ export default function ProductDetailsPage() {
 
                 {product?.images && product.images.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {product.images.map((image) => (
-                      <div
-                        key={image.id}
-                        className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100"
-                      >
-                        <Image
-                          src={image.image}
-                          alt={`Product image`}
-                          fill
-                          priority
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          className="object-cover"
-                        />
-                        {/* Image Actions Overlay */}
-                        <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
-                          <button
-                            onClick={() => handleSetPrimaryImage(image.id)}
-                            className={`p-1.5 rounded-full ${
-                              image.is_primary
-                                ? "bg-yellow-500 text-white"
-                                : "bg-white text-gray-700 hover:bg-yellow-500 hover:text-white"
-                            }`}
-                            title={
-                              image.is_primary
-                                ? "Primary Image"
-                                : "Set as Primary"
-                            }
-                          >
-                            <Star className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteImage(image.id)}
-                            className="p-1.5 bg-white rounded-full text-red-500 hover:bg-red-500 hover:text-white"
-                            title="Delete Image"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                        {image.is_primary && (
-                          <div className="absolute top-2 left-2">
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                              Primary
-                            </span>
+                    {product.images.map((image) => {
+                      const imageUrl = getImageUrl(image);
+
+                      if (!imageUrl) return null;
+
+                      return (
+                        <div
+                          key={image.id}
+                          className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100"
+                        >
+                          <Image
+                            src={imageUrl}
+                            alt={`${product.name || "Product"} image`}
+                            fill
+                            priority
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            className="object-cover"
+                          />
+                          {/* Image Actions Overlay */}
+                          <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+                            <button
+                              onClick={() => handleSetPrimaryImage(image.id)}
+                              className={`p-1.5 rounded-full ${
+                                image.is_primary
+                                  ? "bg-yellow-500 text-white"
+                                  : "bg-white text-gray-700 hover:bg-yellow-500 hover:text-white"
+                              }`}
+                              title={
+                                image.is_primary
+                                  ? "Primary Image"
+                                  : "Set as Primary"
+                              }
+                            >
+                              <Star className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteImage(image.id)}
+                              className="p-1.5 bg-white rounded-full text-red-500 hover:bg-red-500 hover:text-white"
+                              title="Delete Image"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
                           </div>
-                        )}
-                      </div>
-                    ))}
+                          {image.is_primary && (
+                            <div className="absolute top-2 left-2">
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                Primary
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-12 bg-gray-50 rounded-lg">

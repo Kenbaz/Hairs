@@ -1,0 +1,10 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div class="content">
+    <h1>{{ subject }}</h1>
+    <div class="email-body">
+        {{ body|safe }}
+    </div>
+</div>
+{% endblock %}

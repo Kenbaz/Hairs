@@ -9,7 +9,7 @@ import { Button } from "@/app/_components/UI/Button";
 import { Input } from "@/app/_components/UI/Input";
 import { Alert } from "@/app/_components/UI/Alert";
 import { adminProductService } from "@/src/libs/services/adminServices/adminProductService";
-import type { AdminProduct } from "@/src/types";
+import type { AdminProduct, ProductImage } from "@/src/types";
 import { ImageUpload } from "../../UI/ImageUpload";
 import { ApiError } from "next/dist/server/api-utils";
 import { AxiosError } from "axios";
@@ -165,6 +165,26 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
             console.error('Server response:', err.response?.data)
         },
     });
+  
+  
+    const getImageUrl = (image: ProductImage): string | null => {
+      if (!image?.url) return null;
+
+      if (image.url.includes("cloudinary.com")) {
+        return image.url;
+      }
+
+      return null;
+    };
+    
+  
+    const getInitialPreviews = (): string[] => {
+      if (!product?.images) return [];
+
+      return product.images
+        .map((image) => getImageUrl(image))
+        .filter((url): url is string => url !== null);
+    };
 
   
     const onSubmit = (data: ProductFormValues) => {
@@ -332,7 +352,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product }) => {
             </h2>
             <ImageUpload
               value={images}
-              initialPreviews={product?.images?.map((img) => img.image) || []}
+              initialPreviews={getInitialPreviews()}
               onChange={handleImageChange}
               onRemove={handleRemoveImage}
               maxFiles={5}

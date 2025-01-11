@@ -13,6 +13,11 @@ from .serializers import ReturnSerializer, ReturnRequestSerializer, ReturnPolicy
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from .utils import notify_admins_of_return_request, send_return_status_email, ReturnEligibilityChecker
+from utils.cloudinary_utils import CloudinaryUploader
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AdminReturnViewSet(viewsets.ModelViewSet):
@@ -115,6 +120,38 @@ class CustomerReturnViewset(viewsets.GenericViewSet):
         return Return.objects.filter(user=self.request.user)
     
 
+    def _handle_return_images(self, return_item, images):
+        """
+        Handle uploading images for a return item
+        
+        Args:
+            return_item: ReturnItem instance
+            images: List of image files
+        """
+        for image in images:
+            try:
+                # Upload to Cloudinary
+                result = CloudinaryUploader.upload_image(
+                    image,
+                    folder=settings.CLOUDINARY_STORAGE_FOLDERS['RETURN_IMAGES'],
+                    transformation=[
+                        {'quality': 'auto'},
+                        {'fetch_format': 'auto'},
+                        {'width': 1200, 'height': 1200, 'crop': 'limit'}
+                    ]
+                )
+
+                if result:
+                    ReturnImage.objects.create(
+                        return_item=return_item,
+                        image=result['url'],
+                        public_id=result['public_id']
+                    )
+            except Exception as e:
+                logger.error(f"Failed to upload return image: {str(e)}")
+                continue
+    
+
     @action(detail=False, methods=['post'])
     def submit_request(self, request):
         """
@@ -149,38 +186,47 @@ class CustomerReturnViewset(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        return_request = serializer.save(
-            user=request.user,
-            order=order,
-            return_status='pending'
-        )
+        try:
+            with transaction.atomic():
+                # Create return request
+                return_request = serializer.save(
+                    user=request.user,
+                    order=order,
+                    return_status='pending'
+                )
 
-        # Send confirmation email to customer
-        send_return_status_email(return_request)
+                # Handle return items
+                items_data = request.data.get('items', [])
+                for item_data in items_data:
+                    return_item = ReturnItem.objects.create(
+                        return_request=return_request,
+                        product_id=item_data['product_id'],
+                        quantity=item_data['quantity'],
+                        reason=item_data['reason'],
+                        condition=item_data['condition']
+                    )
 
-        # Notify admins of new return request
-        notify_admins_of_return_request(return_request)
+                    # Handle images for this item if provided
+                    images = request.FILES.getlist(
+                        f'images_{item_data["product_id"]}')
+                    if images:
+                        self._handle_return_images(return_item, images)
 
-        # Handle return items
-        items_data = request.data.get('items', [])
-        for item in items_data:
-            ReturnItem.objects.create(
-                return_request=return_request,
-                product_id=item['product_id'],
-                quantity=item['quantity'],
-                reason=item['reason'],
-                condition=item['condition']
+                # Send notifications
+                send_return_status_email(return_request)
+                notify_admins_of_return_request(return_request)
+
+                return Response(
+                    ReturnSerializer(return_request).data,
+                    status=status.HTTP_201_CREATED
+                )
+
+        except Exception as e:
+            logger.error(f"Failed to create return request: {str(e)}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
             )
-
-        # Handle images if provided
-        images = request.FILES.getlist('images')
-        for image in images:
-            ReturnImage.objects.create(
-                return_item_id=item['product_id'],
-                image=image
-            )
-        
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
     @action(detail=True, methods=['get'])

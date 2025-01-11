@@ -54,6 +54,10 @@ const ProductRow: React.FC<ProductRowProps> = ({
    
     // Get primary image if it exists
   const primaryImage = product.images?.find(img => img.is_primary);
+  const imageUrl =
+    primaryImage?.url && primaryImage.url.startsWith("http")
+      ? primaryImage.url
+      : null;
 
 
     return (
@@ -62,10 +66,10 @@ const ProductRow: React.FC<ProductRowProps> = ({
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="flex items-center">
             <div className="h-10 w-10 flex-shrink-0">
-              {primaryImage ? (
+              {imageUrl ? (
                 <div className="relative h-10 w-10 aspect-square">
                   <Image
-                    src={primaryImage.image}
+                    src={imageUrl}
                     alt={product.name}
                     fill
                     priority

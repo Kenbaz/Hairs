@@ -3,6 +3,11 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes, parser_classes
+from django.core.files.storage import default_storage
+from django.core.mail import EmailMessage
+from django.core.exceptions import ValidationError
+from django.template.loader import render_to_string
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db import transaction
 from django.http import HttpResponse
@@ -19,37 +24,45 @@ from .serializers import (
     CustomerAnalyticsSerializer,
     AdminProductSerializer,
     AdminUserSerializer,
-    AdminOrderSerializer
+    AdminOrderSerializer,
+    CurrencySerializer,
+    CurrencyConversionSerializer,
+    ExchangeRateUpdateSerializer,
+    CurrencyInfoSerializer,
+    AdminEmailSerializer,
+    AdminEmailTemplateSerializer,
+    AdminNotificationSerializer,
+    AdminNotification, 
+    AdminCategorySerializer,
+    ProductImageSerializer
 )
 from products.models import Product, Category, ProductImage
-from .utils.in_memory_file_upload import process_product_image
+from utils.cloudinary_utils import CloudinaryUploader
+from .utils.in_memory_file_upload import process_product_image, process_editor_image
 from orders.models import Order
 from users.models import User
 from reviews.models import Review
+from .utils.clean_html import clean_html_for_email
 import csv
 import xlsxwriter
 from io import BytesIO
 from .utils.pdf_generator import PDFGenerator
 from .utils.data_formatters import PDFDataFormatter
 from .utils.invoice_generator import InvoiceGenerator
-from .serializers import AdminNotificationSerializer, AdminNotification, AdminCategorySerializer
 from django_filters.rest_framework import DjangoFilterBackend
-from .serializers import ProductImageSerializer
 import logging
 from django.db.models.functions import Greatest
 from .pagination import AdminPagination
 from currencies.utils import CurrencyConverter, CurrencyConversionError
-from .serializers import (
-    CurrencySerializer,
-    CurrencyConversionSerializer,
-    ExchangeRateUpdateSerializer,
-    CurrencyInfoSerializer
-)
+from customer_support.serializers import CustomerEmailSerializer
+from customer_support.models import EmailAttachment
 from rest_framework.filters import SearchFilter, OrderingFilter
 from returns.models import Return, ReturnHistory, ReturnPolicy, ProductReturnPolicy
-from django.shortcuts import get_object_or_404
+from customer_support.models import CustomerEmail, EmailTemplate
+from django.conf import settings
 from returns.serializers import ReturnSerializer, ProductReturnPolicySerializer, ReturnPolicySerializer
 from currencies.models import Currency
+from django.template import Template, Context
 from decimal import Decimal
 from django.core.cache import cache
 from django.db.models import Q
@@ -610,14 +623,21 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             # Process and save images
             for index, image in enumerate(product_images):
                 try:
-                    processed_image = process_product_image(image)
+                    #Upload to cloudinary
+                    result = process_product_image(image)
+                    if not result:
+                        raise ValueError("Failed to upload image")
+                    
+                    # Create product image instance
                     ProductImage.objects.create(
                         product=product,
-                        image=processed_image,
+                        image=result['url'],
+                        public_id=result['public_id'],
                         is_primary=(index == 0)
                     )
                    
                 except Exception as img_error:
+                    logger.error(f"Error processing image: {str(img_error)}")
                     raise
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -694,15 +714,20 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 saved_images = []
-                for index, image in enumerate(product_images):
-                    print(f"Processing image: {image.name}")  # Debug print
-                    processed_image = process_product_image(image)
+                for image in product_images:
+                    # Upload to Cloudinary
+                    result = process_product_image(image)
+                    if not result:
+                        raise ValueError("Failed to upload image")
+                    
                     # Make first image primary if no image exists
-                    is_primary = index == 0 and not product.images.exists()
+                    is_primary = not product.images.exists()
 
+                    # Create ProductImage instance
                     product_image = ProductImage.objects.create(
                         product=product,
-                        image=processed_image,
+                        image=result['url'],
+                        public_id=result['public_id'],
                         is_primary=is_primary
                     )
                     saved_images.append(product_image)
@@ -719,6 +744,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+    
     
     @action(detail=True, methods=['post'])
     def manage_image(self, request, pk=None):
@@ -1338,7 +1364,13 @@ class AdminReturnViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        queryset = Return.objects.all()
+        queryset = Return.objects.prefetch_related(
+            'items',  # Fetch related return items
+            'items__images'  # Fetch related images for each item
+        ).select_related(
+            'order',  # If you need order details
+            'user'    # If you need user details
+        )
 
         # Date filtering
         date_from = self.request.query_params.get('date_from')
@@ -1568,3 +1600,430 @@ class AdminReturnPolicyViewset(viewsets.ModelViewSet):
                 {'error': 'Product policy not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class AdminEmailViewSet(viewsets.ModelViewSet):
+    serializer_class = AdminEmailSerializer
+    permission_classes = [IsAdminUser]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'priority', 'thread_id']
+    search_fields = ['subject', 'body', 'to_email', 'customer__email',
+                     'customer__first_name', 'customer__last_name']
+    ordering_fields = ['created_at', 'sent_at', 'priority']
+    ordering = ['-created_at']
+
+
+    def get_queryset(self):
+        queryset = CustomerEmail.objects.all()
+
+        # Filter by customer
+        customer_id = self.request.query_params.get('customer_id')
+        if customer_id:
+            queryset = queryset.filter(customer_id=customer_id)
+
+        # Filter by date range
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+        if date_from:
+            queryset = queryset.filter(created_at__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created_at__lte=date_to)
+
+        return queryset
+
+
+    @action(detail=False, methods=['post'])
+    def send_email(self, request):
+        try:
+            # Get customer based on to_email if they exist
+            customer = User.objects.filter(
+                email=request.data.get('to_email')).first()
+
+            # Clean HTML content
+            cleaned_body = clean_html_for_email(request.data.get('body'))
+
+            # Create email instance first
+            email_data = {
+                'subject': request.data.get('subject'),
+                'body': cleaned_body,
+                'to_email': request.data.get('to_email'),
+                'from_email': request.data.get('from_email'),
+                'customer': customer.id if customer else None,
+                'admin_user': request.user.id,
+                'status': 'sent'
+            }
+
+            # Create CustomerEmail instance
+            serializer = self.get_serializer(data=email_data)
+            serializer.is_valid(raise_exception=True)
+            email_instance = serializer.save()
+
+            # Create EmailMessage instance first
+            email = EmailMessage(
+                subject=email_data['subject'],
+                body=cleaned_body,
+                from_email=email_data['from_email'],
+                to=[email_data['to_email']]
+            )
+            email.content_subtype = 'html'
+
+            # Handle attachments
+            attachments = request.FILES.getlist('attachments')
+    
+
+            if attachments:
+                for attachment in attachments:
+                    try:
+                        # Keep original file content before upload
+                        file_content = attachment.read()
+                        attachment.seek(0)  # Reset file pointer for upload
+
+                        # Upload to Cloudinary
+                        result = CloudinaryUploader.upload_image(
+                            attachment,
+                            folder=settings.CLOUDINARY_STORAGE_FOLDERS['EMAIL_ATTACHMENTS'],
+                            resource_type='auto'
+                        )
+
+                        if result:
+                            # Create attachment record
+                            EmailAttachment.objects.create(
+                                email=email_instance,
+                                file=result['url'],
+                                filename=attachment.name,
+                                public_id=result['public_id'],
+                                content_type=attachment.content_type,
+                                file_size=attachment.size
+                            )
+
+                            # Attach to email
+                            attachment.seek(0)  # Reset file pointer again
+                            email.attach(
+                                attachment.name,
+                                file_content,
+                                attachment.content_type
+                            )
+                            
+
+                    except Exception as e:
+                        logger.error(f"Failed to process attachment {
+                                    attachment.name}: {str(e)}", exc_info=True)
+                        continue
+
+            # Render email template
+            html_email_body = render_to_string(
+                'emails/standard_email.html',
+                {
+                    # 'subject': email_data['subject'],
+                    'body': cleaned_body,
+                    'site_url': settings.FRONTEND_URL,
+                    'attachments': email_instance.attachments.all()
+                }
+            )
+
+            # Update email body with rendered template
+            email.body = html_email_body
+
+            # Send email
+            email.send()
+            
+
+            # Update sent timestamp
+            email_instance.sent_at = timezone.now()
+            email_instance.save()
+
+            return Response(
+                self.get_serializer(email_instance).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to send email: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Failed to send email', 'detail': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+    @action(detail=False, methods=['post'])
+    def draft(self, request):
+        print("Saving draft...")
+        print("Request data:", request.data)
+        try:
+            # Get customer if email is provided
+            customer = None
+            if request.data.get('to_email'):
+                customer = User.objects.filter(
+                    email=request.data.get('to_email')).first()
+
+            # Create draft data
+            draft_data = {
+                # Default empty string
+                'subject': request.data.get('subject', ''),
+                'body': request.data.get('body', ''),  # Default empty string
+                # Default empty string
+                'to_email': request.data.get('to_email', ''),
+                'from_email': request.data.get('from_email') or request.user.email,
+                'customer': customer.id if customer else None,
+                'admin_user': request.user.id,
+                'status': 'draft'
+            }
+
+            serializer = self.get_serializer(data=draft_data)
+            serializer.is_valid(raise_exception=True)
+            draft = serializer.save()
+
+            # Handle attachments if any
+            attachments = request.FILES.getlist('attachments')
+            if attachments:
+                for attachment in attachments:
+                    draft.attachments.create(
+                        file=attachment,
+                        filename=attachment.name
+                    )
+
+            return Response(
+                self.get_serializer(draft).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception as e:
+            print("Draft creation failed:", str(e))
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+    @action(detail=True, methods=['patch'])
+    def update_draft(self, request, pk=None):
+        print("Updating existing draft...")
+        print("Request data:", request.data)
+        try:
+            instance = self.get_object()
+
+            # Only update draft status emails
+            if instance.status != 'draft':
+                return Response(
+                    {'error': 'Can only update draft emails'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get customer if email is provided
+            from users.models import User
+            customer = None
+            if request.data.get('to_email'):
+                customer = User.objects.filter(
+                    email=request.data.get('to_email')).first()
+
+            update_data = {
+                'subject': request.data.get('subject', instance.subject),
+                'body': request.data.get('body', instance.body),
+                'to_email': request.data.get('to_email', instance.to_email),
+                'from_email': request.data.get('from_email', instance.from_email),
+                'customer': customer.id if customer else instance.customer_id,
+                'status': 'draft'
+            }
+
+            serializer = self.get_serializer(
+                instance, data=update_data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            draft = serializer.save()
+
+            # Handle new attachments
+            for attachment in request.FILES.getlist('attachments'):
+                draft.attachments.create(
+                    file=attachment,
+                    filename=attachment.name
+                )
+
+            return Response(
+                self.get_serializer(draft).data,
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            print("Draft update failed:", str(e))
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+    @action(detail=False, methods=['get'])
+    def get_drafts(self, request):
+        """Get all draft emails for the current admin user"""
+        drafts = CustomerEmail.objects.filter(
+            admin_user=request.user,
+            status='draft'
+        ).order_by('-created_at')
+
+        page = self.paginate_queryset(drafts)
+        if page is not None:
+            serializer = CustomerEmailSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = CustomerEmailSerializer(drafts, many=True)
+        return Response(serializer.data)
+
+
+    @action(detail=False, methods=['post'])
+    def bulk_send(self, request):
+        template_id = request.data.get('template_id')
+        customer_ids = request.data.get('customer_ids', [])
+
+        if not template_id or not customer_ids:
+            return Response(
+                {'error': 'Template ID and customer IDs are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            template = EmailTemplate.objects.get(
+                id=template_id, is_active=True)
+            results = {
+                'successful': 0,
+                'failed': 0,
+                'errors': []
+            }
+
+            for customer_id in customer_ids:
+                try:
+                    customer = User.objects.get(id=customer_id)
+                    context = {
+                        'customer': customer,
+                        'site_url': settings.FRONTEND_URL
+                    }
+
+                    # Create and send email
+                    CustomerEmail.objects.create(
+                        subject=Template(template.subject).render(
+                            Context(context)),
+                        body=Template(template.body).render(Context(context)),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to_email=customer.email,
+                        customer=customer,
+                        admin_user=request.user,
+                        status='sent',
+                        sent_at=timezone.now()
+                    )
+                    results['successful'] += 1
+
+                except Exception as e:
+                    results['failed'] += 1
+                    results['errors'].append({
+                        'customer_id': customer_id,
+                        'error': str(e)
+                    })
+
+            return Response(results)
+
+        except EmailTemplate.DoesNotExist:
+            return Response(
+                {'error': 'Template not found or inactive'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class AdminEmailTemplateViewSet(viewsets.ModelViewSet):
+    serializer_class = AdminEmailTemplateSerializer
+    permission_classes = [IsAdminUser]
+    queryset = EmailTemplate.objects.all()
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'subject', 'body']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+    @action(detail=True, methods=['post'])
+    def preview(self, request, pk=None):
+        template = self.get_object()
+        try:
+            sample_context = {
+                'customer': {
+                    'first_name': 'John',
+                    'last_name': 'Doe',
+                    'email': 'john@example.com'
+                },
+                'site_url': settings.FRONTEND_URL
+            }
+
+            preview = {
+                'subject': Template(template.subject).render(Context(sample_context)),
+                'body': Template(template.body).render(Context(sample_context))
+            }
+
+            return Response(preview)
+        except Exception as e:
+            return Response(
+                {'error': f'Preview generation failed: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+@parser_classes([MultiPartParser, FormParser])
+def upload_editor_image(request):
+    """Handle image upload for rich text editor"""
+    try:
+        # Get the uploaded file
+        image_file = request.FILES.get('file')
+        if not image_file:
+            return Response(
+                {'error': 'No image file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate file type
+        if not image_file.content_type.startswith('image/'):
+            return Response(
+                {'error': 'Invalid file type. Only images are allowed'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate file size (5MB max)
+        if image_file.size > 5 * 1024 * 1024:
+            return Response(
+                {'error': 'File too large. Maximum size is 5MB'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Upload to Cloudinary 
+            result = CloudinaryUploader.upload_image(
+                image_file,
+                folder=settings.CLOUDINARY_STORAGE_FOLDERS['EDITOR_IMAGES'],
+                transformation=[
+                    {'quality': 'auto'},
+                    {'fetch_format': 'auto'},
+                    {'width': 1200, 'height': 1200, 'crop': 'limit'}
+                ]
+            )
+
+            if not result:
+                raise ValueError("Failed to upload image")
+            
+            return Response({
+                'url': result['url'],
+                'success': True
+            })
+
+        except Exception as e:
+            logger.error(f"Error processing image: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Failed to process image'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    except Exception as e:
+        logger.error(f"Error handling image upload: {str(e)}", exc_info=True)
+        return Response(
+            {'error': 'Internal server error'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

@@ -212,9 +212,10 @@ export interface AdminProduct {
 
 
 export interface ProductImage {
-    id: number;
-    image: string;
-    is_primary: boolean;
+  id: number;
+  url: string;
+  public_id: string;
+  is_primary: boolean;
 }
 
 
@@ -570,4 +571,96 @@ export interface PurchaseHistory {
   total_orders: number;
   total_spent: number;
   orders: AdminOrder[];
+}
+
+// Customer support email types
+export interface EmailItem {
+  id: number;
+  subject: string;
+  body: string;
+  from_email: string;
+  to_email: string;
+  status: "draft" | "sent" | "read" | "delivered" | "failed";
+  priority: "high" | "medium" | "low";
+  customer_name: string;
+  customer_email: string;
+  created_at: string;
+  sent_at: string | null;
+  thread_id?: string;
+  attachments?: EmailAttachment[];
+}
+
+export interface EmailResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: EmailItem[];
+}
+
+export interface EmailFilters {
+  status?: string;
+  priority?: string;
+  search?: string;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface EmailMetrics {
+  opened_at: string | null;
+  opened_count: number;
+  response_time: string | null;
+  bounced: boolean;
+  bounce_reason: string;
+}
+
+export interface UploadedFile extends File {
+  preview?: string;
+  id?: string;
+  
+}
+
+export interface EmailAttachment {
+  id: number;
+  filename: string;
+  file: string;
+}
+
+export interface Template {
+  id: number;
+  name: string;
+  subject: string;
+  body: string;
+  is_active: boolean;
+  created_by_name?: string;
+  variables: Record<string, string>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SendEmailData {
+  to_email: string;
+  from_email: string;
+  subject: string;
+  body: string;
+  attachments?: UploadedFile[];
+}
+
+export interface GetTemplatesParams {
+  search?: string;
+  is_active?: boolean;
+}
+
+export interface SaveTemplateData {
+  name: string;
+  subject: string;
+  body: string;
+  variables?: Record<string, string>;
+  is_active?: boolean;
+}
+
+export interface TemplateResponse {
+  count: number;
+  results: Template[];
 }

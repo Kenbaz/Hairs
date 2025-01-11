@@ -3,6 +3,11 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from cloudinary_storage.storage import MediaCloudinaryStorage
+from utils.cloudinary_utils import CloudinaryUploader
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Return(models.Model):
@@ -144,6 +149,36 @@ class ReturnItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity}x {self.product.name} in Return #{self.return_request.id}"
+    
+    def add_images(self, images):
+        """Add multiple images to return item"""
+        for image in images:
+            try:
+                result = CloudinaryUploader.upload_image(
+                    image,
+                    folder=settings.CLOUDINARY_STORAGE_FOLDERS['RETURN_IMAGES'],
+                    transformation=[
+                        {'quality': 'auto'},
+                        {'fetch_format': 'auto'},
+                        {'width': 1200, 'height': 1200, 'crop': 'limit'}
+                    ]
+                )
+
+                if result:
+                    ReturnImage.objects.create(
+                        return_item=self,
+                        image=result['url'],
+                        public_id=result['public_id']
+                    )
+            except Exception as e:
+                logger.error(f"Failed to upload return image: {str(e)}")
+                continue
+
+
+    def delete_images(self):
+        """Delete all images associated with return item"""
+        for image in self.images.all():
+            image.delete()
 
 
 class ReturnImage(models.Model):
@@ -152,11 +187,48 @@ class ReturnImage(models.Model):
         on_delete=models.CASCADE,
         related_name='images'
     )
-    image = models.ImageField(upload_to='returns/')
+    image = models.ImageField(
+        storage=MediaCloudinaryStorage(),
+        upload_to=settings.CLOUDINARY_STORAGE_FOLDERS['RETURN_IMAGES']
+    )
+    public_id = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['created_at']
+    
+
+    def delete(self, *args, **kwargs):
+        # Delete from Cloudinary
+        if self.public_id:
+            CloudinaryUploader.delete_file(self.public_id)
+        super().delete(*args, **kwargs)
+
+
+    def get_thumbnail_url(self):
+        """Get thumbnail URL for return images"""
+        if self.public_id:
+            return CloudinaryUploader.get_image_url(
+                self.public_id,
+                width=200,
+                height=200,
+                crop='fill',
+                quality='auto'
+            )
+        return None
+
+
+    def get_preview_url(self):
+        """Get preview URL for return images"""
+        if self.public_id:
+            return CloudinaryUploader.get_image_url(
+                self.public_id,
+                width=800,
+                height=800,
+                crop='limit',
+                quality='auto'
+            )
+        return None
 
 
 class ReturnHistory(models.Model):
