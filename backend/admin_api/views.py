@@ -66,6 +66,7 @@ from django.template import Template, Context
 from decimal import Decimal
 from django.core.cache import cache
 from django.db.models import Q
+import json
 
 
 logger = logging.getLogger(__name__)
@@ -1648,7 +1649,7 @@ class AdminEmailViewSet(viewsets.ModelViewSet):
                 'subject': request.data.get('subject'),
                 'body': cleaned_body,
                 'to_email': request.data.get('to_email'),
-                'from_email': request.data.get('from_email'),
+                'from_email': settings.DEFAULT_FROM_EMAIL,
                 'customer': customer.id if customer else None,
                 'admin_user': request.user.id,
                 'status': 'sent'
@@ -1745,6 +1746,116 @@ class AdminEmailViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+    @action(detail=False, methods=['post'])
+    def send_bulk_email(self, request):
+        """Send bulk emails to multiple customers"""
+        subject = request.data.get('subject')
+        body = clean_html_for_email(request.data.get('body'))
+        customer_ids = json.loads(request.data.get('customer_ids', '[]'))
+        attachments = request.FILES.getlist('attachments')
+
+        if not subject or not body or not customer_ids:
+            return Response(
+                {'error': 'Missing fields required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        successful_sends = 0
+        failed_sends = 0
+        total_customers = len(customer_ids)
+
+        try:
+            customers = User.objects.filter(id__in=customer_ids)
+
+            for customer in customers:
+                try:
+                    email = CustomerEmail.objects.create(
+                        subject=subject,
+                        body=body,
+                        to_email=customer.email,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        customer=customer,
+                        admin_user=request.user,
+                        status='sent',
+                        sent_at=timezone.now()
+                    )
+
+                    # Process attachments
+                    stored_attachments = []
+                    for attachment in attachments:
+                        try:
+                            result = CloudinaryUploader.upload_image(
+                                attachment,
+                                folder=settings.CLOUDINARY_STORAGE_FOLDERS['EMAIL_ATTACHMENTS'],
+                                resource_type='auto'
+                            )
+
+                            if result:
+                                attachment_instance = EmailAttachment.objects.create(
+                                    email=email,
+                                    file=result['url'],
+                                    filename=attachment.name,
+                                    public_id=result['public_id'],
+                                    content_type=attachment.content_type,
+                                    file_size=attachment.size
+                                )
+
+                                stored_attachments.append(attachment_instance)
+
+                        except Exception as e:
+                            logger.error(f"Failed to process attachment {
+                                        attachment.name}: {str(e)}")
+                            raise
+
+                    # Render email template with attachment included
+                    html_message = render_to_string(
+                        'emails/standard_email.html',
+                        {
+                            'body': body,
+                            'site_url': settings.FRONTEND_URL,
+                            'attachments': stored_attachments
+                        }
+                    )
+
+                    # Create and send email message
+                    message = EmailMessage(
+                        subject=subject,
+                        body=html_message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=[customer.email]
+                    )
+                    message.content_subtype = 'html'
+
+                    # Attach files
+                    for attachment in attachments:
+                        message.attach(
+                            attachment.name,
+                            attachment.read(),
+                            attachment.content_type
+                        )
+                        attachment.seek(0)  # Reset file pointer
+
+                    message.send()
+                    successful_sends += 1
+                
+                except Exception as e:
+                    logger.error(f"Failed to send email to customer {customer.id}: {str(e)}")
+                    failed_sends += 1
+            
+            return Response({
+                'successful_sends': successful_sends,
+                'failed_sends': failed_sends,
+                'total_customers': total_customers
+            })
+        
+        except Exception as e:
+            logger.error(f"Bulk email error: {str(e)}")
+            return Response(
+                {'error': 'Failed to process bulk emails'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+                    
 
     @action(detail=False, methods=['post'])
     def draft(self, request):

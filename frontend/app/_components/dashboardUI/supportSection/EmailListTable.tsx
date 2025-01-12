@@ -1,12 +1,17 @@
+'use client';
+
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Mail, Eye, Star, Clock, MoreVertical, Loader2 } from "lucide-react";
+import { Mail, Eye, Star, Clock, MoreVertical, Loader2, Trash } from "lucide-react";
 import { EmailPreviewModal } from "./EmailPreviewModal";
 import Link from "next/link";
 import { EmailItem, EmailFilters } from "@/src/types";
+import { Alert } from "../../UI/Alert";
 import { Button } from "../../UI/Button";
 import { adminCustomerSupportService } from "@/src/libs/services/adminServices/adminCustomerSupportService";
+import { ConfirmModal } from "../../UI/ConfirmModal";
+
 
 interface EmailListTableProps {
   filters: EmailFilters;
@@ -16,10 +21,36 @@ interface EmailListTableProps {
 export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
   const [selectedEmail, setSelectedEmail] = useState<number | null>(null);
   const [previewEmail, setPreviewEmail] = useState<EmailItem | null>(null);
+  const [emailToDelete, setEmailToDelete] = useState<EmailItem | null>(null);
+  const [alert, setAlert] = useState<{
+          type: 'success' | 'error';
+          message: string;
+      } | null>(null);
+
+  const queryClient = useQueryClient();
+
+  const showAlert = (type: "success" | "error", message: string) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 5000);
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["customer-emails", filters],
     queryFn: () => adminCustomerSupportService.getEmails(filters),
+  });
+
+
+  const deleteMutation = useMutation({
+    mutationFn: (emailId: number) =>
+      adminCustomerSupportService.deleteEmail(emailId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-emails"] });
+      showAlert("success", "Email deleted successfully");
+      setEmailToDelete(null);
+    },
+    onError: () => {
+      showAlert("error", "Failed to delete email. Please try again.");
+    },
   });
 
   const getStatusStyle = (status: EmailItem["status"]) => {
@@ -60,6 +91,24 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
         isOpen={previewEmail !== null}
         onClose={() => setPreviewEmail(null)}
         email={previewEmail}
+      />
+      {alert && (
+        <Alert type={alert.type} message={alert.message} className="mb-4" />
+      )}
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={emailToDelete !== null}
+        onClose={() => setEmailToDelete(null)}
+        onConfirm={() => {
+          if (emailToDelete) {
+            deleteMutation.mutate(emailToDelete.id);
+          }
+        }}
+        title="Delete Email"
+        message="Are you sure you want to delete this email? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
       />
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
@@ -166,6 +215,16 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
                                 Edit Draft
                               </Link>
                             )}
+                            <button
+                              onClick={() => {
+                                setEmailToDelete(email);
+                                setSelectedEmail(null);
+                              }}
+                              className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            >
+                              <Trash className="h-4 w-4 mr-2" />
+                              Delete
+                            </button>
                           </div>
                         </div>
                       )}

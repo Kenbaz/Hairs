@@ -618,25 +618,12 @@ export interface EmailMetrics {
 export interface UploadedFile extends File {
   preview?: string;
   id?: string;
-  
 }
 
 export interface EmailAttachment {
   id: number;
   filename: string;
   file: string;
-}
-
-export interface Template {
-  id: number;
-  name: string;
-  subject: string;
-  body: string;
-  is_active: boolean;
-  created_by_name?: string;
-  variables: Record<string, string>;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface SendEmailData {
@@ -647,20 +634,19 @@ export interface SendEmailData {
   attachments?: UploadedFile[];
 }
 
-export interface GetTemplatesParams {
-  search?: string;
-  is_active?: boolean;
-}
-
-export interface SaveTemplateData {
-  name: string;
+export interface BulkEmailData {
   subject: string;
   body: string;
-  variables?: Record<string, string>;
-  is_active?: boolean;
+  customer_ids: number[];
+  attachments?: UploadedFile[];
 }
 
-export interface TemplateResponse {
-  count: number;
-  results: Template[];
+export interface BulkEmailResponse {
+  successful_sends: number;
+  failed_sends: number;
+  total_customers: number;
+}
+
+export interface SelectedCustomers {
+  [key: number]: boolean;
 }

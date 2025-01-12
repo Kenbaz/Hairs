@@ -5,6 +5,8 @@ import {
   EmailFilters,
   EmailItem,
   SendEmailData,
+  BulkEmailData,
+  BulkEmailResponse,
 } from "@/src/types";
 
 interface SaveDraftData extends SendEmailData {
@@ -84,7 +86,41 @@ class CustomerSupportService {
       console.error("Failed to send email:", err.response?.data || err.message);
       throw error;
     }
-  }
+  };
+
+  async sendBulkEmail(data: BulkEmailData): Promise<BulkEmailResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('subject', data.subject);
+      formData.append('body', data.body);
+
+      // Append customer ids as JSON string
+      formData.append('customer_ids', JSON.stringify(data.customer_ids));
+
+      // Append attachment if any
+      if (data.attachments) {
+        data.attachments.forEach((file) => {
+          formData.append('attachments', file);
+        });
+      };
+
+      const response = await axiosInstance.post<BulkEmailResponse>(
+        `${this.baseUrl}emails/send_bulk_email/`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError;
+      console.error('Failed to send bulk email:', err.response?.data || err.message);
+      throw error;
+    }
+  };
 
   async saveDraft(data: SaveDraftData): Promise<EmailItem> {
     try {
@@ -136,7 +172,17 @@ class CustomerSupportService {
       );
       throw error;
     }
-  }
+  };
+
+  async deleteEmail(id: number): Promise<void> { 
+    try {
+      await axiosInstance.delete(`${this.baseUrl}emails/${id}/`);
+    } catch (error) {
+      const err = error as AxiosError;
+      console.error("Failed to delete email:", err.response?.data || err.message);
+      throw error;
+    }
+  };
 };
 
 export const adminCustomerSupportService = new CustomerSupportService();

@@ -7,14 +7,20 @@ import { Input } from "../../UI/Input";
 import { Button } from "../../UI/Button";
 import { Alert } from "../../UI/Alert";
 import { adminUserService } from "@/src/libs/services/adminServices/adminUserService";
-import { UserFilters } from "@/src/types";
+import { UserFilters, SelectedCustomers } from "@/src/types";
 import { PriceDisplay } from "../../UI/PriceDisplay";
 import Link from "next/link";
 import CustomerFilters from "./CustomerFilters";
+import { BulkEmail } from "../supportSection/BulkEmail";
+import { ModalForComponents } from "../../UI/ModalForComponents";
 
 
 export default function CustomerListPage() {
   const [filterOpen, setFilterOpen] = useState(false);
+  const [showBulkEmail, setShowBulkEmail] = useState(false);
+  const [selectedCustomers, setSelectedCustomers] = useState<SelectedCustomers>(
+    {}
+  );
   const [filters, setFilters] = useState<
     UserFilters & { page: number; page_size: number }
   >({
@@ -34,6 +40,7 @@ export default function CustomerListPage() {
     queryFn: () => adminUserService.getUsers(filters),
   });
 
+
   // Toggle active status mutation
   const toggleActiveMutation = useMutation({
     mutationFn: (userId: number) => adminUserService.toggleUserStatus(userId),
@@ -41,6 +48,31 @@ export default function CustomerListPage() {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
     },
   });
+
+
+  const handleSelectCustomer = (customerId: number) => {
+    setSelectedCustomers((prev) => ({
+      ...prev,
+      [customerId]: !prev[customerId],
+    }));
+  };
+
+
+  const handleSelectAllCustomers = (checked: boolean) => {
+    if (data) {
+      const newSelected = { ...selectedCustomers };
+      data.results.forEach((customer) => {
+        newSelected[customer.id] = checked;
+      });
+      setSelectedCustomers(newSelected);
+    }
+  };
+
+
+  const selectedCustomerIds = Object.entries(selectedCustomers)
+    .filter(([, isSelected]) => isSelected)
+    .map(([id]) => parseInt(id));
+  
 
   // Handle search with debounce
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
@@ -86,6 +118,12 @@ export default function CustomerListPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">Customers</h1>
+        {selectedCustomerIds.length > 0 && (
+          <Button onClick={() => setShowBulkEmail(true)}>
+            <Mail className="h-4 w-4 mr-2" />
+            Send Bulk Email
+          </Button>
+        )}
       </div>
 
       {/* Search and Filter Bar */}
@@ -125,6 +163,21 @@ export default function CustomerListPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      checked={
+                        data.results.length > 0 &&
+                        data.results.every(
+                          (customer) => selectedCustomers[customer.id]
+                        )
+                      }
+                      onChange={(e) =>
+                        handleSelectAllCustomers(e.target.checked)
+                      }
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Customer
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -139,7 +192,7 @@ export default function CustomerListPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Joined
                   </th>
-                  <th className="px-6 py-3 relative">
+                  <th className="relative px-6 py-3">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
@@ -148,11 +201,20 @@ export default function CustomerListPage() {
                 {data.results.map((customer) => (
                   <tr key={customer.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        checked={selectedCustomers[customer.id] || false}
+                        onChange={() => handleSelectCustomer(customer.id)}
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                             <span className="text-xl font-medium text-gray-500">
-                              {customer.first_name?.[0]?.toUpperCase()}{customer.last_name?.[0]?.toUpperCase()}
+                              {customer.first_name?.[0]?.toUpperCase()}
+                              {customer.last_name?.[0]?.toUpperCase()}
                             </span>
                           </div>
                         </div>
@@ -254,6 +316,19 @@ export default function CustomerListPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Bulk Email Modal */}
+      {showBulkEmail && (
+        <ModalForComponents isOpen onClose={() => setShowBulkEmail(false)}>
+          <BulkEmail
+            onClose={() => {
+              setShowBulkEmail(false);
+              setSelectedCustomers({});
+            }}
+            selectedCustomerIds={selectedCustomerIds}
+          />
+        </ModalForComponents>
       )}
     </div>
   );
