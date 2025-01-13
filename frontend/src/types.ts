@@ -650,3 +650,92 @@ export interface BulkEmailResponse {
 export interface SelectedCustomers {
   [key: number]: boolean;
 }
+
+// Analytics Types
+export interface RevenueSummary {
+  total_revenue: number;
+  average_order_value: number;
+  revenue_growth: number;
+}
+
+export interface SalesSummary {
+  total_sales: number;
+  total_orders: number;
+  average_order_value: number;
+  total_customers: number;
+}
+
+export interface SalesComparison {
+  previous_period: number;
+  current_period: number;
+  growth_rate: number;
+}
+
+export interface CategoryRevenue {
+  category: string;
+  revenue: number;
+  orders: number;
+  average_order_value: number;
+}
+
+export interface RevenueSummary {
+  total_revenue: number;
+  average_order_value: number;
+}
+
+export interface RevenueTrendDataPoint {
+  period: string;
+  revenue: number;
+}
+
+export interface RevenueAnalyticsResponse {
+  summary: RevenueSummary;
+  by_category: CategoryRevenue[];
+  trend_data: RevenueTrendDataPoint[];
+}
+
+export interface SalesOverviewResponse {
+  period: string;
+  summary: {
+    total_sales: number;
+    total_orders: number;
+    total_customers: number;
+    average_order_value: number;
+  };
+  trend_data: SalesAnalyticsTrendData[];
+  comparison: {
+    previous_period: number;
+    current_period: number;
+    growth_rate: number;
+  };
+  date_range: {
+    start: string;
+    end: string;
+  };
+}
+
+export interface SalesAnalyticsTrendData {
+  period: string;
+  total_sales: number;
+  order_count: number;
+  unique_customers: number;
+  average_order: number;
+}
+
+export interface SalesAnalyticsResponse {
+  period: "daily" | "monthly";
+  summary: SalesSummary;
+  trend_data: SalesAnalyticsTrendData[];
+  comparison: SalesComparison;
+  date_range: {
+    start: string;
+    end: string;
+  };
+}
+
+export interface AnalyticsParams {
+  period?: "daily" | "monthly";
+  days?: number;
+  start_date?: string;
+  end_date?: string;
+}

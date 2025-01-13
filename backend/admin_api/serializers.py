@@ -207,13 +207,22 @@ class DashboardStatsSerializer(serializers.Serializer):
     sales_growth = serializers.FloatField()  # Percentage growth from last month
 
 
+class SalesTrendDataSerializer(serializers.Serializer):
+    period = serializers.CharField()
+    total_sales = serializers.FloatField()
+    order_count = serializers.IntegerField()
+    unique_customers = serializers.IntegerField()
+    average_order = serializers.FloatField()
+
+
 class SalesAnalyticsSerializer(serializers.Serializer):
     period = serializers.CharField()
-    data = serializers.ListField(child=serializers.DictField())
-    total_sales = serializers.DecimalField(max_digits=10, decimal_places=2)
-    order_count = serializers.IntegerField()
-    average_order_value = serializers.DecimalField(
-        max_digits=10, decimal_places=2)
+    summary = serializers.DictField(
+        child=serializers.FloatField(allow_null=True))
+    trend_data = SalesTrendDataSerializer(many=True)
+    comparison = serializers.DictField(
+        child=serializers.FloatField(allow_null=True))
+    date_range = serializers.DictField(child=serializers.CharField())
 
 
 class CustomerAnalyticsSerializer(serializers.Serializer):

@@ -13,9 +13,8 @@ from django.db import transaction
 from django.http import HttpResponse
 from rest_framework.permissions import IsAdminUser
 from django.db.models import Count, Sum, Avg, F, Value
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, TruncMonth, TruncDate
 from django.utils import timezone
-from django.db.models.functions import TruncDate
 from datetime import datetime, timedelta
 from .serializers import (
     DashboardStatsSerializer,
@@ -156,43 +155,174 @@ class DashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def sales_analytics(self, request):
         """ Get detailed sales analytics """
-        period = request.query_params.get('period', 'daily')
-        days = int(request.query_params.get('days', 30))
-        end_date = timezone.now()
-        start_date = end_date - timedelta(days=days)
+        try:
+            # Get date range parameters
+            end_date = timezone.now()
+            days = int(request.query_params.get('days', 30))
+            period = request.query_params.get('period', 'daily')
 
-        orders = Order.objects.filter(
-            created_at__range=[start_date, end_date],
-            payment_status=True
-        )
+            # Calculate date range
+            start_date = end_date - timedelta(days=days)
+            previous_period_start = start_date - timedelta(days=days)
 
-        if period == 'daily':
-            orders = orders.annotate(
-                period=TruncDate('created_at')
-            ).values('period').annotate(
-                total_sales=Sum('total_amount'),
-                order_count=Count('id')
-            ).order_by('period')
-        elif period == 'monthly':
-            orders = orders.annotate(
-                period=TruncDate('created_at')
-            ).values('period').annotate(
-                total_sales=Sum('total_amount'),
-                order_count=Count('id')
-            ).order_by('period')
-        
-        data = {
-            'period': period,
-            'data': list(orders),
-            'total_sales': sum(item['total_sales'] for item in orders),
-            'order_count': sum(item['order_count'] for item in orders),
-            'average_order_value': (
-                sum(item['total_sales'] for item in orders) / sum(item['order_count'] for item in orders) if orders else 0
+            # Base queryset for completed orders
+            orders = Order.objects.filter(
+                created_at__range=[start_date, end_date],
+                payment_status=True
             )
-        }
 
-        serializer = SalesAnalyticsSerializer(data)
-        return Response(serializer.data)
+            # Previous period orders
+            previous_orders = Order.objects.filter(
+                created_at__range=[previous_period_start, start_date],
+                payment_status=True
+            )
+
+            # Calculate summary metrics
+            current_total = orders.aggregate(
+                total=Sum('total_amount'))['total'] or 0
+            previous_total = previous_orders.aggregate(
+                total=Sum('total_amount'))['total'] or 0
+
+            summary = {
+                'total_sales': float(current_total),
+                'total_orders': float(orders.count()),
+                'average_order_value': float(
+                    orders.aggregate(avg=Avg('total_amount'))['avg'] or 0
+                ),
+                'total_customers': float(orders.values('user').distinct().count())
+            }
+
+            # Calculate growth rates
+            sales_growth = (
+                ((current_total - previous_total) / previous_total * 100)
+                if previous_total > 0 else 0
+            )
+
+            # Get trend data
+            date_trunc = TruncDate(
+                'created_at') if period == 'daily' else TruncMonth('created_at')
+
+            trend_data = orders.annotate(
+                period=date_trunc
+            ).values('period').annotate(
+                total_sales=Sum('total_amount'),
+                order_count=Count('id'),
+                unique_customers=Count('user', distinct=True),
+                average_order=Avg('total_amount')
+            ).order_by('period')
+
+            # Convert trend data to list and handle Decimal values
+            trend_data_list = [{
+                'period': item['period'].isoformat() if hasattr(item['period'], 'isoformat') else str(item['period']),
+                'total_sales': float(item['total_sales'] or 0),
+                'order_count': item['order_count'],
+                'unique_customers': item['unique_customers'],
+                'average_order': float(item['average_order'] or 0)
+            } for item in trend_data]
+
+            # Prepare data for serializer
+            analytics_data = {
+                'period': period,
+                'summary': summary,
+                'trend_data': trend_data_list,
+                'comparison': {
+                    'previous_period': float(previous_total),
+                    'current_period': float(current_total),
+                    'growth_rate': float(sales_growth)
+                },
+                'date_range': {
+                    'start': start_date.date().isoformat(),
+                    'end': end_date.date().isoformat()
+                }
+            }
+
+            # Use the serializer
+            serializer = SalesAnalyticsSerializer(data=analytics_data)
+            serializer.is_valid(raise_exception=True)
+
+            return Response(serializer.validated_data)
+
+        except ValueError as e:
+            logger.error(f"ValueError in sales_analytics: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Invalid parameters provided', 'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error in sales_analytics: {
+                        str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Failed to fetch sales analytics', 'detail': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+
+    @action(detail=False, methods=['get'])
+    def revenue_analytics(self, request):
+        """ Get detailed revenue analytics """
+        try:
+            # Get date range from query params
+            end_date = timezone.now()
+            start_date = self.request.query_params.get(
+                'start_date',
+                (end_date - timedelta(days=30)).date().isoformat()
+            )
+            end_date = self.request.query_params.get(
+                'end_date',
+                end_date.date().isoformat()
+            )
+
+            # Base queryset for completed orders
+            orders = Order.objects.filter(
+                created_at__range=[start_date, end_date],
+                payment_status=True
+            )
+
+            # Calculate cost and profit
+            order_items = orders.prefetch_related('items', 'items__product')
+            total_revenue = orders.aggregate(total=Sum('total_amount'))['total'] or 0
+
+            # Calculate revenue summary
+            summary = {
+                'total_revenue': total_revenue,
+                'average_order_value': orders.aggregate(avg=Avg('total_amount'))['avg'] or 0,
+            }
+
+            # Calculate revenue by category
+            category_revenue = (
+                order_items
+                .values('items__product__category__name')
+                .annotate(
+                    revenue=Sum('total_amount'),
+                    orders=Count('id'),
+                    average_order_value=Avg('total_amount')
+                )
+                .order_by('-revenue')
+            )
+
+            # Get trend data
+            trend_data = (
+                orders
+                .annotate(period=TruncDate('created_at'))
+                .values('period')
+                .annotate(
+                    revenue=Sum('total_amount'),
+                )
+                .order_by('period')
+            )
+
+            return Response({
+                'summary': summary,
+                'by_category': list(category_revenue),
+                'trend_data': list(trend_data)
+            })
+        
+        except Exception as e:
+            logger.error(f"Error in revenue_analytics: {str(e)}")
+            return Response(
+                {'error': 'Failed to fetch revenue analytics'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
 
     @action(detail=False, methods=['get'])
@@ -298,57 +428,39 @@ class DashboardViewSet(viewsets.ViewSet):
     
 
     @action(detail=False, methods=['get'])
-    def export_data(self, request):
-        """
-        Export dashboard data in various formats
-        Query Parameters:
-        - type: sales, products, orders, customers
-        - format: csv, excel, pdf
-        - date_from: YYYY-MM-DD (optional)
-        - date_to: YYYY-MM-DD (optional)
-        """
-        data_type = request.query_params.get('type', 'sales')
-        export_format = request.query_params.get('format', 'csv')
-
-        # Parse date range
+    def export_analytics(self, request):
+        """Export analytics data in various formats"""
         try:
-            date_from = datetime.strptime(
-                request.query_params.get('date_from', ''),
-                '%Y-%m-%d'
-            ).date() if request.query_params.get('date_from') else None
+            data_type = request.query_params.get('type', 'sales')
+            format = request.query_params.get('format', 'csv')
 
-            date_to = datetime.strptime(
-                request.query_params.get('date_to', ''),
-                '%Y-%m-%d'
-            ).date() if request.query_params.get('date_to') else None
-        except ValueError:
+            # Get analytics data based on type
+            if data_type == 'sales':
+                data = self.get_sales_analytics(request).data
+            else:
+                data = self.get_revenue_analytics(request).data
+
+            # Export based on format
+            if format == 'csv':
+                return self._export_csv(data, data_type)
+            elif format == 'excel':
+                return self._export_excel(data, data_type)
+            elif format == 'pdf':
+                return self._export_pdf(data, data_type)
+            else:
+                return Response(
+                    {'error': 'Invalid export format'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except Exception as e:
+            logger.error(f"Error in export_analytics: {str(e)}")
             return Response(
-                {"error": "Invalid date format. Use YYYY-MM-DD"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Get data based on type
-        try:
-            data = self._get_export_data(data_type, date_from, date_to)
-        except ValueError as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Export in requested format
-        if export_format == 'csv':
-            return self._export_csv(data, data_type)
-        elif export_format == 'excel':
-            return self._export_excel(data, data_type)
-        elif export_format == 'pdf':
-            return self._export_pdf(data, data_type)
-        else:
-            return Response(
-                {'error': 'Unsupported format'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'error': 'Failed to export analytics'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
+
     def _get_export_data(self, data_type, date_from=None, date_to=None):
         """Get data for export based on type and date range"""
         if date_to:
@@ -430,88 +542,97 @@ class DashboardViewSet(viewsets.ViewSet):
         else:
             raise ValueError(f"Unsupported data type: {data_type}")
 
+
     def _export_csv(self, data, data_type):
         """Export data as CSV"""
-        if not data:
-            return Response(
-                {"error": "No data to export"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{
+            data_type}_analytics.csv"'
 
-        output = BytesIO()
-        writer = csv.DictWriter(output, fieldnames=data[0].keys())
-        writer.writeheader()
-        writer.writerows(data)
+        writer = csv.writer(response)
 
-        response = HttpResponse(
-            output.getvalue(),
-            content_type='text/csv'
-        )
-        response['Content-Disposition'] = (
-            f'attachment; filename="{data_type}_export_{
-                datetime.now().strftime("%Y%m%d")}.csv"'
-        )
+        if data_type == 'sales':
+            # Write sales data
+            writer.writerow(['Period', 'Total Sales', 'Order Count'])
+            for item in data['trend_data']:
+                writer.writerow([
+                    item['period'],
+                    item['total_sales'],
+                    item['order_count']
+                ])
+        else:
+            # Write revenue data
+            writer.writerow(['Period', 'Revenue'])
+            for item in data['trend_data']:
+                writer.writerow([
+                    item['period'],
+                    item['revenue']
+                ])
+
         return response
     
 
     def _export_excel(self, data, data_type):
         """Export data as Excel"""
-        if not data:
-            return Response(
-                {"error": "No data to export"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
         output = BytesIO()
         workbook = xlsxwriter.Workbook(output)
         worksheet = workbook.add_worksheet()
 
-        # Add headers
-        headers = list(data[0].keys())
+        # Add headers and data based on type
+        if data_type == 'sales':
+            headers = ['Period', 'Total Sales', 'Order Count']
+            for i, item in enumerate(data['trend_data'], start=1):
+                worksheet.write(i, 0, str(item['period']))
+                worksheet.write(i, 1, item['total_sales'])
+                worksheet.write(i, 2, item['order_count'])
+        else:
+            headers = ['Period', 'Revenue']
+            for i, item in enumerate(data['trend_data'], start=1):
+                worksheet.write(i, 0, str(item['period']))
+                worksheet.write(i, 1, item['revenue'])
+
+        # Write headers
         for col, header in enumerate(headers):
             worksheet.write(0, col, header)
-
-        # Add data
-        for row, item in enumerate(data, start=1):
-            for col, header in enumerate(headers):
-                worksheet.write(row, col, item[header])
 
         workbook.close()
         output.seek(0)
 
         response = HttpResponse(
-            output.getvalue(),
+            output.read(),
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        response['Content-Disposition'] = (
-            f'attachment; filename="{data_type}_export_{
-                datetime.now().strftime("%Y%m%d")}.xlsx"'
-        )
+        response['Content-Disposition'] = f'attachment; filename="{
+            data_type}_analytics.xlsx"'
         return response
     
 
     def _export_pdf(self, data, data_type):
         """ Export data as PDF """
-        if not data:
-            return Response(
-                {"error": "No data to export"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        # Format data for PDF
-        formatter = PDFDataFormatter()
-        format_method = getattr(formatter, f"format_{data_type}_data")
-        formatted_data = format_method(data)
+        # Format data for PDF generator
+        formatted_data = []
+
+        if data_type == 'sales':
+            for item in data['trend_data']:
+                formatted_data.append({
+                    'Period': item['period'],
+                    'Total Sales': f"${item['total_sales']}",
+                    'Orders': item['order_count']
+                })
+        else:
+            for item in data['trend_data']:
+                formatted_data.append({
+                    'Period': item['period'],
+                    'Revenue': f"${item['revenue']}"
+                })
 
         # Generate PDF
         pdf_generator = PDFGenerator(data_type)
         pdf_buffer = pdf_generator.generate(formatted_data)
 
-        # Create response
         response = HttpResponse(pdf_buffer, content_type='application/pdf')
-        response['Content-Disposition'] = (
-            f'attachment; filename="{data_type}_report_{datetime.now().strftime("%Y%m%d")}.pdf"'
-        )
+        response['Content-Disposition'] = f'attachment; filename="{
+            data_type}_analytics.pdf"'
         return response
 
 

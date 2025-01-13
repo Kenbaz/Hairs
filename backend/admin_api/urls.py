@@ -6,8 +6,8 @@ from . import views
 from .views import AdminNotificationViewSet
 
 router = DefaultRouter()
-router.register(r'dashboard', views.DashboardViewSet,
-                basename='admin-dashboard')
+router.register(r'analytics', views.DashboardViewSet,
+                basename='admin-analytics')
 router.register(r'products', views.AdminProductViewSet,
                 basename='admin-products')
 router.register(r'orders', views.AdminOrderViewSet, basename='admin-orders')

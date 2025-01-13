@@ -1,60 +1,85 @@
 import axiosInstance from "@/src/utils/_axios";
-import { DashboardStats, LowStockResponse, ProductAnalytics, SalesAnalytics, OrderResponse } from "@/src/types";
-
+import {
+  DashboardStats,
+  LowStockResponse,
+  ProductAnalytics,
+  SalesOverviewResponse,
+  OrderResponse,
+  AnalyticsParams,
+} from "@/src/types";
+import { AxiosError } from "axios";
 
 class AdminDashboardService {
-    async getStats(): Promise<DashboardStats> {
-        const response = await axiosInstance.get('/api/v1/admin/dashboard/statistics/');
-        return response.data;
-    };
+  private readonly baseUrl = "/api/v1/admin/analytics/";
 
+  async getStats(): Promise<DashboardStats> {
+    const response = await axiosInstance.get(`${this.baseUrl}statistics/`);
+    return response.data;
+  }
 
-    async getSalesAnalytics(period: 'daily' | 'monthly', days: number = 30): Promise<SalesAnalytics> {
-        const response = await axiosInstance.get('/api/v1/admin/dashboard/sales_analytics/', {
-            params: { period, days }
-        });
-        return response.data;
-    };
-
-
-    async getProductAnalytics(): Promise<ProductAnalytics> {
-        try {
-            const response = await axiosInstance.get('/api/v1/admin/dashboard/product_analytics/');
-            return response.data;
-        } catch (error) {
-            console.error('Failed to fetch product analytics:', error);
-            throw error;
+  async getSalesOverview(
+    params: AnalyticsParams
+  ): Promise<SalesOverviewResponse> {
+    try {
+      const response = await axiosInstance.get<SalesOverviewResponse>(
+        `${this.baseUrl}sales_analytics/`,
+        {
+          params: {
+            days: params.days || 30,
+            period: params.period || "daily",
+          },
         }
+      );
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError;
+      console.error(
+        "Failed to fetch sales analytics:",
+        err.response?.data || err.message
+      );
+      throw error;
     }
+  }
 
-
-    async getCustomerAnalytics() {
-        const response = await axiosInstance.get('/api/v1/admin/dashboard/customer_analytics/');
-        return response.data;
-    };
-
-
-    async getRecentOrders(limit: number = 5): Promise<OrderResponse> {
-        const response = await axiosInstance.get('/api/v1/admin/orders/', {
-            params: {
-                limit,
-                ordering: '-created_at'
-            }
-        });
-        return response.data;
-    };
-
-
-    async getLowStockProducts(limit: number = 5): Promise<LowStockResponse> {
-        const response = await axiosInstance.get('/api/v1/admin/products/', {
-            params: {
-                stock_status: 'low',
-                limit,
-                ordering: 'stock' // Order by lowest stock first
-            }
-        });
-        return response.data;
+  async getProductAnalytics(): Promise<ProductAnalytics> {
+    try {
+      const response = await axiosInstance.get(
+        `${this.baseUrl}product_analytics/`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch product analytics:", error);
+      throw error;
     }
-};
+  }
+
+  async getCustomerAnalytics() {
+    const response = await axiosInstance.get(
+      `${this.baseUrl}customer_analytics/`
+    );
+    return response.data;
+  }
+
+  async getRecentOrders(limit: number = 5): Promise<OrderResponse> {
+    const response = await axiosInstance.get("/api/v1/admin/orders/", {
+      params: {
+        limit,
+        ordering: "-created_at",
+      },
+    });
+    return response.data;
+  }
+
+  async getLowStockProducts(limit: number = 5): Promise<LowStockResponse> {
+    const response = await axiosInstance.get("/api/v1/admin/products/", {
+      params: {
+        stock_status: "low",
+        limit,
+        ordering: "stock", // Order by lowest stock first
+      },
+    });
+    return response.data;
+  }
+}
 
 export const adminDashboardService = new AdminDashboardService();
