@@ -46,16 +46,6 @@ class AdminAnalyticsService {
     }
   }
 
-  // Helper method to format currency
-  static formatCurrency(amount: number): string {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  }
-
   // Helper method to calculate percentage change
   static calculateGrowthRate(current: number, previous: number): number {
     if (previous === 0) return 0;
