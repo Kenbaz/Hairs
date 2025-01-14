@@ -1,6 +1,6 @@
 import axiosInstance from "@/src/utils/_axios";
 import { AxiosError } from "axios";
-import { AnalyticsParams, SalesAnalyticsResponse, RevenueAnalyticsResponse } from "@/src/types";
+import { AnalyticsParams, SalesAnalyticsResponse, RevenueAnalyticsResponse, RefundReport, AnalyticsFilters } from "@/src/types";
 
 
 class AdminAnalyticsService {
@@ -43,6 +43,23 @@ class AdminAnalyticsService {
         err.response?.data || err.message
       );
       throw error;
+    }
+  }
+
+  async getRefundReport(filters: AnalyticsFilters): Promise<RefundReport> {
+    try {
+        const response = await axiosInstance.get<RefundReport>(
+            `${this.baseUrl}refund_report/`,
+            { params: filters }
+        );
+        return response.data;
+    } catch (error) {
+        const err = error as AxiosError;
+        console.error(
+          "Failed to fetch refund report:",
+          err.response?.data || err.message
+        );
+        throw error;
     }
   }
 

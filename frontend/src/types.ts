@@ -739,3 +739,50 @@ export interface AnalyticsParams {
   start_date?: string;
   end_date?: string;
 }
+
+// Refund Analytics Types
+export interface RefundTransaction {
+    id: number;
+    order_id: number;
+    amount: number;
+    reason: string;
+    status: 'pending' | 'approved' | 'completed' | 'rejected';
+    created_at: string;
+    processed_at: string | null;
+    return_request_id: number | null;
+}
+
+export interface RefundSummary {
+    total_refunds: number;
+    total_amount: number;
+    average_refund_amount: number;
+    refund_rate: number;
+    processing_time_avg: number;
+}
+
+export interface RefundReasonBreakdown {
+    reason: string;
+    count: number;
+    total_amount: number;
+    percentage: number;
+}
+
+export interface RefundReport {
+    summary: RefundSummary;
+    transactions: RefundTransaction[];
+    reason_breakdown: RefundReasonBreakdown[];
+    date_range: {
+        start: string;
+        end: string;
+    };
+}
+
+export interface AnalyticsFilters {
+    startDate?: string;
+    endDate?: string;
+    status?: string;
+    minAmount?: number;
+    maxAmount?: number;
+    page?: number;
+    pageSize?: number;
+}

@@ -173,6 +173,12 @@ export function DashboardNav() {
             label="Revenue Report"
             isActive={pathname === "/admin/analytics/revenue"}
           />
+          <NavItem
+            href="/admin/analytics/refund"
+            icon={<DollarSign className="h-5 w-5" />}
+            label="Refund Report"
+            isActive={pathname === "/admin/analytics/refund"}
+          />
         </NavGroup>
 
         {/* Settings & configuration */}

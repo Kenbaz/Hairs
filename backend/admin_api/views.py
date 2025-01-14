@@ -12,8 +12,8 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db import transaction
 from django.http import HttpResponse
 from rest_framework.permissions import IsAdminUser
-from django.db.models import Count, Sum, Avg, F, Value
-from django.db.models.functions import Concat, TruncMonth, TruncDate
+from django.db.models import Count, Sum, Avg, F, Value, ExpressionWrapper, FloatField, DurationField
+from django.db.models.functions import Concat, TruncMonth, TruncDate, ExtractDay, ExtractHour
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .serializers import (
@@ -321,6 +321,96 @@ class DashboardViewSet(viewsets.ViewSet):
             logger.error(f"Error in revenue_analytics: {str(e)}")
             return Response(
                 {'error': 'Failed to fetch revenue analytics'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+
+    @action(detail=False, methods=['get'])
+    def refund_report(self, request):
+        """ Get refund analytics report """
+        try:
+            # Get date range from query params
+            date_from = request.query_params.get('startDate')
+            date_to = request.query_params.get('endDate')
+            refund_status = request.query_params.get('status')
+
+            # Base queryset for returns with refunds
+            queryset = Return.objects.filter(refund_amount__isnull=False)
+
+            # Apply filters
+            if date_from:
+                queryset = queryset.filter(created_at__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(created_at__lte=date_to)
+            if refund_status:
+                queryset = queryset.filter(refund_status=refund_status)
+
+            # Calculate summary metrics
+            total_orders = Order.objects.filter(
+                created_at__range=[date_from or timezone.make_aware(datetime.min),
+                                   date_to or timezone.now()]
+            ).count()
+
+            summary = {
+                'total_refunds': queryset.count(),
+                'total_amount': queryset.aggregate(
+                    total=Sum('refund_amount'))['total'] or 0,
+                'average_refund_amount': queryset.aggregate(
+                    avg=Avg('refund_amount'))['avg'] or 0,
+                'refund_rate': (
+                    (queryset.count() / total_orders * 100)
+                    if total_orders > 0 else 0
+                )
+            }
+
+            # Calculate average processing time
+            processing_queryset = queryset.filter(
+                refund_status='completed',
+                updated_at__isnull=False
+            ).annotate(
+                processing_hours=ExpressionWrapper(
+                    ExtractDay(F('updated_at') - F('created_at')) * 24.0 +
+                    ExtractHour(F('updated_at') - F('created_at')),
+                    output_field=FloatField()
+                )
+            )
+
+            avg_processing = processing_queryset.aggregate(
+                avg_hours=Avg('processing_hours')
+            )['avg_hours']
+
+            summary['processing_time_avg'] = avg_processing or 0
+
+            # Get reason breakdown
+            reason_breakdown = queryset.values('reason').annotate(
+                count=Count('id'),
+                total_amount=Sum('refund_amount')
+            ).annotate(
+                percentage=ExpressionWrapper(
+                    F('count') * 100.0 / summary['total_refunds'],
+                    output_field=FloatField()
+                )
+            )
+
+            # Get recent refund transactions
+            transactions = queryset.values(
+                'id', 'order_id', 'refund_amount', 'reason',
+                'refund_status', 'created_at', 'updated_at'
+            ).order_by('-created_at')[:100]  # Limit to last 100 refunds
+
+            return Response({
+                'summary': summary,
+                'reason_breakdown': list(reason_breakdown),
+                'transactions': list(transactions),
+                'date_range': {
+                    'start': date_from,
+                    'end': date_to
+                }
+            })
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
