@@ -24,6 +24,8 @@ router.register(r'return-policies', views.AdminReturnPolicyViewset,
 router.register(r'emails', views.AdminEmailViewSet, basename='admin-email')
 router.register(r'email-templates', views.AdminEmailTemplateViewSet,
                 basename='admin-template')
+router.register(r'flash-sales', views.AdminFlashSaleViewSet,
+                basename='admin-flash-sales')
 
 urlpatterns = [
     path('', include(router.urls)),

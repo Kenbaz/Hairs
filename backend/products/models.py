@@ -15,6 +15,7 @@ from django.conf import settings
 from utils.cloudinary_utils import CloudinaryUploader
 import os
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from django.core.files.images import get_image_dimensions
 import logging
 
@@ -429,3 +430,185 @@ class StockHistory(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.transaction_type} ({self.quantity_changed})"
+
+
+class FlashSale(models.Model):
+    STATUS_CHOICES = [
+        ('scheduled', 'Scheduled'),
+        ('active', 'Active'),
+        ('ended', 'Ended'),
+        ('cancelled', 'Cancelled')
+    ]
+    DISCOUNT_TYPE_CHOICES = [
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed Amount')
+    ]
+
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    discount_type = models.CharField(
+        max_length=20,
+        choices=DISCOUNT_TYPE_CHOICES,
+        default='percentage'
+    )
+    discount_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))]
+    )
+    products = models.ManyToManyField(
+        'Product',
+        related_name='flash_sales',
+        through='FlashSaleProduct'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='scheduled'
+    )
+    max_quantity_per_customer = models.PositiveIntegerField(
+        default=1,
+        help_text="Maximum quantity of each product per customer"
+    )
+    total_quantity_limit = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Total quantity available for the flash sale"
+    )
+    is_visible = models.BooleanField(
+        default=True,
+        help_text="Whether the sale is visible to customers"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_flash_sales'
+    )
+
+    class Meta:
+        ordering = ['-start_time']
+        indexes = [
+            models.Index(fields=['status', 'start_time', 'end_time'])
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_status_display()})"
+    
+
+    def clean(self):
+        if self.start_time and self.end_time:
+            if self.start_time >= self.end_time:
+                raise ValidationError('End time must be after start time')
+            
+            if self.start_time <= timezone.now() and self.status == 'scheduled':
+                raise ValidationError('Start time must be in the future for scheduled sales')
+    
+
+    def update_status(self):
+        now = timezone.now()
+
+        if self.status == 'cancelled':
+            return
+        
+        if now < self.start_time:
+            new_status = 'scheduled'
+        elif now >= self.start_time and now <= self.end_time:
+            new_status = 'active'
+        else:
+            new_status = 'ended'
+        
+        if new_status != self.status:
+            self.status = new_status
+            self.save(update_fields=['status'])
+    
+
+    def calculate_discounted_price(self, original_price):
+        if self.discount_type == 'percentage':
+            discount_amount = (original_price * self.discount_value) / 100
+        else:
+            discount_amount = self.discount_value
+        
+        return max(original_price - discount_amount, Decimal('0.01'))
+
+
+class FlashSaleProduct(models.Model):
+    flash_sale = models.ForeignKey(
+        FlashSale,
+        on_delete=models.CASCADE,
+        related_name='sale_products'
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='sale_entries'
+    )
+    quantity_limit = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Maximum quantity available for this product in the sale"
+    )
+    quantity_sold = models.PositiveIntegerField(default=0)
+    original_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Original price when added to sale'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['flash_sale', 'product']
+        indexes = [
+            models.Index(fields=['flash_sale', 'product'])
+        ]
+    
+    def __str__(self):
+        return f"{self.product.name} in {self.flash_sale.name}"
+    
+
+    def clean(self):
+        if self.quantity_limit is not None:
+            if self.quantity_limit <= 0:
+                raise ValidationError('Quantity limit must be greater than zero')
+            if self.quantity_sold > self.quantity_limit:
+                raise ValidationError('Quantity sold cannot exceed quantity limit')
+
+
+class FlashSalePurchase(models.Model):
+    flash_sale = models.ForeignKey(
+        FlashSale,
+        on_delete=models.CASCADE,
+        related_name='purchases'
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    quantity = models.PositiveIntegerField()
+    price_at_purchase = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+    order = models.ForeignKey(
+        'orders.Order',
+        on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['flash_sale', 'product', 'user'])
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} purchased {self.quantity}x {self.product.name} in {self.flash_sale.name}"

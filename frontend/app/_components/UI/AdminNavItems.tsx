@@ -181,6 +181,16 @@ export function DashboardNav() {
           />
         </NavGroup>
 
+        {/* Marketing */}
+        <NavGroup title="Marketing" icon={<BarChart3 className="h-5 w-5" />}>
+          <NavItem
+            href="/admin/marketing/flash_sale"
+            icon={<BarChart3 className="h-5 w-5" />}
+            label="Flash Sales"
+            isActive={pathname === "/admin/marketing/flash_sale"}
+          />
+        </NavGroup>
+
         {/* Settings & configuration */}
         <NavGroup title="Settings" icon={<Settings className="h-5 w-5" />}>
           <NavItem

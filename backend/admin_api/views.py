@@ -12,7 +12,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db import transaction
 from django.http import HttpResponse
 from rest_framework.permissions import IsAdminUser
-from django.db.models import Count, Sum, Avg, F, Value, ExpressionWrapper, FloatField, DurationField
+from django.db.models import Count, Sum, Avg, F, Value, ExpressionWrapper, FloatField
 from django.db.models.functions import Concat, TruncMonth, TruncDate, ExtractDay, ExtractHour
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -35,7 +35,8 @@ from .serializers import (
     AdminCategorySerializer,
     ProductImageSerializer
 )
-from products.models import Product, Category, ProductImage
+from products.models import Product, Category, ProductImage, FlashSale, FlashSaleProduct
+from products.serializers import FlashSaleSerializer, FlashSaleProductSerializer
 from utils.cloudinary_utils import CloudinaryUploader
 from .utils.in_memory_file_upload import process_product_image, process_editor_image
 from orders.models import Order
@@ -2349,3 +2350,243 @@ def upload_editor_image(request):
             {'error': 'Internal server error'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+class AdminFlashSaleViewSet(viewsets.ModelViewSet):
+    """Viewset for managing flash sales in admin panel"""
+    permission_classes = [IsAdminUser]
+    serializer_class = FlashSaleSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ['name', 'description']
+    ordering_fields = ['start_date', 'end_date', 'created_at']
+    ordering = ['-created_at']
+    filterset_fields = {
+        'status': ['exact'],
+        'start_time': ['gte', 'lte'],
+        'end_time': ['gte', 'lte'],
+        'is_visible': ['exact'],
+    }
+    
+    def get_queryset(self):
+        queryset = FlashSale.objects.all()
+
+        # Filter by status from query params
+        status = self.request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+
+        # Filter active sales
+        active = self.request.query_params.get('active')
+        if active:
+            now = timezone.now()
+            queryset = queryset.filter(
+                start_time__lte=now,
+                end_time__gte=now,
+                status='active'
+            )
+        return queryset.prefetch_related('sale_products', 'sale_products__product')
+    
+    
+    def create(self, request, *args, **kwargs):
+        logger.info(f"Received create flash sale request with data: {
+                    request.data}")
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            # Log validated data before saving
+            logger.info(f"Validated data: {serializer.validated_data}")
+
+            instance = self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
+
+        except Exception as e:
+            logger.error(f"Error in create view: {str(e)}", exc_info=True)
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+    @transaction.atomic
+    @action(detail=True, methods=['post'])
+    def update_status(self, request, pk=None):
+        """Manually update flash sale status"""
+        flash_sale = self.get_object()
+        new_status = request.data.get('status')
+
+        if new_status not in dict(FlashSale.STATUS_CHOICES):
+            return Response(
+                {'error': 'Invalid status'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Validate status transition
+        if new_status == 'active':
+            now = timezone.now()
+            if now < flash_sale.start_time:
+                return Response(
+                    {'error': 'Cannot activate sale before start time'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if now > flash_sale.end_time:
+                return Response(
+                    {'error': 'Cannot activate sale after end time'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+        flash_sale.status = new_status
+        flash_sale.save()
+
+        return Response(self.get_serializer(flash_sale).data)
+    
+
+    @action(detail=True, methods=['get'])
+    def flash_sale_statistics(self, request, pk=None):
+        """Get statistics for a flash sale"""
+        flash_sale = self.get_object()
+
+        # Get total sales data
+        sales_products = flash_sale.sale_products.annotate(
+            total_revenue=Sum('quantity_sold')
+        ).select_related('product')
+
+        total_sold = sum(sp.quantity_sold for sp in sales_products)
+        total_revenue = sum(
+            sp.quantity_sold * flash_sale.calculate_discounted_price(sp.product.price) for sp in sales_products
+        )
+
+        # Calculate metrics 
+        metrics = {
+            'total_products': sales_products.count(),
+            'total_sold': total_sold,
+            'total_revenue': total_revenue,
+            'products_sold_out': sales_products.filter(
+                quantity_sold__gte=F('quantity_limit')
+            ).count(),
+            'total_customers': flash_sale.purchases.values('user').distinct().count()
+        }
+
+        if flash_sale.total_quantity_limit:
+            metrics['remaining_quantity'] = (
+                flash_sale.total_quantity_limit - total_sold
+            )
+
+        # Get top selling products
+        top_products = sales_products.order_by('-quantity_sold')[:5].values(
+            'product__name',
+            'quantity_sold',
+            'quantity_limit'
+        )
+
+        return Response({
+            'metrics': metrics,
+            'top_products': list(top_products),
+            'status': flash_sale.status,
+            'time_remaining': (
+                (flash_sale.end_time - timezone.now()).total_seconds()
+                if flash_sale.status == 'active' else None
+            )
+        })
+    
+
+    @action(detail=True, methods=['get'])
+    def customer_purchases(self, request, pk=None):
+        """Get customer purchases history for a flash sale"""
+        flash_sale = self.get_object()
+
+        purchases = flash_sale.purchases.select_related(
+            'user', 'product'
+        ).order_by('-created_at')
+
+        return Response([{
+            'customer_name': f"{p.user.first_name} {p.user.last_name}",
+            'customer_email': p.user.email,
+            'product_name': p.product.name,
+            'quantity': p.quantity,
+            'price_paid': p.price_at_purchase,
+            'purchase_date': p.created_at
+        } for p in purchases])
+    
+
+    @action(detail=False, methods=['patch'])
+    def update_products(self, request, pk=None):
+        """Update products in a flash sale"""
+        flash_sale = self.get_object()
+
+        if flash_sale.status not in ['scheduled', 'active']:
+            return Response(
+                {'error': 'Can only update products for scheduled or active sales'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        products_data = request.data.get('products', [])
+
+        try:
+            with transaction.atomic():
+                # Remove products not in the updated list
+                current_products_ids = {item['product'] for item in products_data}
+                flash_sale.sale_products.exclude(
+                    product_id__in=current_products_ids
+                ).delete()
+
+                # Update or create new products
+                for product_data in products_data:
+                    product_id = product_data.pop('product')
+                    FlashSaleProduct.objects.update_or_create(
+                        flash_sale=flash_sale,
+                        product_id=product_id,
+                        defaults=product_data
+                    )
+            
+            return Response(self.get_serializer(flash_sale).data)
+        
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+
+    @action(detail=False, methods=['get'])
+    def available_products(self, request):
+        """Get products available for flash sales"""
+        # Get products already in active flash sales
+        active_sales_products = FlashSaleProduct.objects.filter(
+            flash_sale__status='active'
+        ).values_list('product_id', flat=True)
+
+        # Get available products
+        products = Product.objects.exclude(
+            id__in=active_sales_products
+        ).filter(
+            is_available=True,
+            stock__gt=0
+        ).values('id', 'name', 'price', 'stock')
+
+        return Response(products)
+    
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete a flash sale"""
+        flash_sale = self.get_object()
+
+        # Only allow deletion of scheduled or ended sales
+        if flash_sale.status not in ['scheduled', 'ended', 'cancelled']:
+            return Response(
+                {'error': 'Can only delete scheduled or ended sales'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        flash_sale.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -22,6 +22,7 @@ backend/.installed.cfg
 backend/*.egg
 backend/media/
 backend/static/
+backend/staticfiles/
 
 # Backend - Django specific
 backend/*.log

@@ -786,3 +786,84 @@ export interface AnalyticsFilters {
     page?: number;
     pageSize?: number;
 }
+
+// Flash Sale Types
+export interface FlashSaleProducts {
+  id: number;
+  product: number;
+  product_name: string;
+  discounted_price: number;
+  original_price: number;
+  quantity_limit?: number;
+  quantity_sold: number;
+  stock: number;
+}
+
+export interface FlashSaleResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: FlashSale[];
+}
+
+export interface FlashSale {
+  id: number;
+  name: string;
+  description: string;
+  start_time: string;
+  end_time: string;
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  status: "scheduled" | "active" | "ended" | "cancelled";
+  max_quantity_per_customer: number;
+  total_quantity_limit?: number;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  products: FlashSaleProducts[];
+}
+
+export interface FlashSaleStats {
+  metrics: {
+    total_products: number;
+    total_sold: number;
+    total_revenue: number;
+    products_sold_out: number;
+    total_customers: number;
+    remaining_quantity?: number;
+  };
+  top_products: Array<{
+    product_name: string;
+    quantity_sold: number;
+    quantity_limit: number;
+  }>;
+  status: FlashSale["status"];
+  time_remaining?: number;
+}
+
+export interface FlashSaleFilters {
+  status?: string;
+  is_visible?: boolean;
+  start_time_after?: string;
+  start_time_before?: string;
+  search?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface CustomerPurchase {
+  customer_name: string;
+  customer_email: string;
+  product_name: string;
+  quantity: number;
+  price_paid: number;
+  purchase_date: string;
+}
+
+export interface AvailableProduct {
+  id: number;
+  name: string; // Changed from product_name
+  price: number; // Changed from original_price
+  stock: number;
+}

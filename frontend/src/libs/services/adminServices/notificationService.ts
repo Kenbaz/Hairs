@@ -1,14 +1,18 @@
 import { addNotification } from "../../_redux/notificationSlice";
-import { store } from "../../_redux/store";
-// import { AdminNotification } from "../_redux/types";
+import { AppDispatch } from "../../_redux/configureStore";
 
 class NotificationService {
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectTimeout = 1000;
+  private dispatch: AppDispatch | null = null;
   private keepAliveInterval: NodeJS.Timeout | null = null;
   private connectionTimeout: NodeJS.Timeout | null = null;
+
+  public init(dispatch: AppDispatch) {
+    this.dispatch = dispatch;
+  }
 
   async connect() {
     if (!process.env.NEXT_PUBLIC_WS_URL) {
@@ -22,7 +26,6 @@ class NotificationService {
       return;
     }
 
-    // Slight delay before attempting connection
     if (this.connectionTimeout) {
       clearTimeout(this.connectionTimeout);
     }
@@ -56,7 +59,10 @@ class NotificationService {
 
           switch (data.type) {
             case "notification":
-              store.dispatch(addNotification(data.data));
+              // Use the class's dispatch instance instead of store.dispatch
+              if (this.dispatch) {
+                this.dispatch(addNotification(data.data));
+              }
               break;
             case "stats_update":
               console.log("Received stats update:", data.data);
@@ -92,7 +98,7 @@ class NotificationService {
       if (this.ws?.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify({ type: "ping" }));
       }
-    }, 30000); // Send ping every 30 seconds
+    }, 30000);
   }
 
   private stopKeepAlive() {
