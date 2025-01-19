@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from datetime import timedelta
 import sys
+from decimal import Decimal
 
 
 # Load environment variables
@@ -53,6 +54,7 @@ INSTALLED_APPS = [
     'admin_api.apps.AdminApiConfig',
     'returns',
     'customer_support.apps.CustomerSupportConfig',
+    'payments.apps.PaymentsConfig',
 ]
 
 
@@ -76,6 +78,13 @@ CLOUDINARY_STORAGE_FOLDERS = {
     'RETURN_IMAGES': 'returns',
 }
 
+# Paystack Configuration
+PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
+PAYSTACK_PUBLIC_KEY = os.getenv('PAYSTACK_PUBLIC_KEY')
+
+# Payment Configuration
+PAYMENT_WEBHOOK_DOMAIN = os.getenv('PAYMENT_WEBHOOK_DOMAIN')
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -93,6 +102,8 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Development frontend
     os.getenv('FRONTEND_URL', 'https://yourdomain.com'),  # Production frontend
+    "https://checkout.paystack.com",
+    "https://standard.paystack.co",
 ]
 
 
@@ -169,6 +180,7 @@ CHANNEL_LAYERS = {
 
 # Cache Configuration
 if 'test' in sys.argv:
+    PAYSTACK_SECRET_KEY = 'test_secret_key'
     # Use local memory cache for testing
     CACHES = {
         'default': {
@@ -308,6 +320,51 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+# Supported Currencies Configuration
+SUPPORTED_CURRENCIES = {
+    'USD': {
+        'name': 'US Dollar',
+        'symbol': '$',
+        'is_base': True
+    },
+    'NGN': {
+        'name': 'Nigerian Naira',
+        'symbol': '₦',
+        'is_base': False
+    },
+    'GHS': {
+        'name': 'Ghanaian Cedis',
+        'symbol': 'GH₵',
+        'is_base': False
+    },
+    'ZAR': {
+        'name': 'South African Rand',
+        'symbol': 'R',
+        'is_base': False
+    },
+    'KES': {
+        'name': 'Kenyan Shillings',
+        'symbol': 'KSh',
+        'is_base': False
+    }
+}
+
+
+# Payment Settings
+# Minimum amount in base currency (USD)
+MINIMUM_PAYMENT_AMOUNT = Decimal('100.00')
+PAYMENT_EXPIRY_MINUTES = 30  # Payment expires after 30 minutes
+PAYMENT_RETRY_LIMIT = 3  # Maximum payment retry attempts
+
+# Webhook Configuration
+WEBHOOK_TOLERANCE_SECONDS = 300  # 5 minutes tolerance for webhook timestamps
+
+# Payment URLs (update with your frontend routes)
+PAYMENT_SUCCESS_URL = f"{PAYMENT_WEBHOOK_DOMAIN}/payment/success"
+PAYMENT_ERROR_URL = f"{PAYMENT_WEBHOOK_DOMAIN}/payment/error"
+PAYMENT_CANCEL_URL = f"{PAYMENT_WEBHOOK_DOMAIN}/payment/cancel"
 
 
 # Internationalization

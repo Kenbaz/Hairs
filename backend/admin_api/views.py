@@ -13,7 +13,7 @@ from django.db import transaction
 from django.http import HttpResponse
 from rest_framework.permissions import IsAdminUser
 from django.db.models import Count, Sum, Avg, F, Value, ExpressionWrapper, FloatField
-from django.db.models.functions import Concat, TruncMonth, TruncDate, ExtractDay, ExtractHour
+from django.db.models.functions import Concat, TruncMonth, TruncDate, ExtractDay, ExtractHour, TruncDay
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .serializers import (
@@ -36,9 +36,9 @@ from .serializers import (
     ProductImageSerializer
 )
 from products.models import Product, Category, ProductImage, FlashSale, FlashSaleProduct
-from products.serializers import FlashSaleSerializer, FlashSaleProductSerializer
+from products.serializers import FlashSaleSerializer
 from utils.cloudinary_utils import CloudinaryUploader
-from .utils.in_memory_file_upload import process_product_image, process_editor_image
+from .utils.in_memory_file_upload import process_product_image
 from orders.models import Order
 from users.models import User
 from reviews.models import Review
@@ -47,7 +47,6 @@ import csv
 import xlsxwriter
 from io import BytesIO
 from .utils.pdf_generator import PDFGenerator
-from .utils.data_formatters import PDFDataFormatter
 from .utils.invoice_generator import InvoiceGenerator
 from django_filters.rest_framework import DjangoFilterBackend
 import logging
@@ -58,6 +57,8 @@ from customer_support.serializers import CustomerEmailSerializer
 from customer_support.models import EmailAttachment
 from rest_framework.filters import SearchFilter, OrderingFilter
 from returns.models import Return, ReturnHistory, ReturnPolicy, ProductReturnPolicy
+from payments.serializers import PaymentSerializer, TransactionLogSerializer, PaymentReconciliationSerializer
+from payments.models import Payment, PaymentTransaction
 from customer_support.models import CustomerEmail, EmailTemplate
 from django.conf import settings
 from returns.serializers import ReturnSerializer, ProductReturnPolicySerializer, ReturnPolicySerializer
@@ -2590,3 +2591,194 @@ class AdminFlashSaleViewSet(viewsets.ModelViewSet):
         
         flash_sale.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminPaymentViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for managing payments in admin panel"""
+    permission_classes = [IsAdminUser]
+    serializer_class = PaymentSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['status', 'payment_method', 'payment_currency']
+    search_fields = [
+        'reference',
+        'provider_reference',
+        'order__id',
+        'order__user__email'
+    ]
+    ordering_fields = ['created_at', 'amount', 'status']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        queryset = Payment.objects.select_related('order', 'order__user')\
+            .prefetch_related('transactions')
+
+        # Date filtering
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        
+        if start_date:
+            queryset = queryset.filter(created_at__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(created_at__lte=end_date)
+
+        # Amount range filtering
+        min_amount = self.request.query_params.get('min_amount')
+        max_amount = self.request.query_params.get('max_amount')
+        
+        if min_amount:
+            queryset = queryset.filter(amount__gte=min_amount)
+        if max_amount:
+            queryset = queryset.filter(amount__lte=max_amount)
+
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def transaction_logs(self, request):
+        """Get all transaction logs with filtering"""
+        try:
+            # Get query parameters
+            transaction_type = request.query_params.get('transaction_type')
+            status = request.query_params.get('status')
+            start_date = request.query_params.get('start_date')
+            end_date = request.query_params.get('end_date')
+            payment_reference = request.query_params.get('payment_reference')
+
+            # Base queryset
+            queryset = PaymentTransaction.objects.select_related(
+                'payment', 
+                'payment__order',
+                'created_by'
+            )
+
+            # Apply filters
+            if transaction_type:
+                queryset = queryset.filter(transaction_type=transaction_type)
+            if status:
+                queryset = queryset.filter(status=status)
+            if start_date:
+                queryset = queryset.filter(created_at__gte=start_date)
+            if end_date:
+                queryset = queryset.filter(created_at__lte=end_date)
+            if payment_reference:
+                queryset = queryset.filter(
+                    Q(payment__reference__icontains=payment_reference) |
+                    Q(payment__provider_reference__icontains=payment_reference)
+                )
+
+            # Order by latest first
+            queryset = queryset.order_by('-created_at')
+
+            # Paginate results
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = TransactionLogSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = TransactionLogSerializer(queryset, many=True)
+            return Response(serializer.data)
+
+        except Exception as e:
+            logger.error(f"Error fetching transaction logs: {str(e)}")
+            return Response(
+                {'error': 'Failed to fetch transaction logs'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+    @action(detail=False, methods=['get'])
+    def payment_reconciliation_stats(self, request):
+        """Get payment reconciliation data"""
+        try:
+            # Get date range
+            end_date = timezone.now()
+            days = int(request.query_params.get('days', 30))
+            start_date = end_date - timedelta(days=days)
+
+            # Get all payments in date range
+            payments = self.get_queryset().filter(
+                created_at__range=[start_date, end_date]
+            )
+
+            # Calculate summary statistics
+            total_payments = payments.count()
+            successful_payments = payments.filter(status='success').count()
+            success_rate = (
+                (successful_payments / total_payments * 100)
+                if total_payments > 0 else 0
+            )
+
+            # Calculate processing times
+            avg_processing_time = payments.filter(
+                status='success',
+                paid_at__isnull=False
+            ).annotate(
+                processing_time=F('paid_at') - F('created_at')
+            ).aggregate(
+                avg_time=Avg('processing_time')
+            )['avg_time']
+
+            total_amount = payments.aggregate(
+                total=Sum('amount')
+            )['total'] or 0
+
+            average_amount = payments.aggregate(
+                avg=Avg('amount')
+            )['avg'] or 0
+
+            # Get daily transaction totals
+            daily_transactions = payments.annotate(
+                date=TruncDay('created_at')
+            ).values('date').annotate(
+                count=Count('id'),
+                total_amount=Sum('amount'),
+                successful=Count('id', filter=Q(status='success')),
+                failed=Count('id', filter=Q(
+                    status__in=['failed', 'cancelled']))
+            ).order_by('date')
+
+            # Currency distribution
+            currency_stats = payments.values(
+                'payment_currency'
+            ).annotate(
+                count=Count('id'),
+                total_amount=Sum('amount')
+            )
+
+            # Payment method distribution
+            payment_methods = payments.values(
+                'payment_method'
+            ).annotate(
+                count=Count('id'),
+                total_amount=Sum('amount'),
+                success_count=Count(
+                    'id',
+                    filter=Q(status='success')
+                )
+            )
+
+            reconciliation_data = {
+                'summary': {
+                    'total_payments': total_payments,
+                    'successful_payments': successful_payments,
+                    'success_rate': round(success_rate, 2),
+                    'total_amount': total_amount,
+                    'average_amount': average_amount,
+                    'average_processing_time': avg_processing_time,
+                },
+                'daily_transactions': list(daily_transactions),
+                'currency_distribution': list(currency_stats),
+                'payment_methods': list(payment_methods),
+                'date_range': {
+                    'start': start_date.isoformat(),
+                    'end': end_date.isoformat()
+                }
+            }
+
+            return Response(reconciliation_data)
+
+        except Exception as e:
+            logger.error(f"Error generating reconciliation report: {str(e)}")
+            return Response(
+                {'error': 'Failed to generate reconciliation report'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

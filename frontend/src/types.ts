@@ -867,3 +867,187 @@ export interface AvailableProduct {
   price: number; // Changed from original_price
   stock: number;
 }
+
+// Payment types
+export interface PaymentError {
+  type:
+    | "TIMEOUT"
+    | "NETWORK"
+    | "VALIDATION"
+    | "RETRY_LIMIT"
+    | "RATE_LIMIT"
+    | "INVALID_AMOUNT";
+  message: string;
+}
+
+export interface PaymentState {
+  isLoading: boolean;
+  error: PaymentError | null;
+  paymentUrl: string | null;
+  paymentReference: string | null;
+  paymentStatus: "idle" | "pending" | "success" | "failed";
+  retryCount: number;
+  lastAttempt: Date | null;
+  timeoutId: NodeJS.Timeout | null;
+}
+
+export interface InitializePaymentData {
+  order_id: number;
+  payment_currency: string;
+  payment_method?: string;
+  email: string;
+  callback_url: string;
+}
+
+export interface PaymentContextType extends PaymentState {
+  initializePayment: (data: InitializePaymentData) => Promise<void>;
+  verifyPayment: (reference: string) => Promise<void>;
+  resetPayment: () => void;
+}
+
+export interface PaymentResponse {
+  authorization_url: string;
+  reference: string;
+}
+
+export interface VerifyPaymentResponse {
+  verified: boolean;
+  payment: {
+    id: number;
+    reference: string;
+    status: string;
+    amount: number;
+    payment_method: string;
+    created_at: string;
+  };
+}
+
+export interface PaymentMethodResponse {
+  methods: {
+    id: string;
+    name: string;
+    supported: boolean;
+  }[];
+}
+
+// Payment Admin Types
+export interface PaymentTransactionTypeForAdmin {
+    id: number;
+    payment_reference: string;
+    provider_reference: string;
+    transaction_type: string;
+    status: string;
+    amount: number;
+    customer_email: string;
+    response_message: string;
+    created_by_name: string | null;
+    created_at: string;
+}
+
+export interface TransactionResponse {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: PaymentTransactionTypeForAdmin[];
+}
+
+export interface TransactionFilters {
+    transaction_type?: string;
+    status?: string;
+    start_date?: string;
+    end_date?: string;
+    payment_reference?: string;
+    page?: number;
+    page_size?: number;
+}
+
+export interface PaymentFilters {
+    start_date?: string;
+    end_date?: string;
+    min_amount?: number;
+    max_amount?: number;
+    status?: string;
+    payment_method?: string;
+    payment_currency?: string;
+    search?: string;
+    page?: number;
+    page_size?: number;
+}
+
+export interface ReconciliationSummary {
+    total_payments: number;
+    successful_payments: number;
+    success_rate: number;
+    total_amount: number;
+    average_amount: number;
+    average_processing_time: string | null;
+}
+
+export interface DailyTransaction {
+    date: string;
+    count: number;
+    total_amount: number;
+    successful: number;
+    failed: number;
+}
+
+export interface CurrencyDistribution {
+    payment_currency: string;
+    count: number;
+    total_amount: number;
+}
+
+export interface PaymentMethodStats {
+    payment_method: string;
+    count: number;
+    total_amount: number;
+    success_count: number;
+}
+
+export interface ReconciliationData {
+    summary: ReconciliationSummary;
+    daily_transactions: DailyTransaction[];
+    currency_distribution: CurrencyDistribution[];
+    payment_methods: PaymentMethodStats[];
+    date_range: {
+        start: string;
+        end: string;
+    };
+}
+
+export interface PaymentTypeForAdmin {
+    id: number;
+    order_id: number;
+    reference: string;
+    provider_reference: string | null;
+    amount: number;
+    original_amount: number;
+    payment_currency: string;
+    base_currency: string;
+    exchange_rate: number;
+    status: 'pending' | 'processing' | 'success' | 'failed' | 'cancelled' | 'refunded';
+    payment_method: string;
+    error_message?: string | null;
+    paid_at?: string | null;
+    expires_at: string;
+    created_at: string;
+    updated_at: string;
+    customer_email: string;
+    customer_name: string;
+}
+
+export interface PaymentResponseTypeForAdmin {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: PaymentTypeForAdmin[];
+}
+
+export interface PaymentStatsTypeForAdmin {
+    total_payments: number;
+    total_amount: number;
+    successful_payments: number;
+    failed_payments: number;
+    pending_payments: number;
+    success_rate: number;
+}

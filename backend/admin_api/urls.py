@@ -26,6 +26,8 @@ router.register(r'email-templates', views.AdminEmailTemplateViewSet,
                 basename='admin-template')
 router.register(r'flash-sales', views.AdminFlashSaleViewSet,
                 basename='admin-flash-sales')
+router.register(r'admin-payments', views.AdminPaymentViewSet,
+                basename='admin-payments')
 
 urlpatterns = [
     path('', include(router.urls)),

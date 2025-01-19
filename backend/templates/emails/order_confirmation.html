@@ -18,17 +18,52 @@
                 <td>{{ order.created_at|date:"F j, Y" }}</td>
             </tr>
             <tr>
+                <th>Payment Status:</th>
+                <td>Paid</td>
+            </tr>
+            <tr>
                 <th>Total Amount:</th>
                 <td>${{ order.total_amount }}</td>
             </tr>
+        </table>
+
+        <h3>Order Items</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order_items %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
 
         <h3>Shipping Address:</h3>
         <p>{{ order.shipping_address }}</p>
     </div>
 
+    <div class="next-steps">
+        <h2>What's Next?</h2>
+        <ol>
+            <li>Your order is now being processed by our team</li>
+            <li>You'll receive another email when your order ships</li>
+        </ol>
+    </div>
+
     <a href="{{ site_url }}/orders/{{ order.id }}" class="button">View Order Details</a>
 
-    <p>We'll send you another email when your order ships.</p>
+    <div class="support-info">
+        <p>If you have any questions about your order, please don't hesitate to contact our customer support team.</p>
+        <a href="{{ site_url }}/contact" class="button">Contact Support</a>
+    </div>
 </div>
 {% endblock %}

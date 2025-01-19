@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { ReduxProvider } from "@/src/libs/_redux/Provider";
 import { QueryProvider } from "./_components/_providers/QueryProvider";
 import { CurrencyProvider } from "./_components/_providers/CurrencyContext";
+import { PaymentProvider } from "./_components/_providers/PaymentContext";
 
 
 const geistSans = localFont({
@@ -35,18 +36,20 @@ export default function RootLayout({
       >
         <QueryProvider>
           <ReduxProvider>
-            <CurrencyProvider>
-              {children}
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 3000,
-                  style: {
-                    minWidth: "250px",
-                  },
-                }}
-              />
-            </CurrencyProvider>
+            <PaymentProvider>
+              <CurrencyProvider>
+                {children}
+                <Toaster
+                  position="top-right"
+                  toastOptions={{
+                    duration: 3000,
+                    style: {
+                      minWidth: "250px",
+                    },
+                  }}
+                />
+              </CurrencyProvider>
+            </PaymentProvider>
           </ReduxProvider>
         </QueryProvider>
       </body>

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, Tags, ShoppingBag, Users, BarChart3, DollarSign, Receipt, Heart, Settings, ChevronDown, Package2, Mail } from 'lucide-react';
+import { LayoutDashboard, Package, Tags, ShoppingBag, Users, BarChart3, DollarSign, Receipt, Heart, Settings, ChevronDown, Package2, Mail, CreditCard, ListIcon, BarChart2, Store, PackageOpen } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -182,12 +182,34 @@ export function DashboardNav() {
         </NavGroup>
 
         {/* Marketing */}
-        <NavGroup title="Marketing" icon={<BarChart3 className="h-5 w-5" />}>
+        <NavGroup title="Marketing" icon={<Store className="h-5 w-5" />}>
           <NavItem
             href="/admin/marketing/flash_sale"
-            icon={<BarChart3 className="h-5 w-5" />}
+            icon={<PackageOpen className="h-5 w-5" />}
             label="Flash Sales"
             isActive={pathname === "/admin/marketing/flash_sale"}
+          />
+        </NavGroup>
+
+        {/* Payment Management */}
+        <NavGroup title="Payments" icon={<DollarSign className="h-5 w-5" />}>
+          <NavItem
+            href="/admin/admin-payments"
+            icon={<CreditCard className="h-5 w-5" />}
+            label="All Payments"
+            isActive={pathname === "/admin/admin-payments"}
+          />
+          <NavItem
+            href="/admin/admin-payments/transactions"
+            icon={<ListIcon className="h-5 w-5" />}
+            label="Transaction Logs"
+            isActive={pathname === "/admin/admin-payments/transactions"}
+          />
+          <NavItem
+            href="/admin/admin-payments/payment-stats"
+            icon={<BarChart2 className="h-5 w-5" />}
+            label="Payment Stats"
+            isActive={pathname === "/admin/admin-payments/payment-stats"}
           />
         </NavGroup>
 
