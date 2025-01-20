@@ -1,7 +1,7 @@
 # users/urls.py
 
 from django.urls import path
-from rest_framework_simplejwt.views import (TokenObtainPairView, TokenRefreshView)
+from rest_framework_simplejwt.views import ( TokenRefreshView )
 from . import views
 
 
@@ -23,5 +23,6 @@ urlpatterns = [
          name='verify-email'),
 
     # Profile endpoints 
-    path('profile/', views.ProfileView.as_view(), name='profile')
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('admin/profile/', views.AdminProfileView.as_view(), name='admin-profile')
 ]

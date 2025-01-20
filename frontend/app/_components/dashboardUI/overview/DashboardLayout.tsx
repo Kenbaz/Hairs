@@ -11,6 +11,7 @@ import { NotificationCenter } from './NotificationCenter';
 import { notificationService } from '@/src/libs/services/adminServices/notificationService';
 import { SessionManager } from '@/src/libs/auth/sessionManager';
 import { CurrencySelector } from '../../UI/CurrencySelector';
+import Image from 'next/image';
 
 
 interface DashboardLayoutProps {
@@ -149,9 +150,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100"
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   >
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                      {user?.first_name?.[0]}
-                    </div>
+                    {user?.avatar_url ? (
+                      <Image
+                        src={user.avatar_url}
+                        alt="User Avatar"
+                        width={32}
+                        height={32}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                        {user?.first_name?.[0]}
+                      </div>
+                    )}
                     <span className="hidden md:inline">
                       {user?.first_name} {user?.last_name}
                     </span>

@@ -153,7 +153,11 @@ export const loadUser = createAsyncThunk<
              // Start session management if user is successfully loaded
              SessionManager.getInstance().startSession();
              
-             return response.data;
+             return {
+               ...response.data,
+               avatar: response.data.avatar_url || response.data.avatar || null,
+               avatar_url: response.data.avatar_url || response.data.avatar || null,
+             };
         } catch (error) {
             if (error instanceof Error) {
                 return rejectWithValue(error.message);
@@ -165,6 +169,16 @@ export const loadUser = createAsyncThunk<
         }
     }
 );
+
+
+export const updateUserData = createAsyncThunk<
+  AuthResponse["user"],
+  Partial<AuthResponse["user"]>,
+  { state: RootState }
+>("auth/updateUserData", async (userData) => {
+  return userData as AuthResponse["user"];
+});
+
 
 const authSlice = createSlice({
     name: 'auth',
@@ -254,6 +268,16 @@ const authSlice = createSlice({
 
             // End session if user load fails
             SessionManager.getInstance().endSession();
+        });
+
+        // Update user cases
+        builder.addCase(updateUserData.fulfilled, (state, action) => {
+          if (state.user) {
+            state.user = {
+              ...state.user,
+              ...action.payload,
+            };
+          }
         });
     },
 });

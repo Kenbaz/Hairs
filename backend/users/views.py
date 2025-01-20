@@ -1,18 +1,22 @@
 # users/views.py
 
-from rest_framework import status, generics
+from rest_framework import status, generics, serializers
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import UserRegisterSerializer, UserProfileSerializer, ChangePasswordSerializer, ResetPasswordEmailSerializer, ResetPasswordSerializer, EmailVerificationSerializer
+from .serializers import UserRegisterSerializer, UserProfileSerializer, ChangePasswordSerializer, ResetPasswordEmailSerializer, ResetPasswordSerializer, EmailVerificationSerializer, AdminProfileSerializer
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from .models import User
+from rest_framework.permissions import IsAdminUser
+from django.db import transaction
 from django.utils.crypto import get_random_string
+from utils.cloudinary_utils import CloudinaryUploader
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 
 class RegisterView(generics.CreateAPIView):
@@ -209,6 +213,20 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
+        # Get avatar URL if it exists
+        avatar_url = None
+        if self.user.avatar_public_id:
+            try:
+                avatar_url = CloudinaryUploader.get_image_url(
+                    self.user.avatar_public_id,
+                    width=200,
+                    height=200,
+                    crop='fill',
+                    gravity='face'
+                )
+            except Exception as e:
+                print(f"Error getting avatar URL: {e}")
+
         # Add user data to response
         user = self.user
         data['user'] = {
@@ -219,7 +237,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'last_name': user.last_name,
             'is_staff': user.is_staff,
             'is_superuser': user.is_superuser,
-            'verified_email': user.verified_email
+            'verified_email': user.verified_email,
+            'avatar': avatar_url
         }
 
         return data
@@ -227,4 +246,44 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
-    
+
+
+class AdminProfileView(generics.RetrieveUpdateAPIView):
+    """
+    View for retrieving and updating admin profile
+    """
+    permission_classes = (IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    def get_serializer_class(self):
+        # Use AdminProfileSerializer for staff/admin users
+        if self.request.user.is_staff:
+            return AdminProfileSerializer
+        return UserProfileSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        data = serializer.data
+
+        # Always include avatar URL for admin users
+        if request.user.is_staff and instance.avatar_public_id:
+            data['avatar'] = CloudinaryUploader.get_image_url(
+                instance.avatar_public_id,
+                width=200,
+                height=200,
+                crop='fill',
+                gravity='face'
+            )
+
+        return Response(data)
+
+    def perform_update(self, serializer):
+        try:
+            with transaction.atomic():
+                serializer.save()
+        except Exception as e:
+            raise serializers.ValidationError(str(e))

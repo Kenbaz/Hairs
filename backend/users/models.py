@@ -3,6 +3,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.conf import settings
+from cloudinary_storage.storage import MediaCloudinaryStorage
+from utils.cloudinary_utils import CloudinaryUploader
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, first_name, last_name, password=None, **extra_fields):
@@ -47,6 +50,13 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=15, blank=True)
     verified_email = models.BooleanField(default=False)
     email_verification_token = models.CharField(max_length=100, blank=True)
+    avatar = models.ImageField(
+        upload_to=settings.CLOUDINARY_STORAGE_FOLDERS['AVATARS'],
+        storage=MediaCloudinaryStorage(),
+        null=True,
+        blank=True
+    )
+    avatar_public_id = models.CharField(max_length=200, blank=True, null=True)
 
 
     # Shipping Information
@@ -83,6 +93,13 @@ class User(AbstractUser):
 
     def has_module_perms(self, app_label):
         return True
+    
+    def delete_avatar(self):
+        if self.avatar_public_id:
+            CloudinaryUploader.delete_files(self.avatar_public_id)
+            self.avatar = None
+            self.avatar_public_id = ''
+            self.save()
     
     @property
     def full_name(self):

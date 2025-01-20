@@ -3,6 +3,8 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import User
+from utils.cloudinary_utils import CloudinaryUploader
+from django.conf import settings
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -39,20 +41,39 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
-    
 
-class UserProfileSerializer(serializers.ModelSerializer):
+
+class BaseUserSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
     full_name = serializers.CharField(read_only=True)
 
+    def get_avatar_url(self, obj):
+        """Get the Cloudinary URL for the avatar"""
+        if obj.avatar_public_id:
+            try:
+                return CloudinaryUploader.get_image_url(
+                    obj.avatar_public_id,
+                    width=200,
+                    height=200,
+                    crop='fill',
+                    gravity='face'
+                )
+            except Exception as e:
+                print(f"Error getting avatar URL: {e}")
+                return None
+        return None
+    
+
+class UserProfileSerializer(BaseUserSerializer):
     class Meta:
         model = User
         fields = (
             'id', 'email', 'username', 
             'first_name', 'last_name', 
             'phone_number', 'address', 'city', 'state',
-            'country', 'postal_code', 'full_name',
+            'country', 'postal_code', 'full_name', 'avatar', 'avatar_url'
         )
-        read_only_fields = ('email',)
+        read_only_fields = ('email', 'avatar_url')
 
 
 class ShippingAddressSerializer(serializers.ModelSerializer):
@@ -110,3 +131,59 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 class EmailVerificationSerializer(serializers.Serializer):
     token = serializers.CharField()
+
+
+class AdminProfileSerializer(BaseUserSerializer):
+    """Serializer for admin profile updates"""
+    avatar = serializers.ImageField(required=False)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'email', 'username', 'first_name', 'last_name',
+            'phone_number', 'avatar', 'avatar_url', 'full_name'
+        ]
+        read_only_fields = ['email', 'username']
+
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+
+    def update(self, instance, validated_data):
+        try:
+            # Handle avatar upload
+            avatar_file = self.context['request'].FILES.get('avatar')
+
+            if avatar_file:
+                # Delete old avatar if exists
+                if instance.avatar_public_id:
+                    instance.delete_avatar()
+
+                # Upload new avatar to Cloudinary
+                result = CloudinaryUploader.upload_image(
+                    avatar_file,
+                    folder=settings.CLOUDINARY_STORAGE_FOLDERS['AVATARS'],
+                    transformation=[
+                        {'width': 400, 'height': 400, 'crop': 'fill'},
+                        {'quality': 'auto'},
+                        {'fetch_format': 'auto'}
+                    ]
+                )
+
+                if result:
+                    instance.avatar = result['url']
+                    instance.avatar_public_id = result['public_id']
+                else:
+                    raise serializers.ValidationError(
+                        "Failed to upload avatar")
+
+            # Update other fields
+            for attr, value in validated_data.items():
+                if attr != 'avatar':  # Skip avatar as we handled it above
+                    setattr(instance, attr, value)
+
+            instance.save()
+            return instance
+
+        except Exception as e:
+            raise serializers.ValidationError(str(e))

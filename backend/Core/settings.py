@@ -76,6 +76,7 @@ CLOUDINARY_STORAGE_FOLDERS = {
     'EDITOR_IMAGES': 'editor_images',
     'EMAIL_ATTACHMENTS': 'email_attachments',
     'RETURN_IMAGES': 'returns',
+    'AVATARS': 'admin/avatars',
 }
 
 # Paystack Configuration

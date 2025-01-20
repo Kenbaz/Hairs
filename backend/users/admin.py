@@ -50,6 +50,8 @@ class CustomUserAdmin(UserAdmin):
                 'first_name', 
                 'last_name',
                 'phone_number',
+                'avatar',
+                'avatar_public_id'
             )
         }),
         ('Address Information', {
