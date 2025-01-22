@@ -1,5 +1,5 @@
 import { addNotification } from "../../_redux/notificationSlice";
-import { AppDispatch } from "../../_redux/configureStore";
+import { AppDispatch } from "../../_redux/reduxTypes";
 
 class NotificationService {
   private ws: WebSocket | null = null;

@@ -1053,3 +1053,40 @@ export interface PaymentStatsTypeForAdmin {
     pending_payments: number;
     success_rate: number;
 }
+
+// Shipping Types
+// Add to src/types.ts
+
+export interface ShippingRate {
+    id: number;
+    currency_code: string;
+    flat_rate: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ShippingRateResponse {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: ShippingRate[];
+}
+
+export interface ShippingCalculation {
+    currency: string;
+    shipping_fee: number;
+    formatted_shipping_fee: string;
+}
+
+export interface CreateShippingRateData {
+    currency_code: string;
+    flat_rate: number;
+    is_active?: boolean;
+}
+
+export interface UpdateShippingRateData {
+    currency_code?: string;
+    flat_rate?: number;
+    is_active?: boolean;
+}

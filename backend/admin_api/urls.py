@@ -28,6 +28,8 @@ router.register(r'flash-sales', views.AdminFlashSaleViewSet,
                 basename='admin-flash-sales')
 router.register(r'admin-payments', views.AdminPaymentViewSet,
                 basename='admin-payments')
+router.register(r'shipping-rates', views.ShippingRateViewSet,
+                basename='shipping-rate')
 
 urlpatterns = [
     path('', include(router.urls)),

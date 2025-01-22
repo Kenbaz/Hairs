@@ -11,11 +11,13 @@ export function AuthLayout({ children }: PropsWithChildren) {
         {/* Logo and branding container */}
         <div className="mb-8 text-center">
           <Image
-            src="/"
+            src="/Mizviv-Logo.jpg"
+            priority
             alt="Admin Logo"
             width={80}
             height={80}
-            className="mx-auto mb-4"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="mx-auto mb-4 rounded-full"
           />
           <h2 className="text-2xl font-bold text-gray-900">Admin Dashboard</h2>
           <p className="mt-2 text-sm text-gray-600">

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, Tags, ShoppingBag, Users, BarChart3, DollarSign, Receipt, Heart, Settings, ChevronDown, Package2, Mail, CreditCard, ListIcon, BarChart2, Store, PackageOpen } from 'lucide-react';
+import { LayoutDashboard, Package, Tags, ShoppingBag, Users, BarChart3, DollarSign, Receipt, Heart, Settings, ChevronDown, Package2, Mail, CreditCard, ListIcon, BarChart2, Store, PackageOpen, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -226,6 +226,12 @@ export function DashboardNav() {
             icon={<Package2 className="h-5 w-5" />}
             label="Returns Policies"
             isActive={pathname === "/admin/returns"}
+          />
+          <NavItem
+            href="/admin/shipping-rates"
+            icon={<Truck className="h-5 w-5" />}
+            label="Shipping Rates"
+            isActive={pathname === "/admin/shipping-rates"}
           />
         </NavGroup>
       </nav>

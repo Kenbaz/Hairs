@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'returns',
     'customer_support.apps.CustomerSupportConfig',
     'payments.apps.PaymentsConfig',
+    'shipping',
 ]
 
 

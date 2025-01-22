@@ -67,6 +67,9 @@ from decimal import Decimal
 from django.core.cache import cache
 from django.db.models import Q
 import json
+from django.shortcuts import get_object_or_404
+from shipping.models import ShippingRate
+from shipping.serializers import ShippingRateSerializer, ShippingCalculationSerializer
 
 
 logger = logging.getLogger(__name__)
@@ -2780,4 +2783,59 @@ class AdminPaymentViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(
                 {'error': 'Failed to generate reconciliation report'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ShippingRateViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing shipping rates (admin only)"""
+    queryset = ShippingRate.objects.all()
+    serializer_class = ShippingRateSerializer
+    permission_classes = [IsAdminUser]
+
+    
+    def get_queryset(self):
+        queryset = ShippingRate.objects.all()
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(is_active=True)
+        return queryset
+    
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        return context
+    
+
+    @action(detail=False, methods=['post'])
+    def calculate_shipping(self, request):
+        """Calculate shipping fee for given currency and order amount"""
+        serializer = ShippingCalculationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        currency = serializer.validated_data['currency']
+        order_amount = serializer.validated_data['order_amount']
+
+        try:
+            # Get shipping rate for the currency
+            shipping_rate = get_object_or_404(
+                ShippingRate,
+                currency_code=currency,
+                is_active=True
+            )
+
+            # Calculate shipping fee
+            shipping_fee = shipping_rate.flat_rate
+
+            return Response({
+                'currency': currency,
+                'shipping_fee': shipping_fee,
+                'formatted_shipping_fee': CurrencyConverter.format_price(
+                    amount=shipping_fee,
+                    currency_code=currency
+                )
+            })
+        
+        except ShippingRate.DoesNotExist:
+            return Response(
+                {'error': f'No shipping rate found for {currency}'},
+                status=status.HTTP_404_NOT_FOUND
             )

@@ -1,7 +1,6 @@
 "use client";
 
 import { use } from "react";
-import { Breadcrumb } from "@/app/_components/UI/Breadcrumb";
 import FlashSaleStats from "@/app/_components/dashboardUI/flashSaleSection/FlashSaleStats";
 
 interface FlashSaleStatsPageProps {
@@ -23,7 +22,6 @@ export default function FlashSaleStatsPage({
 
   return (
     <div className="space-y-6">
-      <Breadcrumb />
       <FlashSaleStats flashSaleId={flashSaleId} />
     </div>
   );
