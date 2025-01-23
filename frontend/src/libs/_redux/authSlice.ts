@@ -29,6 +29,7 @@ const initialState: AuthState = {
 
 
 // Async thunks
+// Regular user login
 export const login = createAsyncThunk<AuthResponse, LoginCredentials, { rejectValue: string }>(
     'auth/login',
     async (credentials, { rejectWithValue }) => {
@@ -54,6 +55,41 @@ export const login = createAsyncThunk<AuthResponse, LoginCredentials, { rejectVa
             const err = error as AxiosError<ApiError>
             return rejectWithValue(
                 err.response?.data?.detail || err.response?.data.message || 'Login failed'
+            );
+        }
+    }
+);
+
+
+// Admin login
+export const adminLogin = createAsyncThunk<AuthResponse, LoginCredentials, { rejectValue: string }>(
+    'auth/adminLogin',
+    async (credentials, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post<AuthResponse>(
+                "/api/v1/users/login/",
+                credentials
+            );
+
+            // Verify admin privileges
+            if (!response.data.user.is_staff && !response.data.user.is_superuser) {
+                return rejectWithValue("Access denied. Admin privileges required.");
+            }
+
+            // Set auth data for admin users
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('accessToken', response.data.access);
+                localStorage.setItem('refreshToken', response.data.refresh);
+                axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${response.data.access}`;
+            }
+
+            return response.data;
+        } catch (error) {
+            const err = error as AxiosError<ApiError>;
+            return rejectWithValue(
+                err.response?.data?.detail ||
+                err.response?.data?.message ||
+                'Login failed'
             );
         }
     }
@@ -190,96 +226,126 @@ const authSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-        // Login cases
-        builder.addCase(login.pending, (state) => {
-            state.isLoading = true;
-            state.error = null;
-        });
-        builder.addCase(login.fulfilled, (state, action) => {
-            state.isLoading = false;
-            state.isAuthenticated = true;
-            state.user = action.payload.user;
-            state.accessToken = action.payload.access;
-            state.refreshToken = action.payload.refresh;
-            state.error = null;
-            toast.success('Logged in successfully');
+      // Login cases
+      builder.addCase(login.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      });
+      builder.addCase(login.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.accessToken = action.payload.access;
+        state.refreshToken = action.payload.refresh;
+        state.error = null;
+        toast.success("Logged in successfully");
 
-            // Start session monitoring
-            SessionManager.getInstance().startSession();
-        });
-        builder.addCase(login.rejected, (state, action) => {
-            state.isLoading = false;
-            state.error = action.payload ?? 'Login failed. Please check your credentials.';
-            // Clear the partial auth state
-            state.isAuthenticated = false;
-            state.user = null;
-            state.accessToken = null;
-            state.refreshToken = null;
+        // Start session monitoring
+        SessionManager.getInstance().startSession();
+      });
+      builder.addCase(login.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error =
+          action.payload ?? "Login failed. Please check your credentials.";
+        // Clear the partial auth state
+        state.isAuthenticated = false;
+        state.user = null;
+        state.accessToken = null;
+        state.refreshToken = null;
 
-            // End session if login fails
-            SessionManager.getInstance().endSession();
-        });
-        
-        // Refresh cases
-        builder.addCase(refreshAccessToken.fulfilled, (state, action) => {
-            state.accessToken = action.payload.access;
-            state.error = null;
-        });
-        builder.addCase(refreshAccessToken.rejected, (state) => {
-            state.isAuthenticated = false;
-            state.user = null;
-            state.accessToken = null;
-            state.refreshToken = null;
-            toast.error('Session expired. Please login again');
+        // End session if login fails
+        SessionManager.getInstance().endSession();
+      });
 
-            // End session on refresh failure
-            SessionManager.getInstance().endSession();
+      // Admin login cases
+      builder.addCase(adminLogin.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      });
+      builder.addCase(adminLogin.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.accessToken = action.payload.access;
+        state.refreshToken = action.payload.refresh;
+        state.error = null;
+        toast.success("Admin login successful");
 
-            // Redirect to login with current path
-            if (typeof window !== 'undefined') {
-                const currentPath = window.location.pathname;
-                const loginUrl = new URL('/admin/login', window.location.origin);
-                loginUrl.searchParams.set('from', currentPath);
-                window.location.href = loginUrl.toString();
-            }
-        });
+        // Start session monitoring
+        SessionManager.getInstance().startSession();
+      });
+      builder.addCase(adminLogin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? "Admin login failed";
+        state.isAuthenticated = false;
+        state.user = null;
+        state.accessToken = null;
+        state.refreshToken = null;
 
-        // Logout cases
-        builder.addCase(logout.fulfilled, (state) => {
-            state.isAuthenticated = false;
-            state.user = null;
-            state.accessToken = null;
-            state.refreshToken = null;
-            state.error = null;
-            toast.success('Logged out successfully');
-        });
+        // End session if login fails
+        SessionManager.getInstance().endSession();
+      });
 
-        // Load user cases
-        builder.addCase(loadUser.pending, (state) => {
-            state.isLoading = true;
-        });
-        builder.addCase(loadUser.fulfilled, (state, action) => {
-            state.isLoading = false;
-            state.user = action.payload;
-            state.error = null;
-        });
-        builder.addCase(loadUser.rejected, (state, action) => {
-            state.isLoading = false;
-            state.error = action.payload ?? 'Failed to load user';
+      // Refresh cases
+      builder.addCase(refreshAccessToken.fulfilled, (state, action) => {
+        state.accessToken = action.payload.access;
+        state.error = null;
+      });
+      builder.addCase(refreshAccessToken.rejected, (state) => {
+        state.isAuthenticated = false;
+        state.user = null;
+        state.accessToken = null;
+        state.refreshToken = null;
+        toast.error("Session expired. Please login again");
 
-            // End session if user load fails
-            SessionManager.getInstance().endSession();
-        });
+        // End session on refresh failure
+        SessionManager.getInstance().endSession();
 
-        // Update user cases
-        builder.addCase(updateUserData.fulfilled, (state, action) => {
-          if (state.user) {
-            state.user = {
-              ...state.user,
-              ...action.payload,
-            };
-          }
-        });
+        // Redirect to login with current path
+        if (typeof window !== "undefined") {
+          const currentPath = window.location.pathname;
+          const loginUrl = new URL("/admin/login", window.location.origin);
+          loginUrl.searchParams.set("from", currentPath);
+          window.location.href = loginUrl.toString();
+        }
+      });
+
+      // Logout cases
+      builder.addCase(logout.fulfilled, (state) => {
+        state.isAuthenticated = false;
+        state.user = null;
+        state.accessToken = null;
+        state.refreshToken = null;
+        state.error = null;
+        toast.success("Logged out successfully");
+      });
+
+      // Load user cases
+      builder.addCase(loadUser.pending, (state) => {
+        state.isLoading = true;
+      });
+      builder.addCase(loadUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.error = null;
+      });
+      builder.addCase(loadUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? "Failed to load user";
+
+        // End session if user load fails
+        SessionManager.getInstance().endSession();
+      });
+
+      // Update user cases
+      builder.addCase(updateUserData.fulfilled, (state, action) => {
+        if (state.user) {
+          state.user = {
+            ...state.user,
+            ...action.payload,
+          };
+        }
+      });
     },
 });
 
