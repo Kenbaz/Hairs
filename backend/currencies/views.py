@@ -3,7 +3,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from .models import Currency
 from .serializers import CurrencySerializer, CurrencyConversionSerializer
 from .utils import CurrencyConverter
@@ -20,8 +20,8 @@ class CurrencyViewSet(viewsets.ModelViewSet):
             Admin users can perform all operations
         
         """
-        if self.action in ['list', 'retrieve', 'convert']:
-            Permission_classes = [IsAuthenticated]
+        if self.action in ['list', 'retrieve', 'convert', 'active']:
+            Permission_classes = [AllowAny]
         else:
             Permission_classes = [IsAdminUser]
         return [permission() for permission in Permission_classes]
@@ -63,11 +63,11 @@ class CurrencyViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
     
-
     @action(detail=False, methods=['get'])
-    def active(self):
-        """ Get all active currencies with thier info """
-        currencies = CurrencyConverter.get_active_currencies()
-        return Response(currencies)
+    def active(self, request):
+        """Get all active currencies with their info"""
+        currencies = Currency.objects.filter(is_active=True)
+        serializer = self.get_serializer(currencies, many=True)
+        return Response(serializer.data)
 
 

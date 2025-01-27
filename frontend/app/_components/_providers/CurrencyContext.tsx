@@ -4,8 +4,9 @@ import { createContext, useCallback, useContext, useState, useEffect, PropsWithC
 import type { Currency } from "@/src/types";
 import { useQuery } from "@tanstack/react-query";
 import { adminCurrencyService } from "@/src/libs/services/adminServices/adminCurrencyService";
+import { publicCurrencyService } from "@/src/libs/services/customerServices/publicCurrencyService";
 import { useAppSelector } from "@/src/libs/_redux/hooks";
-import { selectIsAuthenticated } from "@/src/libs/_redux/authSlice";
+import { selectIsAdmin } from "@/src/libs/_redux/authSlice";
 
 
 interface CurrencyContextType {
@@ -19,13 +20,13 @@ interface CurrencyContextType {
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'adminCurrency';
+const STORAGE_KEY = 'selectedCurrency';
 const DEFAULT_CURRENCY = 'USD';
 
 
 export function CurrencyProvider({ children }: PropsWithChildren) {
     // Get authentication status
-    const isAuthenticated = useAppSelector(selectIsAuthenticated);
+    const isAdmin = useAppSelector(selectIsAdmin);
 
     // Initialize from local storage with USD fallback
     const [selectedCurrency, setSelectedCurrency] = useState(() => {
@@ -38,16 +39,17 @@ export function CurrencyProvider({ children }: PropsWithChildren) {
 
     // Fetch available currencies
     const {
-        data: availableCurrencies = [],
-        isLoading,
-        error,
+      data: availableCurrencies = [],
+      isLoading,
+      error,
     } = useQuery({
-        queryKey: ['admin', 'currencies', 'active'],
-        queryFn: () => adminCurrencyService.getActiveCurrencies(),
-        staleTime: 5 * 60 * 1000, // data is considered fresh for 5 minutes
-        refetchOnWindowFocus: false,
-        // Only fetch when authenticated
-        enabled: isAuthenticated,
+      queryKey: ["currencies", "active", isAdmin ? "admin" : "public"],
+      queryFn: () =>
+        isAdmin
+          ? adminCurrencyService.getActiveCurrencies()
+          : publicCurrencyService.getPublicCurrencies(),
+      staleTime: 5 * 60 * 1000, // data is considered fresh for 5 minutes
+      refetchOnWindowFocus: false,
     });
 
 
@@ -79,7 +81,7 @@ export function CurrencyProvider({ children }: PropsWithChildren) {
         selectedCurrency,
         updateCurrency,
         availableCurrencies,
-        isLoading: isLoading && isAuthenticated,
+        isLoading,
         error: error as Error | null,
     };
 

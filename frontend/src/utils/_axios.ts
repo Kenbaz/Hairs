@@ -72,7 +72,13 @@ axiosInstance.interceptors.response.use(
     // If there is no config, reject immediately
     if (!originalRequest) {
       return Promise.reject(error);
-    };
+    }
+
+    // Check if this is a login request - to avoid refreshing on login failures
+    const isLoginRequest = originalRequest.url?.includes("/login/");
+    if (isLoginRequest) {
+      return Promise.reject(error);
+    }
 
     // Avoid infinite loops
     if (originalRequest._retry) {
@@ -113,7 +119,12 @@ axiosInstance.interceptors.response.use(
         processQueue(null, newToken);
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError instanceof Error ? refreshError : new Error('Token refresh failed'), null);
+        processQueue(
+          refreshError instanceof Error
+            ? refreshError
+            : new Error("Token refresh failed"),
+          null
+        );
 
         // If refresh fails, logout the user
         store.dispatch(logout());

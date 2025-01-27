@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '../UI/Button';
@@ -48,7 +50,9 @@ export function PasswordResetConfirmation({ token }: PasswordResetConfirmationPr
           });
 
           if (success) {
-            router.push("/admin/login");
+            // Check for admin route
+            const isAdminRoute = window.location.pathname.startsWith('/admin');
+            router.push(isAdminRoute ? "/admin/login" : "/auth/login");
           }
         } catch {
           setError("Failed to reset password. The link may have expired.");

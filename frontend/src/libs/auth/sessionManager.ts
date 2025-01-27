@@ -5,7 +5,7 @@ import { logout } from "../_redux/authSlice";
 export class SessionManager {
     private static instance: SessionManager;
     private timeoutId: ReturnType<typeof setTimeout> | null = null;
-    private readonly timeoutDuration: number = 30 * 60 * 1000; // 30 minutes
+    private readonly adminTimeoutDuration: number = 30 * 60 * 1000; // 30 minutes
     private readonly events: readonly string[] = [
         'mousedown',
         'keydown',
@@ -43,20 +43,47 @@ export class SessionManager {
 
 
     private resetTimer(): void {
-        if (this.timeoutId) {
+        const isAdminUser = this.isAdminUser();
+
+        // Only manage timeout for admin users
+        if (isAdminUser) {
+          if (this.timeoutId) {
             clearTimeout(this.timeoutId);
+          }
+          this.timeoutId = setTimeout(
+            () => this.handleTimeout(),
+            this.adminTimeoutDuration
+          );
         }
-        this.timeoutId = setTimeout(() => this.handleTimeout(), this.timeoutDuration);
     };
 
 
     private handleTimeout(): void {
-        store.dispatch(logout());
+        if (this.isAdminUser()) {
+          // Dispatch logout only for admin users
+            store.dispatch(logout());
+        }
     };
 
 
+    private isAdminUser(): boolean {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return false;
+
+      // Decode JWT token
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.is_staff || payload.is_superuser;
+    } catch {
+      return false;
+    }
+  }
+
+
     public startSession(): void { 
-        this.resetTimer();
+        if (this.isAdminUser()) {
+          this.resetTimer();
+        }
     };
 
 

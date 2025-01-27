@@ -12,7 +12,10 @@ export function PasswordResetForm() {
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [success, setSuccess] = useState(false);
-
+    
+    const adminRoute = window.location.pathname.startsWith('/admin');
+    
+  
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -35,7 +38,7 @@ export function PasswordResetForm() {
                 <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => window.location.href = '/admin/login'}
+                    onClick={() => adminRoute ? (window.location.href = "/admin/login") : (window.location.href = "/auth/login")}
                 >
                     Return to Login
                 </Button>
@@ -76,7 +79,7 @@ export function PasswordResetForm() {
 
         <div className="text-center">
           <Link
-            href="/admin/login"
+            href={adminRoute ? "/admin/login" : "/auth/login"}
             className="text-sm text-blue-600 hover:text-blue-500"
           >
             Back to Login

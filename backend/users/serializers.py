@@ -5,6 +5,9 @@ from django.contrib.auth.password_validation import validate_password
 from .models import User
 from utils.cloudinary_utils import CloudinaryUploader
 from django.conf import settings
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.crypto import get_random_string
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -17,10 +20,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'email', 'username', 'password', 'password_repeat',
+            'email', 'password', 'password_repeat',
             'first_name', 'last_name', 'phone_number',
-            'address', 'city',
-            'state', 'country', 'postal_code',
         )
         extra_kwargs = {
             'first_name': {'required': True},
@@ -35,12 +36,53 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     
 
     def create(self, validated_data):
-        validated_data.pop('password_repeat')
+        # Remove password_repeat from the data
+        validated_data.pop('password_repeat', None)
         password = validated_data.pop('password')
-        user = User.objects.create_user(**validated_data)
+
+        # Generate verification token
+        verification_token = get_random_string(64)
+
+        # Create user
+        user = User.objects.create_user(
+            **validated_data,
+            email_verification_token=verification_token,
+            verified_email=False
+        )
         user.set_password(password)
         user.save()
+
+        # Send verification email
+        self._send_verification_email(user, verification_token)
+
         return user
+    
+
+    def _send_verification_email(self, user, token):
+        """Send verification email to user"""
+        verification_url = f"{settings.FRONTEND_URL}/verify-email/{token}"
+
+        context = {
+            'user': user,
+            'verification_url': verification_url,
+            'site_name': 'Miz Viv Hairs',
+            'valid_hours': 24 # Token valid for 24 hours
+        }
+
+        # Render email template
+        html_message = render_to_string('emails/verify_email.html', context)
+
+        try:
+            send_mail(
+                subject='Verify your email address',
+                message="",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+        except Exception as e:
+            print(f"Error sending verification email: {e}")
 
 
 class BaseUserSerializer(serializers.ModelSerializer):
@@ -68,7 +110,7 @@ class UserProfileSerializer(BaseUserSerializer):
     class Meta:
         model = User
         fields = (
-            'id', 'email', 'username', 
+            'id', 'email', 
             'first_name', 'last_name', 
             'phone_number', 'address', 'city', 'state',
             'country', 'postal_code', 'full_name', 'avatar', 'avatar_url'
@@ -140,10 +182,10 @@ class AdminProfileSerializer(BaseUserSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'email', 'username', 'first_name', 'last_name',
+            'id', 'email', 'first_name', 'last_name',
             'phone_number', 'avatar', 'avatar_url', 'full_name'
         ]
-        read_only_fields = ['email', 'username']
+        read_only_fields = ['email', 'full_name']
 
 
     def get_full_name(self, obj):

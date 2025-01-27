@@ -1,5 +1,3 @@
-// Create new file: src/libs/services/adminServices/adminProfileService.ts
-
 import axiosInstance from "@/src/utils/_axios";
 import { User } from "@/src/types";
 import { AxiosError } from "axios";

@@ -1,6 +1,7 @@
 # users/views.py
 
 from rest_framework import status, generics, serializers
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -15,7 +16,11 @@ from .models import User
 from rest_framework.permissions import IsAdminUser
 from django.db import transaction
 from django.utils.crypto import get_random_string
+from django.utils import timezone
+from datetime import timedelta
+from django.template.loader import render_to_string
 from utils.cloudinary_utils import CloudinaryUploader
+from django.template.loader import render_to_string
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 
@@ -74,19 +79,31 @@ class ResetPasswordEmailView(generics.GenericAPIView):
             # Create reset token
             reset_token = f"{uid}-{token}"  # Format: uid-token
 
+            # Check is user is admin
+            is_admin = user.is_staff or user.is_superuser
+            base_path = 'admin' if is_admin else 'auth'
+
             # Construct reset URL with the combined token
             reset_url = f"{
-                settings.FRONTEND_URL}/admin/password-reset/{reset_token}"
+                settings.FRONTEND_URL}/{base_path}/password-reset/{reset_token}"
 
             print(f"Debug - Reset URL: {reset_url}")  # Debug log
 
+            # email context
+            context = {
+                'reset_url': reset_url,
+                'year': timezone.now().year,
+            }
+
+            html_message = render_to_string('emails/password_reset.html', context)
+
             # Send email
             send_mail(
-                'Password Reset Request',
-                f'Please click the following link to reset your password: {
-                    reset_url}',
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
+                subject='Reset your password - Miz Viv Hairs',
+                message='',
+                recipient_list=[email],
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                html_message=html_message,
                 fail_silently=False,
             )
 
@@ -152,31 +169,55 @@ class SendVerificationEmailView(generics.GenericAPIView):
 
     def post(self, request):
         user = request.user
+
+        # Check if email is already verified
         if user.verified_email:
             return Response(
-                {"message": "Email already verified"},
+                {"message": "Email is already verified"},
                 status=status.HTTP_200_OK
             )
-        
-        # Generate verification token
-        token = get_random_string(64)
-        user.email_verification_token = token
+
+        # Generate new verification token
+        verification_token = get_random_string(64)
+        user.email_verification_token = verification_token
         user.save()
 
-        # Send verification email
-        verification_url = f"{settings.FRONTEND_URL}/verify-email/{token}"
-        send_mail(
-            'Verify your email',
-            f'Please click the following link to verify your email: {verification_url}',
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False
-        )
+        # Prepare email context
+        verification_url = f"{
+            settings.FRONTEND_URL}/verify-email/{verification_token}"
+        context = {
+            'user': user,
+            'verification_url': verification_url,
+            'site_name': 'Miz Viv Hairs',
+            'valid_hours': 24  # Token valid for 24 hours
+        }
 
-        return Response(
-            {"message": "Verification email sent successfully."},
-            status=status.HTTP_200_OK
-        )
+        try:
+            # Render both HTML and plain text versions
+            html_message = render_to_string(
+                'emails/verify_email.html', context)
+
+            # Send email
+            send_mail(
+                subject='Verify your email address',
+                message='',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+
+            return Response({
+                "message": "Verification email sent successfully"
+            })
+
+        except Exception as e:
+            # Log the error
+            print(f"Failed to send verification email: {str(e)}")
+            return Response(
+                {"error": "Failed to send verification email"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class VerifyEmailView(generics.GenericAPIView):
@@ -186,22 +227,46 @@ class VerifyEmailView(generics.GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        token = serializer.data['token']
+        token = serializer.validated_data['token']
 
         try:
-            user = User.objects.get(email_verification_token=token)
-            if not user.verified_email:
-                user.verified_email = True
-                user.email_verification_token = ''
-                user.save()
-                return Response(
-                    {"message": "Email verified successfully."},
-                    status=status.HTTP_200_OK
-                )
-            return Response(
-                {"message": "Email is already verified."},
-                status=status.HTTP_200_OK
+            # Find user with the token
+            user = User.objects.get(
+                email_verification_token=token,
+                verified_email=False
             )
+
+            # Check token expiry (24 hours)
+            token_age = timezone.now() - user.date_joined
+            if token_age > timedelta(hours=24):
+                return Response(
+                    {"error": "Verification link has expired. Please request a new one."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Mark email as verified and clear token
+            user.verified_email = True
+            user.email_verification_token = ''
+            user.save()
+
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                'message': 'Email verified successfully.',
+                'verified': True,
+                'tokens': {
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh)
+                },
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'verified_email': user.verified_email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name
+                }
+            })
         except User.DoesNotExist:
             return Response(
                 {"error": "Invalid verification token."},
@@ -232,7 +297,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['user'] = {
             'id': user.id,
             'email': user.email,
-            'username': user.username,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'is_staff': user.is_staff,

@@ -7,8 +7,7 @@ from .models import User
 
 class CustomUserAdmin(UserAdmin):
     list_display = (
-        'email', 
-        'username', 
+        'email',  
         'get_full_name',
         'country',
         'city',
@@ -31,7 +30,6 @@ class CustomUserAdmin(UserAdmin):
     
     search_fields = (
         'email',
-        'username',
         'first_name',
         'last_name',
         'phone_number',
@@ -43,7 +41,7 @@ class CustomUserAdmin(UserAdmin):
     
     fieldsets = (
         ('Login Information', {
-            'fields': ('email', 'username', 'password')
+            'fields': ('email', 'password')
         }),
         ('Personal Information', {
             'fields': (
@@ -89,7 +87,6 @@ class CustomUserAdmin(UserAdmin):
             'classes': ('wide',),
             'fields': (
                 'email',
-                'username',
                 'first_name',
                 'last_name',
                 'password1',

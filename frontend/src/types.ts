@@ -1,13 +1,106 @@
 export interface User {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone_number?: string;
+  is_staff?: boolean;
+  avatar?: string | null;
+  avatar_url?: string | null;
+  is_superuser?: boolean;
+  verified_email: boolean;
+  address?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
+}
+
+export interface UserRegisterData {
+  email: string;
+  password: string;
+  password_repeat: string;
+  first_name: string;
+  last_name: string;
+  phone_number?: string;
+}
+
+export interface UpdateProfileData {
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
+}
+
+export interface VerifyEmailData { 
+  token: string;
+}
+
+export interface VerifyEmailResponse {
+  message: string;
+  verified: boolean;
+  tokens: {
+    access: string;
+    refresh: string;
+  };
+  user: {
     id: number;
     email: string;
-    username: string;
+    verified_email: boolean;
     first_name: string;
     last_name: string;
-    is_staff: boolean;
-    avatar?: string | null;
-    avatar_url?: string | null;
-    is_superuser: boolean;
+  };
+}
+
+export interface VerificationSuccess {
+  user: {
+    id: number;
+    email: string;
+    verified_email: boolean;
+    first_name: string;
+    last_name: string;
+  };
+  tokens: {
+    access: string;
+    refresh: string;
+  };
+}
+
+export interface PasswordResetRequestData {
+  email: string;
+}
+
+export interface PasswordRequestConfirmData {
+  uid64: string;
+  token: string;
+  password: string;
+  password_confirmation: string;
+}
+
+export interface ChangePasswordData { 
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export interface ShippingAddressData {
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postal_code: string;
+}
+
+export interface UpdateShippingAddressData { 
+  address?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
 }
 
 
@@ -26,20 +119,17 @@ export interface LoginCredentials {
     password: string;
 }
 
-
 export interface AuthResponse {
     access: string;
     refresh: string;
     user: User;
 }
 
-
 export interface ApiError {
   detail?: string;
   message?: string;
   errors?: Record<string, string[]>;
 }
-
 
 export interface RootState {
     auth: AuthState;
@@ -59,14 +149,12 @@ export interface AdminNotification {
     reference_id?: number;
 }
 
-
 export interface NotificationState {
     notifications: AdminNotification[];
     unreadCount: number;
     isLoading: boolean;
     error: string | null;
 }
-
 
 export interface DashboardStats {
     // Basic stats
@@ -102,7 +190,6 @@ export interface DashboardStats {
     sales_growth: number;
 }
 
-
 export interface SalesAnalytics {
     period: string;
     data: Array<{
@@ -115,7 +202,6 @@ export interface SalesAnalytics {
     average_order_value: number;
 }
 
-
 export interface RecentOrder {
     id: number;
     created_at: string;
@@ -126,12 +212,10 @@ export interface RecentOrder {
     items_count: number;
 }
 
-
 export interface OrdersResponse {
     total: number;
     orders: RecentOrder[];
 }
-
 
 export interface LowStockProduct {
     id: number;
@@ -143,19 +227,16 @@ export interface LowStockProduct {
     image?: string;
 }
 
-
 export interface LowStockResponse {
     total: number;
     products: LowStockProduct[];
 }
-
 
 export interface RevenueData {
     period: string;
     total_sales: number;
     order_count: number;
 }
-
 
 export interface RevenueAnalytics {
     period: 'daily' | 'monthly';
@@ -164,7 +245,6 @@ export interface RevenueAnalytics {
     order_count: number;
     average_order_value: number;
 }
-
 
 export interface TopProduct {
     id: number;
@@ -175,7 +255,6 @@ export interface TopProduct {
     image?: string;
     growth_rate: number;
 }
-
 
 export interface ProductAnalytics {
     best_sellers: TopProduct[];
@@ -212,7 +291,6 @@ export interface AdminProduct {
     revenue_generated: number
 }
 
-
 export interface ProductImage {
   id: number;
   url: string;
@@ -220,16 +298,13 @@ export interface ProductImage {
   is_primary: boolean;
 }
 
-
 export interface Category {
   id: number;
   name: string;
   slug: string;
 }
 
-
 export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
-
 
 export interface ProductFilters {
     search?: string;
@@ -243,7 +318,6 @@ export interface ProductFilters {
     page_size: number;
 }
 
-
 export interface ProductResponse {
     count: number;
     next: string | null;
@@ -251,14 +325,12 @@ export interface ProductResponse {
     results: AdminProduct[];
 }
 
-
 export interface BulkOperationResponse { 
     message: string;
     deleted_count?: number;
     error?: string;
     products?: AdminProduct[];
 }
-
 
 export interface ProductFormData {
     name: string;
@@ -275,7 +347,6 @@ export interface ProductFormData {
     low_stock_threshold?: number;
     images?: File[];
 }
-
 
 // Currency types
 export interface Currency {
@@ -538,7 +609,6 @@ export interface PolicyResponse {
 export interface AdminUser {
   id: number;
   email: string;
-  username: string;
   first_name: string;
   last_name: string;
   phone_number?: string;

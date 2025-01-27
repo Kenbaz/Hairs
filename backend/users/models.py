@@ -8,13 +8,12 @@ from cloudinary_storage.storage import MediaCloudinaryStorage
 from utils.cloudinary_utils import CloudinaryUploader
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, username, first_name, last_name, password=None, **extra_fields):
+    def create_user(self, email, first_name, last_name, password=None, **extra_fields):
         if not email:
             raise ValueError('Users must have an email address')
         
         user = self.model(
             email = self.normalize_email(email),
-            username = username,
             first_name = first_name,
             last_name = last_name,
             **extra_fields
@@ -25,10 +24,9 @@ class CustomUserManager(BaseUserManager):
         return user
     
 
-    def create_superuser(self, first_name, last_name, email, username, password=None):
+    def create_superuser(self, first_name, last_name, email, password=None):
         user = self.create_user(
             email = self.normalize_email(email),
-            username = username,
             password = password,
             first_name = first_name,
             last_name = last_name,
@@ -45,7 +43,6 @@ class User(AbstractUser):
     # Basic Information
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
-    username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(max_length=100, unique=True)
     phone_number = models.CharField(max_length=15, blank=True)
     verified_email = models.BooleanField(default=False)
@@ -79,7 +76,7 @@ class User(AbstractUser):
 
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+    REQUIRED_FIELDS = [ 'first_name', 'last_name']
 
     class Meta:
         ordering = ['-date_joined']

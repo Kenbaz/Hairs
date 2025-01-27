@@ -40,7 +40,8 @@ export async function middleware(request: NextRequest) {
     
 
     const redirectToLogin = (request: NextRequest) => {
-        const loginUrl = new URL('/admin/login', request.url);
+        const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+        const loginUrl = new URL(isAdminRoute ? '/admin/login' : 'auth/login', request.url);
         loginUrl.searchParams.set('from', request.nextUrl.pathname);
         return NextResponse.redirect(loginUrl);
     };

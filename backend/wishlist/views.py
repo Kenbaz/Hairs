@@ -47,7 +47,7 @@ class WishlistViewSet(viewsets.GenericViewSet):
                 )
             
             # Add product to wishlist
-            wishlist_item = WishlistItem.objects.create(
+            WishlistItem.objects.create(
                 wishlist=wishlist,
                 product=product
             )
