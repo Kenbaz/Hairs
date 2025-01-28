@@ -291,6 +291,12 @@ export interface AdminProduct {
     revenue_generated: number
 }
 
+export interface ProductState {
+  filters: ProductFilters;
+  currentPage: number;
+  searchQuery: string;
+}
+
 export interface ProductImage {
   id: number;
   url: string;
@@ -1125,7 +1131,6 @@ export interface PaymentStatsTypeForAdmin {
 }
 
 // Shipping Types
-// Add to src/types.ts
 
 export interface ShippingRate {
     id: number;
@@ -1159,4 +1164,136 @@ export interface UpdateShippingRateData {
     currency_code?: string;
     flat_rate?: number;
     is_active?: boolean;
+}
+
+
+// Cart types
+// Types for cart items and state management
+export interface CartProduct {
+    id: number;
+    name: string;
+    price: number;
+    discount_price?: number;
+    image?: string;
+    stock: number;
+    category: {
+        id: number;
+        name: string;
+    };
+}
+
+export interface CartItem {
+    id: number;
+    product: CartProduct;
+    quantity: number;
+    price_at_add: number;
+    created_at: string;
+}
+
+export interface CartSummary {
+    subtotal: number;
+    shipping_fee: number;
+    total: number;
+    item_count: number;
+}
+
+export interface CartState {
+    items: CartItem[];
+    summary: CartSummary;
+    isLoading: boolean;
+    error: string | null;
+    lastUpdated: string | null;
+}
+
+// For cart operations
+export interface AddToCartData {
+    product_id: number;
+    quantity: number;
+}
+
+export interface UpdateCartItemData {
+    item_id: number;
+    quantity: number;
+}
+
+export interface CartResponse {
+    id?: number;
+    items: CartItem[];
+    total_amount: number;
+    created_at?: string;
+    updated_at?: string;
+    shipping_fee: number;
+}
+
+// For cart merging after login
+export interface MergeCartResponse {
+    message: string;
+    cart: CartResponse;
+}
+
+// For cart API errors
+export interface CartError {
+    message: string;
+    code?: string;
+    field?: string;
+    details?: {
+        [key: string]: string[];
+    };
+}
+
+// For optimistic updates
+export interface CartOptimisticUpdate {
+    type: 'add' | 'remove' | 'update';
+    data: CartItem;
+    timestamp: string;
+}
+
+// For shipping calculation
+export interface ShippingFee {
+    amount: number;
+    currency: string;
+}
+
+// Wishlist Types
+export interface WishlistItem {
+    id: number;
+    product: {
+        id: number;
+        name: string;
+        price: number;
+        discount_price?: number;
+        stock: number;
+        image?: string;
+        category: {
+            id: number;
+            name: string;
+        };
+    };
+    added_at: string;
+}
+
+export interface Wishlist {
+    id: number;
+    items: WishlistItem[];
+    total_items: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface WishlistState {
+    items: WishlistItem[];
+    isLoading: boolean;
+    error: string | null;
+    lastUpdated: string | null;
+}
+
+export interface WishlistResponse {
+    message: string;
+    wishlist: Wishlist;
+}
+
+export interface MoveToCartResponse {
+    wishlist: Wishlist;
+    message: string;
+    cart?: CartResponse; // Optional cart response if needed
 }

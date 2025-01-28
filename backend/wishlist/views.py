@@ -7,6 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Wishlist, WishlistItem
 from .serializers import WishlistSerializer
 from products.models import Product
+from cart.models import CartItem, Cart
+from cart.serializers import CartSerializer
 
 
 class WishlistViewSet(viewsets.GenericViewSet):
@@ -110,3 +112,67 @@ class WishlistViewSet(viewsets.GenericViewSet):
         ).exists()
 
         return Response({"is_in_wishlist": is_in_wishlist})
+
+
+    @action(detail=False, methods=['post'])
+    def move_to_cart(self, request):
+        """Move item from wishlist to cart"""
+        product_id = request.data.get('product_id')
+
+        try:
+            # Find the item in wishlist
+            wishlist = self.get_object()
+            wishlist_item = WishlistItem.objects.get(
+                wishlist=wishlist,
+                product_id=product_id
+            )
+
+            # Check product stock
+            product = wishlist_item.product
+            if not product.is_available or product.stock <= 0:
+                return Response(
+                    {'error': 'Product is no longer available'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get or create cart
+            cart, _ = Cart.objects.get_or_create(user=request.user)
+
+            # Add to cart
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart,
+                product=product,
+                defaults={
+                    'quantity': 1,
+                    'price_at_add': product.discount_price or product.price
+                }
+            )
+
+            if not created:
+                cart_item.quantity += 1
+                cart_item.save()
+            
+            # Remove from wishlist
+            wishlist_item.delete()
+
+            return Response({
+                'message': f'{product.name} added to cart',
+                'wishlist': WishlistSerializer(wishlist).data,
+                'cart': CartSerializer(cart).data
+            })
+        
+        except WishlistItem.DoesNotExist:
+            return Response(
+                {"error": "Item not found in wishlist"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Product.DoesNotExist:
+            return Response(
+                {"error": "Product not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

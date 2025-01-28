@@ -6,6 +6,8 @@ import { ReduxProvider } from "@/src/libs/_redux/Provider";
 import { QueryProvider } from "./_components/_providers/QueryProvider";
 import { CurrencyProvider } from "./_components/_providers/CurrencyContext";
 import { PaymentProvider } from "./_components/_providers/PaymentContext";
+import { CartInitializer } from "./_components/_providers/CartInitializer";
+import { WishlistInitializer } from "./_components/_providers/WishlistInitializer";
 
 
 const geistSans = localFont({
@@ -38,6 +40,8 @@ export default function RootLayout({
           <ReduxProvider>
             <PaymentProvider>
               <CurrencyProvider>
+                <CartInitializer />
+                <WishlistInitializer />
                 {children}
                 <Toaster
                   position="top-right"
