@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 
 export const useWishlistQuery = (productId?: number) => {
   const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isUser } = useAuth();
 
     
   // Fetch wishlist
@@ -18,7 +18,8 @@ export const useWishlistQuery = (productId?: number) => {
   } = useQuery({
     queryKey: ["wishlist"],
     queryFn: () => wishlistService.fetchWishlist(),
-    enabled: isAuthenticated,
+    staleTime: 60 * 60 * 1000,
+    enabled: isAuthenticated && isUser,
   });
 
     

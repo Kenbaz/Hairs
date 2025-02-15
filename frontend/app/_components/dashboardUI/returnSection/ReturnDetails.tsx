@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
-import { Loader2, ArrowLeft } from "lucide-react";
-import { Button } from "../../UI/Button";
+import { useParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { Alert } from "../../UI/Alert";
 import { Breadcrumb } from "../../UI/Breadcrumb";
 import { ReturnRequest } from "@/src/types";
@@ -16,7 +15,6 @@ import CustomerInfo from "../orderSection/CustomerInfo";
 
 export default function ReturnDetails() {
   const params = useParams();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [alert, setAlert] = useState<{
     type: "success" | "error";
@@ -98,7 +96,7 @@ export default function ReturnDetails() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-800" />
       </div>
     );
   }
@@ -110,31 +108,25 @@ export default function ReturnDetails() {
 
     
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen px-2 md:px-0 md:mt-[2%] xl:-mt-[2%] xl:pt-1 2xl:pt-2">
       <Breadcrumb />
 
       {alert && <Alert type={alert.type} message={alert.message} />}
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="outline" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Return Request #{returnRequest.id}
-            </h1>
-            <p className="text-sm text-gray-500">
-              For Order #{returnRequest.order_number}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">
+            Return Request #{returnRequest.id}
+          </h1>
+          <p className="text-sm text-gray-500">
+            For Order #{returnRequest.order_number}
+          </p>
         </div>
       </div>
 
       {/* Content Grid */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:h-screen md:grid-style4 gap-6 md:gap-4">
         {/* Main Content - 2 columns */}
         <div className="col-span-2 space-y-6">
           <ReturnInformation
@@ -144,7 +136,7 @@ export default function ReturnDetails() {
         </div>
 
         {/* Sidebar - 1 column */}
-        <div className="space-y-6">
+        <div className="space-y-6 md:space-y-4 md:h-full col-span-2 md:col-span-1">
           <ReturnStatusUpdate
             currentStatus={returnRequest.return_status}
             onUpdateStatus={handleUpdateStatus}

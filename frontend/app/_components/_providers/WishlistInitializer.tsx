@@ -6,15 +6,15 @@ import { useWishlistQuery } from "@/src/libs/customHooks/useWishlist";
 
 
 export function WishlistInitializer() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isUser } = useAuth();
   const { refreshWishlist } = useWishlistQuery();
 
     
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && isUser) {
       refreshWishlist();
     }
-  }, [isAuthenticated, refreshWishlist]);
+  }, [isAuthenticated, refreshWishlist, isUser]);
 
   return null;
 }

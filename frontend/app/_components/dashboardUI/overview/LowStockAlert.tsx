@@ -89,14 +89,14 @@ export function LowStockAlerts() {
     const { data, isLoading, error } = useQuery<LowStockResponse>({
         queryKey: ['lowStockProducts'],
         queryFn: () => adminDashboardService.getLowStockProducts(5),
-        refetchInterval: 60000, // Refetch every minute
+        refetchInterval: 5 * 60 * 1000, // Refetch 5 every minutes
     });
 
     if (isLoading) {
       return (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-center h-48">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
           </div>
         </div>
       );
@@ -119,22 +119,22 @@ export function LowStockAlerts() {
 
 
     return (
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg max-h-[25rem] shadow">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <h2 className="text-lg font-medium text-gray-900">
+              <h2 className="text-lg md:text-xl font-medium lg:landscape:text-base text-gray-900">
                 Low Stock Alerts
               </h2>
               {total > 0 && (
-                <span className="px-2.5 py-0.5 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                <span className="px-2.5 py-0.5 rounded-full text-base font-medium bg-red-100 text-red-800">
                   {total}
                 </span>
               )}
             </div>
             <Link
               href="/admin/products?stock_status=low"
-              className="text-sm text-blue-600 hover:text-blue-800 inline-flex items-center space-x-1"
+              className="text-sm md:text-base text-blue-600 lg:landscape:text-sm hover:text-blue-800 inline-flex items-center space-x-1"
             >
               <span>View all</span>
               <ExternalLink className="h-4 w-4" />
@@ -142,14 +142,14 @@ export function LowStockAlerts() {
           </div>
         </div>
 
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-gray-200 lg:landscape:text-sm xl:overide2 text-base">
           {products.length > 0 ? (
             products.map((product) => (
               <ProductRow key={product.id} product={product} />
             ))
           ) : (
             <div className="flex items-center justify-center p-6 text-gray-500">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center md:text-base lg:landscape:text-sm space-x-2">
                 <AlertCircle className="h-5 w-5" />
                 <span>No products currently low in stock</span>
               </div>
@@ -159,7 +159,7 @@ export function LowStockAlerts() {
 
         {total > 5 && (
           <div className="px-6 py-4 border-t border-gray-200">
-            <div className="text-sm text-gray-500">
+            <div className="text-sm md:text-base text-gray-500">
               And {total - 5} more products with low stock
             </div>
           </div>

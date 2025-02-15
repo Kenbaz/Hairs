@@ -65,8 +65,8 @@ const PeriodSelector = ({
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
             ${
               selectedPeriod === period.value
-                ? "bg-blue-100 text-blue-700"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-gray-50 text-gray-900"
+                : "text-gray-700 hover:bg-gray-50"
             }`}
         >
           {period.label}
@@ -99,7 +99,7 @@ const AnalyticsCard = ({
   <div className="bg-white p-6 rounded-lg shadow-sm">
     <div className="flex items-center justify-between">
       <div>
-        <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+        <h3 className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-500">{title}</h3>
         <div className="mt-2 flex items-baseline">
           <p className="text-2xl font-semibold text-gray-900">
             <PriceDisplay
@@ -195,7 +195,7 @@ export function SalesAnalytics() {
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
         </div>
       );
     }
@@ -210,9 +210,19 @@ export function SalesAnalytics() {
 
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 h-[92%]">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-medium text-gray-900">Sales Analytics</h2>
+          <h2 className="text-lg md:text-xl font-medium text-gray-900">
+            Sales Analytics
+          </h2>
+          <div className="hidden md:inline-flex">
+            <PeriodSelector
+              selectedPeriod={period}
+              onPeriodChange={setPeriod}
+            />
+          </div>
+        </div>
+        <div className="grid ml-[31%] md:hidden">
           <PeriodSelector selectedPeriod={period} onPeriodChange={setPeriod} />
         </div>
 
@@ -237,40 +247,42 @@ export function SalesAnalytics() {
           />
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-sm font-medium text-gray-500 mb-4">
-            Sales Trend
-          </h3>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.trend_data}>
-                <defs>
-                  <linearGradient
-                    id="salesGradient"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="period"
-                  tickFormatter={(value) => format(parseISO(value), "MMM d")}
-                />
-                <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                <Tooltip content={CustomTooltip} />
-                <Area
-                  type="monotone"
-                  dataKey="total_sales"
-                  stroke="#3B82F6"
-                  fill="url(#salesGradient)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+        <div className="bg-white p-6 rounded-lg shadow-sm h-[85%]">
+          <div className="">
+            <h3 className="text-sm md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-500 mb-4">
+              Sales Trend
+            </h3>
+            <div className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.trend_data}>
+                  <defs>
+                    <linearGradient
+                      id="salesGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="period"
+                    tickFormatter={(value) => format(parseISO(value), "MMM d")}
+                  />
+                  <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                  <Tooltip content={CustomTooltip} />
+                  <Area
+                    type="monotone"
+                    dataKey="total_sales"
+                    stroke="#3B82F6"
+                    fill="url(#salesGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </div>
@@ -290,7 +302,7 @@ export function RevenueReport() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
       </div>
     );
   }
@@ -306,7 +318,15 @@ export function RevenueReport() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-medium text-gray-900">Revenue Report</h2>
+        <h2 className="text-lg md:text-xl font-medium text-gray-900">
+          Revenue Report
+        </h2>
+        <div className="hidden md:inline-flex">
+          <PeriodSelector selectedPeriod={period} onPeriodChange={setPeriod} />
+        </div>
+      </div>
+
+      <div className="grid ml-[31%] md:hidden">
         <PeriodSelector selectedPeriod={period} onPeriodChange={setPeriod} />
       </div>
 
@@ -323,9 +343,9 @@ export function RevenueReport() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-sm font-medium text-gray-500 mb-4">
+          <h3 className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 mb-4">
             Revenue Trend
           </h3>
           <div className="h-[300px]">
@@ -350,7 +370,7 @@ export function RevenueReport() {
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-sm font-medium text-gray-500 mb-4">
+          <h3 className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 mb-4">
             Revenue by Category
           </h3>
           <div className="h-[300px]">

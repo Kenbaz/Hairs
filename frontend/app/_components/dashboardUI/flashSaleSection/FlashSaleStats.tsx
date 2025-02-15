@@ -1,4 +1,6 @@
-import { useState } from "react";
+'use client';
+
+import { useState, Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { adminFlashSaleService } from "@/src/libs/services/adminServices/adminFlashService";
 import {
@@ -13,10 +15,17 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Loader2, Users, Package, DollarSign, Clock } from "lucide-react";
+import { Loader2, Users, Package, DollarSign, Clock, Check, ChevronDown } from "lucide-react";
 import { PriceDisplay } from "@/app/_components/UI/PriceDisplay";
 import { Alert } from "@/app/_components/UI/Alert";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
+import {
+  Listbox,
+  Transition,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+} from "@headlessui/react";
 
 
 // Add ValueDisplay component for handling PriceDisplay values
@@ -50,7 +59,7 @@ const StatCard = ({
   <div className="bg-white rounded-lg shadow p-6">
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm font-medium text-gray-600">{title}</p>
+        <p className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600">{title}</p>
         <p className="mt-2 text-3xl font-semibold text-gray-900">{value}</p>
         {description && (
           <p className="mt-1 text-sm text-gray-500">{description}</p>
@@ -76,8 +85,17 @@ interface FlashSaleStatsProps {
   flashSaleId: number;
 }
 
+
+const timeRangeOptions = [
+  { id: "hourly", name: "By Hour" },
+  { id: "daily", name: "By Day" },
+] as const;
+
+type TimeRange = (typeof timeRangeOptions)[number]["id"];
+
+
 export default function FlashSaleStats({ flashSaleId }: FlashSaleStatsProps) {
-  const [timeRange, setTimeRange] = useState<"hourly" | "daily">("hourly");
+  const [timeRange, setTimeRange] = useState<TimeRange>("hourly");
 
 
   // Get flash sale details
@@ -102,8 +120,75 @@ export default function FlashSaleStats({ flashSaleId }: FlashSaleStatsProps) {
   });
 
 
-  const handleTimeRangeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTimeRange(e.target.value as "hourly" | "daily");
+  // const handleTimeRangeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //   setTimeRange(e.target.value as "hourly" | "daily");
+  // };
+
+
+  const TimeRangeSelect = () => {
+    const selectedRange = timeRangeOptions.find(
+      (option) => option.id === timeRange
+    );
+
+    return (
+      <div className="w-40">
+        <Listbox
+          value={selectedRange}
+          onChange={(value) => setTimeRange(value.id)}
+        >
+          <div className="relative mt-1">
+            <ListboxButton className="relative w-full cursor-pointer rounded-lg bg-white py-2 pl-3 pr-10 text-left border focus:outline-none">
+              <span className="block truncate text-sm text-gray-900">
+                {selectedRange?.name}
+              </span>
+              <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronDown
+                  className="h-5 w-5 text-gray-400"
+                  aria-hidden="true"
+                />
+              </span>
+            </ListboxButton>
+            <Transition
+              as={Fragment}
+              leave="transition ease-in duration-100"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                {timeRangeOptions.map((option) => (
+                  <ListboxOption
+                    key={option.id}
+                    className={({ active }) =>
+                      `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
+                        active ? "bg-gray-200 text-blue-900" : "text-gray-900"
+                      }`
+                    }
+                    value={option}
+                  >
+                    {({ selected }) => (
+                      <>
+                        <span
+                          className={`block truncate ${
+                            selected ? "font-medium" : "font-normal"
+                          }`}
+                        >
+                          {option.name}
+                        </span>
+                        {selected ? (
+                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                            <Check className="h-5 w-5" aria-hidden="true" />
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                  </ListboxOption>
+                ))}
+              </ListboxOptions>
+            </Transition>
+          </div>
+        </Listbox>
+      </div>
+    );
   };
 
 
@@ -128,7 +213,7 @@ export default function FlashSaleStats({ flashSaleId }: FlashSaleStatsProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="p-4">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">
@@ -140,7 +225,7 @@ export default function FlashSaleStats({ flashSaleId }: FlashSaleStatsProps) {
             </p>
           </div>
           <div
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
+            className={`px-3 py-1 rounded-full text-sm md:text-base lg:landscape:text-[0.9rem] font-medium ${
               isActive
                 ? "bg-green-100 text-green-800"
                 : "bg-gray-100 text-gray-800"
@@ -157,7 +242,7 @@ export default function FlashSaleStats({ flashSaleId }: FlashSaleStatsProps) {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <StatCard
           title="Total Revenue"
           value={
@@ -192,7 +277,7 @@ export default function FlashSaleStats({ flashSaleId }: FlashSaleStatsProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Top Products */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">
@@ -221,14 +306,7 @@ export default function FlashSaleStats({ flashSaleId }: FlashSaleStatsProps) {
             Sales Over Time
           </h2>
           <div className="mb-4">
-            <select
-              value={timeRange}
-              onChange={handleTimeRangeChange}
-              className="mt-1 block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-            >
-              <option value="hourly">By Hour</option>
-              <option value="daily">By Day</option>
-            </select>
+            <TimeRangeSelect/>
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={purchases}>
@@ -270,21 +348,21 @@ export default function FlashSaleStats({ flashSaleId }: FlashSaleStatsProps) {
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 uppercase tracking-wide">
                   Customer
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 uppercase tracking-wide">
                   Product
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 uppercase tracking-wide">
                   Quantity
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 uppercase tracking-wide">
                   Price Paid
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 uppercase tracking-wide">
                   Purchase Date
                 </th>
               </tr>
@@ -293,20 +371,20 @@ export default function FlashSaleStats({ flashSaleId }: FlashSaleStatsProps) {
               {purchases?.map((purchase, index) => (
                 <tr key={index}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm  md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-900">
                       {purchase.customer_name}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm  md:text-base lg:landscape:text-[0.9rem] text-gray-500">
                       {purchase.customer_email}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm  md:text-base lg:landscape:text-[0.9rem] text-gray-900">
                       {purchase.product_name}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm  md:text-base lg:landscape:text-[0.9rem] text-gray-900">
                       {purchase.quantity}
                     </div>
                   </td>
@@ -317,7 +395,7 @@ export default function FlashSaleStats({ flashSaleId }: FlashSaleStatsProps) {
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm  md:text-base lg:landscape:text-[0.9rem] text-gray-900">
                       {format(
                         new Date(purchase.purchase_date),
                         "MMM d, yyyy HH:mm"

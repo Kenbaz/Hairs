@@ -29,22 +29,22 @@ export default function ComposeEmailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2 md:px-0 md:mt-4 md:h-screen lg:landscape:h-auto xl:-mt-4">
       <Breadcrumb />
 
       <div className="px-4">
-        <h1 className="text-2xl font-semibold text-gray-900">
+        <h1 className="text-2xl lg:landscape:text-xl font-semibold text-gray-900">
           {draftId ? "Edit Draft" : "Compose Email"}
         </h1>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-6 md:h-[92%] lg:landscape:h-full">
         <EmailComposer
           draftId={draftId || undefined}
           initialData={draftData || undefined}

@@ -19,3 +19,82 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@layer base {
+  .grid-style {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+    }
+  
+    .grid-style2 {
+      display: grid;
+      grid-template-columns: 250px 1fr 250px;
+      gap: 10px;
+    }
+  
+    .grid-style3 {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+    }
+  
+    .grid-style4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap: 10px;
+    }
+
+    .overide-height {
+      max-height: 60rem !important;
+      scrollbar-width: thin;
+      scroll-behavior: smooth;
+    }
+
+    .overide-height::-webkit-scrollbar {
+      border: none;
+      scrollbar-width: thin;
+    }
+
+    .main-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .overide-text {
+      font-size: 1.25rem !important;
+    }
+
+    .overide {
+      font-size: 1rem !important;  
+    }
+
+    .overide2 {
+      font-size: 0.95rem !important;  
+    }
+
+    .overide3 {
+      font-size: 0.875rem !important;
+    }
+
+    .overide4 {
+      font-size: 1.25rem !important;
+    }
+
+    .overide-size {
+      height: 1.25rem !important;
+      width: 1.25rem !important;
+    }
+
+    .overide-size2 {
+      height: 1.875rem !important;
+      width: 1.875rem !important;
+    }
+
+    .currency-list-style {
+      width: 10vw !important;
+    }
+
+    .layout-container::-webkit-scrollbar {
+      display: none;
+    }
+}
+
+

@@ -7,6 +7,7 @@ import {
   Calendar,
   Package,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 import { Button } from "../../UI/Button";
 import { Alert } from "../../UI/Alert";
@@ -50,7 +51,11 @@ export default function CustomerDetails({ customerId }: CustomerDetailsProps) {
     });
 
     if (isLoading) {
-        return <div>Loading...</div>;
+        return (
+          <div className="flex justify-center items-center h-96">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
+          </div>
+        );
     };
 
     if (error || !customer) {
@@ -62,9 +67,12 @@ export default function CustomerDetails({ customerId }: CustomerDetailsProps) {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => router.back()}>
+          <Button
+            className="bg-slate-700 hover:bg-slate-800 rounded-lg border border-slate-700 text-xm md:text-base"
+            onClick={() => router.back()}
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Customers
+            Back
           </Button>
         </div>
 
@@ -75,14 +83,15 @@ export default function CustomerDetails({ customerId }: CustomerDetailsProps) {
               <div className="flex items-center space-x-4">
                 <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
                   <span className="text-xl font-medium text-gray-500">
-                    {customer.first_name[0]}{customer.last_name[0]}
+                    {customer.first_name[0]}
+                    {customer.last_name[0]}
                   </span>
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl lg:landscape:text-lg font-semibold text-gray-900">
                     {customer.first_name} {customer.last_name}
                   </h2>
-                  <p className="text-sm text-gray-500">{customer.email}</p>
+                  <p className="text-sm text-gray-600">{customer.email}</p>
                 </div>
               </div>
               <button
@@ -102,13 +111,17 @@ export default function CustomerDetails({ customerId }: CustomerDetailsProps) {
           {/* Customer Metrics */}
           <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-4 gap-4 border-b">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Orders</p>
+              <p className="text-[0.95rem] md:text-base lg:landscape:text-[0.95rem] font-medium text-gray-600">
+                Total Orders
+              </p>
               <p className="mt-1 text-2xl font-semibold text-gray-900">
                 {customer.total_orders}
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Spent</p>
+              <p className="text-[0.95rem] md:text-base lg:landscape:text-[0.95rem] font-medium text-gray-600">
+                Total Spent
+              </p>
               <p className="mt-1 text-2xl font-semibold text-gray-900">
                 <PriceDisplay
                   amount={customer.total_spent}
@@ -117,7 +130,9 @@ export default function CustomerDetails({ customerId }: CustomerDetailsProps) {
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Average Order</p>
+              <p className="text-[0.95rem] md:text-base lg:landscape:text-[0.95rem] font-medium text-gray-600">
+                Average Order
+              </p>
               <p className="mt-1 text-2xl font-semibold text-gray-900">
                 <PriceDisplay
                   amount={customer.average_order_value}
@@ -126,7 +141,7 @@ export default function CustomerDetails({ customerId }: CustomerDetailsProps) {
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">
+              <p className="text-[0.95rem] md:text-base lg:landscape:text-[0.95rem] font-medium text-gray-600">
                 Customer Since
               </p>
               <p className="mt-1 text-2xl font-semibold text-gray-900">
@@ -142,33 +157,33 @@ export default function CustomerDetails({ customerId }: CustomerDetailsProps) {
             </h3>
             <div className="mt-4 space-y-4">
               <div className="flex items-center space-x-2">
-                <Mail className="h-5 w-5 text-gray-400" />
+                <Mail className="h-5 w-5 text-gray-500" />
                 <a
                   href={`mailto:${customer.email}`}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-[0.95rem] text-blue-600 hover:text-blue-800"
                 >
                   {customer.email}
                 </a>
               </div>
               {customer.phone_number && (
                 <div className="flex items-center space-x-2">
-                  <Phone className="h-5 w-5 text-gray-400" />
-                  <p className="text-sm text-gray-600">
+                  <Phone className="h-5 w-5 text-gray-500" />
+                  <p className="text-[0.95rem] text-gray-600">
                     {customer.phone_number}
                   </p>
                 </div>
               )}
               {customer.address && (
                 <div className="flex items-start space-x-2">
-                  <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
-                  <p className="text-sm text-gray-600 whitespace-pre-line">
+                  <MapPin className="h-5 w-5 text-gray-500 mt-0.5" />
+                  <p className="text-[0.95rem] text-gray-600 whitespace-pre-line">
                     {customer.address}
                   </p>
                 </div>
               )}
               <div className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5 text-gray-400" />
-                <p className="text-sm text-gray-600">
+                <Calendar className="h-5 w-5 text-gray-500" />
+                <p className="text-[0.95rem] text-gray-600">
                   Joined{" "}
                   {format(new Date(customer.date_joined), "MMMM d, yyyy")}
                 </p>
@@ -178,18 +193,18 @@ export default function CustomerDetails({ customerId }: CustomerDetailsProps) {
         </div>
 
         {/* Order History */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow pb-[14%] h-[60vh]">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Order History</h3>
           </div>
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 overflow-y-auto h-[55vh] overflow-hidden">
             {orderHistory?.orders.length === 0 ? (
               <div className="px-6 py-4 text-center">
                 <Package className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">
+                <h3 className="mt-2 text-[0.95rem] md:text-base lg:landscape:text-[0.95rem] font-medium text-gray-900">
                   No orders yet
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm md:text-[0.9rem] text-gray-500">
                   This customer hasn&apos;t placed any orders yet.
                 </p>
               </div>
@@ -200,11 +215,11 @@ export default function CustomerDetails({ customerId }: CustomerDetailsProps) {
                     <div>
                       <Link
                         href={`/admin/orders/${order.id}`}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                        className="text-[0.95rem] md:text-base font-medium text-blue-600 hover:text-blue-800"
                       >
                         Order #{order.id}
                       </Link>
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-[0.95rem] text-gray-500">
                         {format(new Date(order.created_at), "MMM d, yyyy")}
                       </p>
                     </div>
@@ -214,7 +229,7 @@ export default function CustomerDetails({ customerId }: CustomerDetailsProps) {
                         sourceCurrency="USD"
                       />
                       <span
-                        className={`ml-2 inline-flex px-2 text-xs font-semibold rounded-full ${
+                        className={`ml-2 inline-flex px-2 text-[0.8rem] font-semibold rounded-full ${
                           order.payment_status
                             ? "bg-green-100 text-green-800"
                             : "bg-yellow-100 text-yellow-800"

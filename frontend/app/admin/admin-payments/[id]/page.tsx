@@ -1,4 +1,3 @@
-// app/admin/payments/[id]/page.tsx
 "use client";
 
 import { PaymentDetails } from "@/app/_components/dashboardUI/paymentSection/PaymentDetails";

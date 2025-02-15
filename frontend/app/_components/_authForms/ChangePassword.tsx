@@ -52,55 +52,60 @@ export function ChangePassword() {
 
 
     return (
-       <div className="bg-white p-6 rounded-lg shadow">
-         <h2 className="text-xl font-semibold mb-4">Change Password</h2>
+      <div className="bg-white py-4 rounded-lg">
+        <h2 className="text-xl text-gray-900 font-semibold mb-4">
+          Change Password
+        </h2>
 
-         {error && <Alert type="error" message={error} className="mb-4" />}
-         {success && (
-           <Alert
-             type="success"
-             message="Password changed successfully"
-             className="mb-4"
-           />
-         )}
+        {error && <Alert type="error" message={error} className="mb-4" />}
+        {success && (
+          <Alert
+            type="success"
+            message="Password changed successfully"
+            className="mb-4"
+          />
+        )}
 
-         <form onSubmit={handleSubmit} className="space-y-4">
-           <Input
-             type="password"
-             label="Current Password"
-             value={oldPassword}
-             onChange={(e) => setOldPassword(e.target.value)}
-             required
-             disabled={isLoading}
-           />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            type="password"
+            label="Current Password"
+            className="text-gray-900 border rounded-lg"
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            required
+            disabled={isLoading}
+          />
 
-           <Input
-             type="password"
-             label="New Password"
-             value={newPassword}
-             onChange={(e) => setNewPassword(e.target.value)}
-             required
-             disabled={isLoading}
-           />
+          <Input
+            type="password"
+            label="New Password"
+            className="text-gray-900 border rounded-lg"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+            disabled={isLoading}
+          />
 
-           <Input
-             type="password"
-             label="Confirm New Password"
-             value={confirmPassword}
-             onChange={(e) => setConfirmPassword(e.target.value)}
-             required
-             disabled={isLoading}
-           />
+          <Input
+            type="password"
+            label="Confirm New Password"
+            className="text-gray-900 border rounded-lg"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            disabled={isLoading}
+          />
 
-           <Button
-             type="submit"
-             className="mt-2"
-             isLoading={isLoading}
-             disabled={isLoading}
-           >
-             Change Password
-           </Button>
-         </form>
-       </div>
+          <Button
+            type="submit"
+            className="w-full mt-4 md:w-auto bg-slate-700 hover:bg-slate-800"
+            isLoading={isLoading}
+            disabled={isLoading}
+          >
+            Change Password
+          </Button>
+        </form>
+      </div>
     );
 }

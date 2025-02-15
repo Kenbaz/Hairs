@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, Tags, ShoppingBag, Users, BarChart3, DollarSign, Receipt, Heart, Settings, ChevronDown, Package2, Mail, CreditCard, ListIcon, BarChart2, Store, PackageOpen, Truck } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Users, BarChart3, DollarSign, Receipt, Heart, Settings, ChevronDown, Package2, Mail, CreditCard, ListIcon, BarChart2, Store, PackageOpen, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -16,7 +16,7 @@ function NavItem({ href, icon, label, isActive }: NavItemProps) {
         <Link
             href={href}
             className={`
-                flex items-center space-x-2 px-4 py-2.5 rounded-lg transition-colors duration-200 ${isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+                flex items-center text-base lg:landscape:text-sm space-x-2 px-4 py-2.5 rounded-lg xl:overide2 transition-colors duration-200 ${isActive ? 'bg-gray-50 text-gray-900 font-medium xl:bg-gray-50 xl:text-gray-900' : 'text-gray-600 xl:hover:bg-gray-50 xl:hover:text-gray-900'}
             `}
         >
             <span className='flex-shrink-0'>{icon}</span>
@@ -54,12 +54,12 @@ function NavGroup({ title, children, icon }: NavGroupProps) {
           className={`
           w-full flex items-center justify-between
           px-4 py-3 rounded-lg
-          text-sm font-medium
+          text-base font-medium lg:landscape:text-sm xl:overide2
           transition-colors duration-200
           ${
             isActiveGroup
-              ? "text-blue-700 bg-blue-50"
-              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              ? "bg-gray-50 text-gray-900 xl:text-gray-900 xl:bg-gray-50"
+              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 xl:hover:bg-gray-50 xl:hover:text-gray-900"
           }
         `}
         >
@@ -96,7 +96,7 @@ export function DashboardNav() {
     const pathname = usePathname();
 
     return (
-      <nav className="p-4 space-y-6">
+      <nav className="p-4 space-y-6 text-base pb-[18%]">
         {/* Dashboard - Always visible */}
         <NavItem
           href="/admin/dashboard"
@@ -112,12 +112,6 @@ export function DashboardNav() {
             icon={<Package className="h-5 w-5" />}
             label="All Products"
             isActive={pathname === "/admin/products"}
-          />
-          <NavItem
-            href="/admin/products/categories"
-            icon={<Tags className="h-5 w-5" />}
-            label="Categories"
-            isActive={pathname === "/admin/products/categories"}
           />
         </NavGroup>
 

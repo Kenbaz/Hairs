@@ -15,7 +15,7 @@ export const useCartQuery = () => {
   } = useQuery({
     queryKey: ["cart"],
     queryFn: () => cartService.fetchCart(),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 60 * 60 * 1000, // 1 hour
   });
 
   // Add to cart mutation

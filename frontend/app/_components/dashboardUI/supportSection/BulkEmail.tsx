@@ -84,13 +84,10 @@ export function BulkEmail({ onClose, selectedCustomerIds }: BulkEmailProps) {
 
     return (
       <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="">
           <h2 className="text-xl font-semibold text-gray-900">
             Send Bulk Email
           </h2>
-          <div className="text-sm text-gray-500">
-            {selectedCustomerIds.length} customers selected
-          </div>
         </div>
 
         {alert && <Alert type={alert.type} message={alert.message} />}
@@ -98,6 +95,7 @@ export function BulkEmail({ onClose, selectedCustomerIds }: BulkEmailProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
             label="Subject"
+            className="rounded-lg text-gray-900 border bg-gray-50 text-base"
             value={formData.subject}
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, subject: e.target.value }))
@@ -136,6 +134,7 @@ export function BulkEmail({ onClose, selectedCustomerIds }: BulkEmailProps) {
             </Button>
             <Button
               type="submit"
+              className="bg-slate-700 hover:bg-slate-800 rounded-lg border border-slate-700 text-xm md:text-base"
               isLoading={sendBulkEmail.isPending}
               disabled={sendBulkEmail.isPending}
             >

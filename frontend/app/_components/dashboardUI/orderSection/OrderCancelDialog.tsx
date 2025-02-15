@@ -34,17 +34,23 @@ export default function CancellationDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex px-4 items-center justify-center bg-black bg-opacity-50 shadow-sm">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-lg font-medium mb-4">Cancel Order</h2>
+        <h2 className="text-lg text-gray-900 font-medium mb-4">Cancel Order</h2>
 
         {error && <Alert type="error" message={error} className="mb-4" />}
 
         <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+          <Button
+            className="bg-red-600 hover:bg-red-700"
+            onClick={onClose} disabled={isLoading}
+          >
             Cancel
           </Button>
-          <Button onClick={handleConfirm} isLoading={isLoading}>
+          <Button
+            className="bg-slate-700 hover:bg-slate-800"
+            onClick={handleConfirm}
+            isLoading={isLoading}>
             Confirm Cancellation
           </Button>
         </div>

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from "react";
-import { Plus, Filter, Download, Search, Loader2 } from "lucide-react";
+import { Search, Loader2, ChevronDown, Check } from "lucide-react";
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
 import { Button } from "@/app/_components/UI/Button";
 import { Input } from "@/app/_components/UI/Input";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -28,7 +29,7 @@ const ProductList = () => {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<ProductFilters>({
     page: 1,
-    page_size: 5,
+    page_size: 7,
     search: '',
     category: '',
   });
@@ -62,7 +63,7 @@ const ProductList = () => {
       console.log("Sending filters to backend:", filters);
       return adminProductService.getProducts(filters)
     },
-    placeholderData: (previousData) => previousData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
 
@@ -227,102 +228,233 @@ const ProductList = () => {
 
     
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 rounded-2xl w-full bg-customWhite3 pt-[3%] md:pt-[0.1rem] xl:pt-[0.1rem] pb-[15%] md:pb-0 min-h-screen">
         {alert && (
           <Alert type={alert.type} message={alert.message} className="mb-4" />
         )}
         {/* Header Section */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
-          <div className="flex items-center space-x-4">
-            <Button onClick={handleCreateProduct}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
-            </Button>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
+        <div className="ml-[62%] md:hidden md:ml-[80%] xl:ml-[85%] 2xl:ml-[89%]">
+          <Button
+            onClick={handleCreateProduct}
+            className="bg-slate-700 hover:bg-slate-800 rounded-lg border border-slate-700 text-sm md:text-base"
+          >
+            Add Product
+          </Button>
         </div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <div className="flex items-center gap-3 px-2 md:gap-4 md:px-4">
+          <div className="relative flex-1 md:flex md:h-[2.7rem] xl:h-[3rem]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-500" />
             <Input
               placeholder="Search products..."
-              className="pl-10"
+              className="pl-10 w-full md:w-[70%] xl:w-[50%] md:h-full rounded-full text-gray-600 text-base"
               value={searchValue}
               onChange={handleSearch}
             />
           </div>
-          <div className="flex gap-4">
+          <div className="flex items-center min-w-[100px]">
             <Button
-              variant="outline"
+              className="bg-gray-50 hover:bg-gray-100 w-full rounded-lg border"
               onClick={() => setFilterOpen(!filterOpen)}
             >
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
-              {Object.values(filters).some(
-                (value) => value !== undefined && value !== ""
-              ) && (
-                <span className="ml-2 text-xs bg-blue-100 text-blue-600 rounded-full px-2">
-                  Active
-                </span>
-              )}
+              <span className="text-gray-800 md:text-base">Filters</span>
+              <ChevronDown
+                className={`h-4 w-4 ml-2 text-gray-800 transition-transform duration-200 ${
+                  filterOpen ? "rotate-180" : ""
+                }`}
+              />
             </Button>
           </div>
         </div>
 
         {/* Filter Panel - Show when filterOpen is true */}
         {filterOpen && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white rounded-lg shadow">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white ">
+            {/* Category Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-base font-medium text-gray-700 mb-1">
                 Category
               </label>
-              <select
-                className="w-full rounded-lg border-gray-300 shadow-sm"
+              <Listbox
                 value={filters.category || ""}
-                onChange={(e) => handleFilterChange("category", e.target.value)}
+                onChange={(value) => handleFilterChange("category", value)}
               >
-                <option value="">All Categories</option>
-                {CATEGORY_OPTIONS.map((category) => (
-                  <option key={category.value} value={category.value}>
-                    {category.label}
-                  </option>
-                ))}
-              </select>
+                <div className="relative mt-1">
+                  <ListboxButton className="relative w-full cursor-pointer rounded-lg border bg-gray-50 py-2 pl-3 pr-10 text-left focus:outline-none focus:ring-1 focus:ring-slate-500 text-gray-500 sm:text-sm md:text-base">
+                    <span className="block truncate">
+                      {CATEGORY_OPTIONS.find(
+                        (cat) => cat.value === filters.category
+                      )?.label || "All Categories"}
+                    </span>
+                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                      <ChevronDown
+                        className="h-4 w-4 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </ListboxButton>
+                  <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 md:text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                    <ListboxOption
+                      className={({ active }) =>
+                        `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
+                          active ? "bg-gray-200 text-blue-900" : "text-gray-900"
+                        }`
+                      }
+                      value=""
+                    >
+                      {({ selected }) => (
+                        <>
+                          <span
+                            className={`block truncate ${
+                              selected ? "font-medium" : "font-normal"
+                            }`}
+                          >
+                            All Categories
+                          </span>
+                          {selected && (
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                              <Check className="h-4 w-4" aria-hidden="true" />
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </ListboxOption>
+                    {CATEGORY_OPTIONS.map((category) => (
+                      <ListboxOption
+                        key={category.value}
+                        className={({ active }) =>
+                          `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
+                            active
+                              ? "bg-blue-100 text-blue-900"
+                              : "text-gray-900"
+                          }`
+                        }
+                        value={category.value}
+                      >
+                        {({ selected }) => (
+                          <>
+                            <span
+                              className={`block truncate ${
+                                selected ? "font-medium" : "font-normal"
+                              }`}
+                            >
+                              {category.label}
+                            </span>
+                            {selected && (
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                                <Check className="h-4 w-4" aria-hidden="true" />
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </ListboxOption>
+                    ))}
+                  </ListboxOptions>
+                </div>
+              </Listbox>
             </div>
+
+            {/* Stock Status Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-base font-medium text-gray-700 mb-1">
                 Stock Status
               </label>
-              <select
-                className="w-full rounded-lg border-gray-300 shadow-sm"
+              <Listbox
                 value={filters.stock_status || ""}
-                onChange={(e) =>
-                  handleFilterChange(
-                    "stock_status",
-                    e.target.value as StockStatus
-                  )
+                onChange={(value) =>
+                  handleFilterChange("stock_status", value as StockStatus)
                 }
               >
-                <option value="">All</option>
-                <option value="in_stock">In Stock</option>
-                <option value="low_stock">Low Stock</option>
-                <option value="out_of_stock">Out of Stock</option>
-              </select>
+                <div className="relative mt-1">
+                  <ListboxButton className="relative w-full cursor-pointer rounded-lg border bg-gray-50 py-2 pl-3 pr-10 text-left focus:outline-none focus:ring-1 focus:ring-slate-500 text-gray-400 sm:text-sm md:text-base">
+                    <span className="block truncate">
+                      {filters.stock_status
+                        ? filters.stock_status
+                            .replace(/_/g, " ")
+                            .replace(/\b\w/g, (l) => l.toUpperCase())
+                        : "All"}
+                    </span>
+                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                      <ChevronDown
+                        className="h-4 w-4 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </ListboxButton>
+                  <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 md:text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                    <ListboxOption
+                      className={({ active }) =>
+                        `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
+                          active ? "bg-gray-200 text-blue-900" : "text-gray-900"
+                        }`
+                      }
+                      value=""
+                    >
+                      {({ selected }) => (
+                        <>
+                          <span
+                            className={`block truncate ${
+                              selected ? "font-medium" : "font-normal"
+                            }`}
+                          >
+                            All
+                          </span>
+                          {selected && (
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                              <Check className="h-4 w-4" aria-hidden="true" />
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </ListboxOption>
+                    {["in_stock", "low_stock", "out_of_stock"].map((status) => (
+                      <ListboxOption
+                        key={status}
+                        className={({ active }) =>
+                          `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
+                            active
+                              ? "bg-blue-100 text-blue-900"
+                              : "text-gray-900"
+                          }`
+                        }
+                        value={status}
+                      >
+                        {({ selected }) => (
+                          <>
+                            <span
+                              className={`block truncate ${
+                                selected ? "font-medium" : "font-normal"
+                              }`}
+                            >
+                              {status
+                                .replace(/_/g, " ")
+                                .replace(/\b\w/g, (l) => l.toUpperCase())}
+                            </span>
+                            {selected && (
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                                <Check className="h-4 w-4" aria-hidden="true" />
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </ListboxOption>
+                    ))}
+                  </ListboxOptions>
+                </div>
+              </Listbox>
             </div>
+
+            {/* Price Range - Keep the existing Input components */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-base font-medium text-gray-700 mb-1">
                 Price Range
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full">
                 <Input
                   type="number"
                   placeholder="Min"
+                  className="rounded-lg w-[100%] md:text-base"
                   value={filters.min_price || ""}
                   onChange={(e) =>
                     handleFilterChange(
@@ -334,6 +466,7 @@ const ProductList = () => {
                 <Input
                   type="number"
                   placeholder="Max"
+                  className="rounded-lg w-[100%] md:text-base"
                   value={filters.max_price || ""}
                   onChange={(e) =>
                     handleFilterChange(
@@ -348,7 +481,7 @@ const ProductList = () => {
         )}
 
         {/* Product Grid */}
-        <div className="bg-white rounded-lg min-h-screen shadow overflow-y-auto border">
+        <div className="bg-white min-h-full border-b overflow-y-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -363,31 +496,31 @@ const ProductList = () => {
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.9rem] uppercase"
                 >
                   Product
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700 uppercase md:text-base xl:text-[0.9rem]"
                 >
                   Category
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700 uppercase md:text-base xl:text-[0.9rem]"
                 >
                   Price
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700 uppercase md:text-base xl:text-[0.9rem]"
                 >
                   Stock
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700 uppercase md:text-base xl:text-[0.9rem]"
                 >
                   Status
                 </th>
@@ -402,7 +535,7 @@ const ProductList = () => {
                 <tr>
                   <td colSpan={6} className="px-6 py-4 text-center">
                     <div className="flex justify-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                      <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
                     </div>
                   </td>
                 </tr>
@@ -451,72 +584,70 @@ const ProductList = () => {
               )}
             </tbody>
           </table>
-          {/* Pagination Controls */}
-          {data && (
-            <div className="flex items-center justify-between px-6 py-4 bg-white border-t">
-              <div className="text-sm text-gray-500">
-                Showing {((filters.page || 1) - 1) * filters.page_size + 1} to{" "}
-                {Math.min((filters.page || 1) * filters.page_size, data.count)}{" "}
-                of {data.count} products
+        </div>
+        {/* Pagination Controls */}
+        {data && (
+          <div className="flex items-center justify-between px-4 py-4 bg-white border-t-0 rounded-2xl">
+            <div className="md:text-[0.95rem] text-sm text-gray-500">
+              Showing{" "}
+              {Math.min((filters.page || 1) * filters.page_size, data.count)} of{" "}
+              {data.count} products
+            </div>
+
+            <nav className="flex items-center gap-2">
+              <Button
+                className="rounded-lg bg-slate-700 border border-slate-700 hover:bg-slate-800 text-sm py-2 px-1 md:text-base"
+                onClick={() =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    page: (prev.page || 1) - 1,
+                  }))
+                }
+                disabled={!data?.previous || isLoading}
+              >
+                Previous
+              </Button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {Array.from(
+                  { length: Math.ceil(data.count / filters.page_size) },
+                  (_, i) => i + 1
+                ).map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        page: pageNum,
+                      }))
+                    }
+                    className={`px-3 py-1 text-sm rounded-full ${
+                      pageNum === filters.page
+                        ? "bg-gray-100 text-gray-700 font-medium"
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
               </div>
 
-              <nav className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      page: (prev.page || 1) - 1,
-                    }))
-                  }
-                  disabled={!data?.previous || isLoading}
-                >
-                  Previous
-                </Button>
-
-                {/* Page Numbers */}
-                <div className="flex items-center gap-1">
-                  {Array.from(
-                    { length: Math.ceil(data.count / filters.page_size) },
-                    (_, i) => i + 1
-                  ).map((pageNum) => (
-                    <button
-                      key={pageNum}
-                      onClick={() =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          page: pageNum,
-                        }))
-                      }
-                      className={`px-3 py-1 text-sm rounded-md ${
-                        pageNum === filters.page
-                          ? "bg-blue-50 text-blue-600 font-medium"
-                          : "text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      page: (prev.page || 1) + 1,
-                    }))
-                  }
-                  disabled={!data.next || isLoading}
-                >
-                  Next
-                </Button>
-              </nav>
-            </div>
-          )}
-        </div>
+              <Button
+                className="rounded-lg bg-slate-700 border border-slate-700 hover:bg-slate-800 py-1 px-1 text-sm md:text-base"
+                onClick={() =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    page: (prev.page || 1) + 1,
+                  }))
+                }
+                disabled={!data.next || isLoading}
+              >
+                Next
+              </Button>
+            </nav>
+          </div>
+        )}
         <ProductBulkActions
           selectedIds={selectedIds}
           onClearSelection={() => setSelectedIds([])}

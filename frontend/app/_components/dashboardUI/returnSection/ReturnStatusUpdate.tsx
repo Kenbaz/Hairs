@@ -80,7 +80,7 @@ export default function ReturnStatusUpdate({
         {showConfirm ? (
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-gray-600">
+              <p className="text-base text-gray-900">
                 Are you sure you want to change the return status to{" "}
                 <span className="font-medium">
                   {
@@ -100,7 +100,7 @@ export default function ReturnStatusUpdate({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Enter any notes about this status change..."
-                  className="w-full"
+                  className="w-full border p-2 rounded-lg"
                 />
               </div>
             </div>
@@ -109,20 +109,19 @@ export default function ReturnStatusUpdate({
               <Button
                 onClick={handleConfirm}
                 isLoading={isLoading}
-                className="w-full"
+                className="w-full bg-blue-700 hover:bg-blue-800"
               >
                 <Check className="h-4 w-4 mr-2" />
                 Confirm
               </Button>
               <Button
-                variant="outline"
                 onClick={() => {
                   setShowConfirm(false);
                   setSelectedStatus(null);
                   setNotes("");
                 }}
                 disabled={isLoading}
-                className="w-full"
+                className="w-full bg-red-600 hover:bg-red-700"
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancel
@@ -130,7 +129,7 @@ export default function ReturnStatusUpdate({
             </div>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 text-gray-900">
             {RETURN_STATUSES.map((status) => (
               <button
                 key={status.value}
@@ -143,7 +142,7 @@ export default function ReturnStatusUpdate({
               >
                 <div className="flex flex-col">
                   <span className="text-sm font-medium">{status.label}</span>
-                  <span className="text-xs text-gray-500 mt-1">
+                  <span className="text-[0.8rem] text-gray-500 mt-1">
                     {status.description}
                   </span>
                 </div>
@@ -154,7 +153,7 @@ export default function ReturnStatusUpdate({
       </div>
 
       {/* Current Status */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+      <div className="px-4 py-3 rounded-b-lg bg-gray-50 border-t border-gray-200">
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-500">Current Status</span>
           <span

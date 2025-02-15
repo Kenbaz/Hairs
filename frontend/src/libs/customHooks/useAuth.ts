@@ -9,5 +9,6 @@ export const useAuth = () => {
     isAuthenticated,
     user,
     isAdmin: Boolean(user?.is_staff || user?.is_superuser),
+    isUser: Boolean(user && !user.is_staff && !user.is_superuser),
   };
 };

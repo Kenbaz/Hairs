@@ -75,11 +75,11 @@ const ProductRow: React.FC<ProductRowProps> = ({
                     priority
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     style={{ objectFit: "cover" }}
-                    className="rounded-md"
+                    className="rounded-full"
                   />
                 </div>
               ) : (
-                <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                   <Package className="h-5 w-5 text-gray-400" />
                 </div>
               )}
@@ -87,12 +87,12 @@ const ProductRow: React.FC<ProductRowProps> = ({
             <div className="ml-4">
               <Link
                 href={`/admin/products/${product.id}`}
-                className="text-sm font-medium text-gray-900 hover:text-blue-600"
+                className="text-base font-medium text-gray-900 hover:text-blue-600 xl:text-[0.9rem]"
               >
                 {product.name}
               </Link>
               {product.is_featured && (
-                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-base xl:text-[0.9rem] font-medium bg-yellow-100 text-yellow-800">
                   Featured
                 </span>
               )}
@@ -102,14 +102,14 @@ const ProductRow: React.FC<ProductRowProps> = ({
 
         {/* Category */}
         <td className="px-6 py-4 whitespace-nowrap">
-          <span className="text-sm text-gray-500">
+          <span className="text-base xl:text-[0.9rem] text-gray-600">
             {product.category?.name || "No category"}
           </span>
         </td>
 
         {/* Price */}
         <td className="px-6 py-4 whitespace-nowrap">
-          <div className="text-sm">
+          <div className="text-base xl:text-[0.9rem]">
             <div className="font-medium text-gray-900">
               <PriceDisplay
                 amount={product.price}
@@ -130,9 +130,9 @@ const ProductRow: React.FC<ProductRowProps> = ({
         {/* Stock */}
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="flex flex-col">
-            <span className="text-sm text-gray-900">{product.stock} units</span>
+            <span className="text-base xl:text-[0.9rem] text-gray-900">{product.stock} units</span>
             <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.className}`}
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${status.className}`}
             >
               {status.label}
             </span>
@@ -142,7 +142,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
         {/* Status */}
         <td className="px-6 py-4 whitespace-nowrap">
           <span
-            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+            className={`px-2 py-1 inline-flex text-base xl:text-[0.9rem] leading-5 font-semibold rounded-full ${
               product.is_available
                 ? "bg-green-100 text-green-800"
                 : "bg-gray-100 text-gray-800"
@@ -157,7 +157,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowActions(!showActions)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-700 hover:text-gray-600"
             >
               <MoreVertical className="h-5 w-5" />
             </button>
@@ -171,7 +171,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
                       onEdit(product);
                       setShowActions(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    className="w-full text-left px-4 py-2 text-base xl:text-[0.9rem] text-gray-700 hover:bg-gray-100 flex items-center"
                   >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Product
@@ -181,7 +181,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
                       onToggleFeatured(product);
                       setShowActions(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    className="w-full text-left px-4 py-2 text-base xl:text-[0.9rem] text-gray-700 hover:bg-gray-100 flex items-center"
                   >
                     <Star className="h-4 w-4 mr-2" />
                     {product.is_featured ? "Remove Featured" : "Mark Featured"}
@@ -194,7 +194,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
                       );
                       setShowActions(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    className="w-full text-left px-4 py-2 text-base xl:text-[0.9rem] text-gray-700 hover:bg-gray-100 flex items-center"
                   >
                     <Share className="h-4 w-4 mr-2" />
                     Copy Link
@@ -204,7 +204,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
                       onDelete(product);
                       setShowActions(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"
+                    className="w-full text-left px-4 py-2 text-base xl:text-[0.9rem] text-red-600 hover:bg-red-50 flex items-center"
                   >
                     <Trash className="h-4 w-4 mr-2" />
                     Delete

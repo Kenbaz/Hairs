@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Filter, Search } from "lucide-react";
+import { Loader2, Search, ChevronDown } from "lucide-react";
 import { Button } from "@/app/_components/UI/Button";
 import { Input } from "@/app/_components/UI/Input";
 import { Alert } from "@/app/_components/UI/Alert";
@@ -48,7 +48,7 @@ export default function ReturnsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2 h-screen md:mt-[2%] xl:-mt-[2%] 2xl:-mt-[1%]">
       <Breadcrumb />
 
       <div className="flex items-center justify-between">
@@ -57,39 +57,50 @@ export default function ReturnsPage() {
         </h1>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search returns..."
-            className="pl-10"
-            value={searchValue}
-            onChange={(e) => handleSearch(e.target.value)}
+      <div className="bg-white rounded-xl pt-1 shadow h-full">
+        <div className="flex items-center gap-3 py-2 mb-3 px-2 md:gap-4 md:px-4">
+          <div className="relative flex-1 md:flex md:h-[2.7rem] xl:h-[3rem]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-500" />
+            <Input
+              placeholder="Search Orders..."
+              className="pl-10 w-full md:w-[70%] xl:w-[50%] md:h-full rounded-full text-gray-600 text-base"
+              value={searchValue}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center min-w-[100px]">
+            <Button
+              className="bg-gray-50 hover:bg-gray-100 w-full rounded-lg border"
+              onClick={() => setFilterOpen(!filterOpen)}
+            >
+              <span className="text-gray-800 md:text-base">Filters</span>
+              <ChevronDown
+                className={`h-4 w-4 ml-2 text-gray-800 transition-transform duration-200 ${
+                  filterOpen ? "rotate-180" : ""
+                }`}
+              />
+            </Button>
+          </div>
+        </div>
+
+        {filterOpen && (
+          <ReturnFilters filters={filters} onChange={handleFilterChange} />
+        )}
+
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-800" />
+          </div>
+        ) : (
+          <ReturnsList
+            returns={data?.results || []}
+            totalCount={data?.count || 0}
+            currentPage={filters.page || 1}
+            pageSize={filters.page_size || 10}
+            onPageChange={(page) => setFilters((prev) => ({ ...prev, page }))}
           />
-        </div>
-        <Button variant="outline" onClick={() => setFilterOpen(!filterOpen)}>
-          <Filter className="h-4 w-4 mr-2" />
-          Filters
-        </Button>
+        )}
       </div>
-
-      {filterOpen && (
-        <ReturnFilters filters={filters} onChange={handleFilterChange} />
-      )}
-
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-        </div>
-      ) : (
-        <ReturnsList
-          returns={data?.results || []}
-          totalCount={data?.count || 0}
-          currentPage={filters.page || 1}
-          pageSize={filters.page_size || 10}
-          onPageChange={(page) => setFilters((prev) => ({ ...prev, page }))}
-        />
-      )}
     </div>
   );
 }

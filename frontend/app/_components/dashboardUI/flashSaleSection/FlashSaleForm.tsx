@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +12,8 @@ import { Alert } from "@/app/_components/UI/Alert";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { PriceDisplay } from "@/app/_components/UI/PriceDisplay";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Check, ChevronDown } from "lucide-react";
+import { Listbox, Transition, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react';
 
 
 // Create Zod schema for validation
@@ -59,6 +60,14 @@ type FlashSaleFormData = z.infer<typeof flashSaleSchema>;
 interface FlashSaleFormProps {
   flashSaleId?: number;
 }
+
+type DiscountType = "percentage" | "fixed";
+
+const discountTypes: Array<{ id: DiscountType; name: string }> = [
+  { id: "percentage", name: "Percentage" },
+  { id: "fixed", name: "Fixed Amount" },
+];
+
 
 export default function FlashSaleForm({ flashSaleId }: FlashSaleFormProps) {
   const router = useRouter();
@@ -214,38 +223,172 @@ export default function FlashSaleForm({ flashSaleId }: FlashSaleFormProps) {
   };
 
   // Update the product selection handler
-  const handleProductSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const productId = parseInt(e.target.value);
-    if (productId && !selectedProducts.find((p) => p.product === productId)) {
-      const product = availableProducts?.find((p) => p.id === productId);
-      if (product) {
-        const newProduct: FlashSaleProducts = {
-          id: 0,
-          product: product.id,
-          product_name: product.name,
-          discounted_price: 0,
-          original_price: product.price,
-          quantity_limit: product.stock,
-          quantity_sold: 0,
-          stock: product.stock,
-        };
-        setSelectedProducts((prev) => [...prev, newProduct]);
-      }
-    }
-    e.target.value = ""; // Reset select after adding product
+ const handleProductSelect = (productId: number) => {
+   if (productId && !selectedProducts.find((p) => p.product === productId)) {
+     const product = availableProducts?.find((p) => p.id === productId);
+     if (product) {
+       const newProduct: FlashSaleProducts = {
+         id: 0,
+         product: product.id,
+         product_name: product.name,
+         discounted_price: 0,
+         original_price: product.price,
+         quantity_limit: product.stock,
+         quantity_sold: 0,
+         stock: product.stock,
+       };
+       setSelectedProducts((prev) => [...prev, newProduct]);
+     }
+   }
+ };
+
+
+  const DiscountTypeSelect = () => {
+    const selectedType = discountTypes.find(
+      (type) => type.id === watch("discount_type")
+    );
+
+    return (
+      <div className="relative">
+        <label className="block text-sm font-medium text-gray-800 mb-1">
+          Discount Type
+        </label>
+        <Listbox
+          value={selectedType}
+          onChange={(value: (typeof discountTypes)[number]) => {
+            // Update the form with the new value
+            reset({ ...watch(), discount_type: value.id });
+          }}
+        >
+          <div className="relative mt-1">
+            <ListboxButton className="relative w-full cursor-pointer rounded-lg bg-gray-50 py-2 pl-3 pr-10 text-left border focus:outline-none text-gray-900">
+              <span className="block truncate">{selectedType?.name}</span>
+              <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronDown
+                  className="h-5 w-5 text-gray-600"
+                  aria-hidden="true"
+                />
+              </span>
+            </ListboxButton>
+            <Transition
+              as={Fragment}
+              leave="transition ease-in duration-100"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 md:text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm lg:landscape:text-[0.9rem]">
+                {discountTypes.map((type) => (
+                  <ListboxOption
+                    key={type.id}
+                    className={({ active }) =>
+                      `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
+                        active ? "bg-gray-200 text-blue-900" : "text-gray-900"
+                      }`
+                    }
+                    value={type}
+                  >
+                    {({ selected }) => (
+                      <>
+                        <span
+                          className={`block truncate ${
+                            selected ? "font-medium" : "font-normal"
+                          }`}
+                        >
+                          {type.name}
+                        </span>
+                        {selected ? (
+                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                            <Check className="h-5 w-5" aria-hidden="true" />
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                  </ListboxOption>
+                ))}
+              </ListboxOptions>
+            </Transition>
+          </div>
+        </Listbox>
+      </div>
+    );
   };
+
+
+  const ProductSelect = () => {
+    return (
+      <div className="relative">
+        <label className="block text-[0.9rem] font-medium text-gray-700 mb-1">
+          Add Products
+        </label>
+        <Listbox onChange={handleProductSelect}>
+          <div className="relative mt-1">
+            <ListboxButton className="relative text-gray-700 w-full cursor-pointer rounded-lg bg-gray-50 py-2 pl-3 pr-10 text-left border focus:outline-none">
+              <span className="block truncate">Select a product</span>
+              <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronDown
+                  className="h-5 w-5 text-gray-600"
+                  aria-hidden="true"
+                />
+              </span>
+            </ListboxButton>
+            <Transition
+              as={Fragment}
+              leave="transition ease-in duration-100"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto border rounded-md bg-white py-1 md:text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm lg:landscape:text-[0.9rem]">
+                {availableProducts?.map((product) => (
+                  <ListboxOption
+                    key={product.id}
+                    className={({ active }) =>
+                      `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
+                        active ? "bg-gray-200 text-blue-900" : "text-gray-900"
+                      }`
+                    }
+                    value={product.id}
+                    disabled={selectedProducts.some(
+                      (p) => p.product === product.id
+                    )}
+                  >
+                    {({ selected, disabled }) => (
+                      <>
+                        <span
+                          className={`block truncate ${
+                            selected ? "font-medium" : "font-normal"
+                          } ${disabled ? "text-gray-400" : ""}`}
+                        >
+                          {product.name} - Stock: {product.stock}
+                        </span>
+                        {selected ? (
+                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                            <Check className="h-5 w-5" aria-hidden="true" />
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                  </ListboxOption>
+                ))}
+              </ListboxOptions>
+            </Transition>
+          </div>
+        </Listbox>
+      </div>
+    );
+  };
+
 
   if (isLoadingFlashSale || isLoadingProducts) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
       </div>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-6">
+      <h1 className="text-xl text-gray-900 font-semibold mb-6">
         {isEditing ? "Edit Flash Sale" : "Create Flash Sale"}
       </h1>
 
@@ -254,18 +397,22 @@ export default function FlashSaleForm({ flashSaleId }: FlashSaleFormProps) {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white p-6 rounded-lg shadow space-y-6">
+        <div className="bg-white p-6 rounded-lg shadow space-y-8">
           {/* Basic Information */}
           <div>
-            <h2 className="text-lg font-medium mb-4">Basic Information</h2>
+            <h2 className="text-lg text-gray-800 font-medium mb-5">
+              Basic Information
+            </h2>
             <div className="grid grid-cols-1 gap-6">
               <Input
                 label="Name"
+                className="border rounded-lg text-gray-900"
                 {...register("name")}
                 error={errors.name?.message}
               />
               <Input
                 label="Description"
+                className="border rounded-lg text-gray-900"
                 {...register("description")}
                 error={errors.description?.message}
               />
@@ -274,16 +421,20 @@ export default function FlashSaleForm({ flashSaleId }: FlashSaleFormProps) {
 
           {/* Timing */}
           <div>
-            <h2 className="text-lg font-medium mb-4">Sale Period</h2>
+            <h2 className="text-lg text-gray-800 font-medium mb-4">
+              Sale Period
+            </h2>
             <div className="grid grid-cols-2 gap-6">
               <Input
                 type="datetime-local"
                 label="Start Time"
+                className="border rounded-lg text-gray-900"
                 {...register("start_time")}
                 error={errors.start_time?.message}
               />
               <Input
                 type="datetime-local"
+                className="border rounded-lg text-gray-900"
                 label="End Time"
                 {...register("end_time")}
                 error={errors.end_time?.message}
@@ -291,83 +442,13 @@ export default function FlashSaleForm({ flashSaleId }: FlashSaleFormProps) {
             </div>
           </div>
 
-          {/* Discount Settings */}
-          <div>
-            <h2 className="text-lg font-medium mb-4">Discount Settings</h2>
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Discount Type
-                </label>
-                <select
-                  {...register("discount_type")}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                >
-                  <option value="percentage">Percentage</option>
-                  <option value="fixed">Fixed Amount</option>
-                </select>
-                {errors.discount_type && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.discount_type.message}
-                  </p>
-                )}
-              </div>
-
-              <Input
-                type="number"
-                label={
-                  discountType === "percentage"
-                    ? "Discount Percentage"
-                    : "Discount Amount"
-                }
-                {...register("discount_value", { valueAsNumber: true })}
-                error={errors.discount_value?.message}
-              />
-            </div>
-          </div>
-
-          {/* Quantity Limits */}
-          <div>
-            <h2 className="text-lg font-medium mb-4">Quantity Limits</h2>
-            <div className="grid grid-cols-2 gap-6">
-              <Input
-                type="number"
-                label="Max Quantity Per Customer"
-                {...register("max_quantity_per_customer", {
-                  valueAsNumber: true,
-                })}
-                error={errors.max_quantity_per_customer?.message}
-              />
-              <Input
-                type="number"
-                label="Total Quantity Limit (Optional)"
-                {...register("total_quantity_limit", { valueAsNumber: true })}
-                error={errors.total_quantity_limit?.message}
-              />
-            </div>
-          </div>
-
           {/* Product Selection */}
           <div>
-            <h2 className="text-lg font-medium mb-4">Products</h2>
+            <h2 className="text-lg text-gray-800 font-medium mb-4">Products</h2>
 
             {/* Product selector */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Add Products
-              </label>
-              <select
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                onChange={handleProductSelect}
-                value=""
-              >
-                <option value="">Select a product</option>
-                {availableProducts?.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} - Stock: {product.stock}
-                  </option>
-                ))}
-              </select>
+              <ProductSelect />
             </div>
 
             {/* Selected products list */}
@@ -375,11 +456,11 @@ export default function FlashSaleForm({ flashSaleId }: FlashSaleFormProps) {
               {selectedProducts.map((product, index) => (
                 <div
                   key={product.product}
-                  className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg"
+                  className="flex items-center border space-x-4 p-4 bg-gray-50 rounded-lg"
                 >
                   <div className="flex-1">
-                    <h3 className="font-medium">{product.product_name}</h3>
-                    <div className="text-sm text-gray-500">
+                    <h3 className="font-medium text-gray-800">{product.product_name}</h3>
+                    <div className="text-sm text-gray-600">
                       Original Price:{" "}
                       <PriceDisplay
                         amount={product.original_price}
@@ -390,7 +471,7 @@ export default function FlashSaleForm({ flashSaleId }: FlashSaleFormProps) {
 
                   <Input
                     type="number"
-                    className="w-32"
+                    className="w-32 border rounded-md bg-white text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] text-gray-900"
                     placeholder="Limit"
                     {...register(`products.${index}.quantity_limit` as const, {
                       valueAsNumber: true,
@@ -423,6 +504,53 @@ export default function FlashSaleForm({ flashSaleId }: FlashSaleFormProps) {
             )}
           </div>
 
+          {/* Discount Settings */}
+          <div>
+            <h2 className="text-lg text-gray-800 font-medium mb-4">
+              Discount Settings
+            </h2>
+            <div className="grid grid-cols-2 gap-6">
+              <DiscountTypeSelect />
+
+              <Input
+                type="number"
+                label={
+                  discountType === "percentage"
+                    ? "Discount Percentage"
+                    : "Discount Amount"
+                }
+                className="border rounded-lg text-gray-900"
+                {...register("discount_value", { valueAsNumber: true })}
+                error={errors.discount_value?.message}
+              />
+            </div>
+          </div>
+
+          {/* Quantity Limits */}
+          <div>
+            <h2 className="text-lg text-gray-800 font-medium mb-4">
+              Quantity Limits
+            </h2>
+            <div className="grid grid-cols-2 gap-6">
+              <Input
+                type="number"
+                label="Max Quantity Per Customer"
+                className="border rounded-lg text-gray-900"
+                {...register("max_quantity_per_customer", {
+                  valueAsNumber: true,
+                })}
+                error={errors.max_quantity_per_customer?.message}
+              />
+              <Input
+                type="number"
+                label="Total Quantity Limit (Optional)"
+                className="border rounded-lg text-gray-900"
+                {...register("total_quantity_limit", { valueAsNumber: true })}
+                error={errors.total_quantity_limit?.message}
+              />
+            </div>
+          </div>
+
           {/* Visibility */}
           <div>
             <label className="flex items-center space-x-2">
@@ -431,7 +559,7 @@ export default function FlashSaleForm({ flashSaleId }: FlashSaleFormProps) {
                 {...register("is_visible")}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-700">
                 Make this flash sale visible to customers
               </span>
             </label>
@@ -448,6 +576,7 @@ export default function FlashSaleForm({ flashSaleId }: FlashSaleFormProps) {
           </Button>
           <Button
             type="submit"
+            className="bg-slate-700 hover:bg-slate-700"
             disabled={isSubmitting}
             isLoading={isSubmitting}
             onClick={() => console.log("Button clicked")}

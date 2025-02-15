@@ -1,81 +1,65 @@
 import { OrderFilters } from "@/src/types";
 import { Input } from "../../UI/Input";
+import { FilterDropdown } from "../../UI/FilterDropdown";
 
-
-interface FilterPanelProps { 
-    filters: OrderFilters;
-    onChange: (filters: Partial<OrderFilters>) => void;
+interface FilterPanelProps {
+  filters: OrderFilters;
+  onChange: (filters: Partial<OrderFilters>) => void;
 }
 
+export default function FilterPanel({ filters, onChange }: FilterPanelProps) {
+  const ORDER_STATUS_OPTIONS = [
+    { value: "", label: "All Statuses" },
+    { value: "pending", label: "Pending" },
+    { value: "processing", label: "Processing" },
+    { value: "shipped", label: "Shipped" },
+    { value: "delivered", label: "Delivered" },
+    { value: "cancelled", label: "Cancelled" },
+  ];
 
-export default function FilterPanel({ filters, onChange }: FilterPanelProps) { 
-    const ORDER_STATUS_OPTIONS = [
-      { value: "pending", label: "Pending" },
-      { value: "processing", label: "Processing" },
-      { value: "shipped", label: "Shipped" },
-      { value: "delivered", label: "Delivered" },
-      { value: "cancelled", label: "Cancelled" },
-    ];
+  const PAYMENT_STATUS_OPTIONS = [
+    { value: "", label: "All" },
+    { value: "true", label: "Paid" },
+    { value: "false", label: "Unpaid" },
+  ];
 
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-white mb-4">
+      <FilterDropdown
+        label="Order Status"
+        options={ORDER_STATUS_OPTIONS}
+        value={filters.status || ""}
+        onChange={(value) => onChange({ status: value })}
+      />
 
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white rounded-lg shadow">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Order Status
-          </label>
-          <select
-            className="w-full rounded-lg border-gray-300 shadow-sm"
-            value={filters.status || ""}
-            onChange={(e) => onChange({ status: e.target.value })}
-          >
-            <option value="">All Statuses</option>
-            {ORDER_STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+      <FilterDropdown
+        label="Payment Status"
+        options={PAYMENT_STATUS_OPTIONS}
+        value={filters.payment_status || ""}
+        onChange={(value) => onChange({ payment_status: value })}
+      />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Payment Status
-          </label>
-          <select
-            className="w-full rounded-lg border-gray-300 shadow-sm"
-            value={String(filters.payment_status || '')}
-            onChange={(e) =>
-              onChange({
-                payment_status: e.target.value || undefined,
-              })
-            }
-          >
-            <option value="">All</option>
-            <option value="true">Paid</option>
-            <option value="false">Unpaid</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date Range
-          </label>
-          <div className="flex gap-2">
-            <Input
-              type="date"
-              value={filters.date_from || ""}
-              onChange={(e) => onChange({ date_from: e.target.value })}
-              placeholder="From"
-            />
-            <Input
-              type="date"
-              value={filters.date_to || ""}
-              onChange={(e) => onChange({ date_to: e.target.value })}
-              placeholder="To"
-            />
-          </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-900 mb-1">
+          Date Range
+        </label>
+        <div className="grid grid-cols-2 md:flex gap-2 md:gap-4 w-full">
+          <Input
+            type="date"
+            className="rounded-lg border text-gray-500"
+            value={filters.date_from || ""}
+            onChange={(e) => onChange({ date_from: e.target.value })}
+            placeholder="From"
+          />
+          <Input
+            type="date"
+            className="rounded-lg border text-gray-500"
+            value={filters.date_to || ""}
+            onChange={(e) => onChange({ date_to: e.target.value })}
+            placeholder="To"
+          />
         </div>
       </div>
-    );
+    </div>
+  );
 }

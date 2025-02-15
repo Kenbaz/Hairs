@@ -55,7 +55,7 @@ class CloudinaryUploader:
 
 
     @staticmethod
-    def delete_files(public_id: str) -> bool:
+    def delete_file(public_id: str) -> bool:
         """
         Delete a file from Cloudinary
         

@@ -48,7 +48,7 @@ export function CurrencyProvider({ children }: PropsWithChildren) {
         isAdmin
           ? adminCurrencyService.getActiveCurrencies()
           : publicCurrencyService.getPublicCurrencies(),
-      staleTime: 5 * 60 * 1000, // data is considered fresh for 5 minutes
+      staleTime: 120 * 60 * 1000, // cache for 2 hours
       refetchOnWindowFocus: false,
     });
 

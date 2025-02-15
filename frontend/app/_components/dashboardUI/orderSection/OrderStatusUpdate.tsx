@@ -73,7 +73,7 @@ export default function OrderStatusUpdate({
          <div className="p-4">
            {showConfirm ? (
              <div className="space-y-4">
-               <p className="text-sm text-gray-600">
+               <p className="text-base text-gray-900">
                  Are you sure you want to change the order status to{" "}
                  <span className="font-medium">
                    {
@@ -87,16 +87,15 @@ export default function OrderStatusUpdate({
                  <Button
                    onClick={handleConfirm}
                    isLoading={isLoading}
-                   className="w-full"
+                   className="w-full bg-blue-700 hover:bg-blue-800"
                  >
                    <Check className="h-4 w-4 mr-2" />
                    Confirm
                  </Button>
                  <Button
-                   variant="outline"
                    onClick={() => setShowConfirm(false)}
                    disabled={isLoading}
-                   className="w-full"
+                   className="w-full bg-red-600 hover:bg-red-700"
                  >
                    <X className="h-4 w-4 mr-2" />
                    Cancel
@@ -104,7 +103,7 @@ export default function OrderStatusUpdate({
                </div>
              </div>
            ) : (
-             <div className="space-y-2">
+             <div className="space-y-2 text-gray-900">
                {ORDER_STATUSES.map((status) => (
                  <button
                    key={status.value}

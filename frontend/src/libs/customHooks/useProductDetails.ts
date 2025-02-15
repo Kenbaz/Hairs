@@ -12,7 +12,7 @@ export const useProductDetailQuery = (slug?: string) => {
     queryKey: ["product", slug],
     queryFn: () => productService.getProductBySlug(slug || ""),
     enabled: !!slug,
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    staleTime: 60 * 60 * 1000, // Consider data fresh for 5 minutes
   });
 
   return {

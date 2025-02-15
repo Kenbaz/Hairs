@@ -39,7 +39,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:pt-4 xl:-mt-6">
       <Breadcrumb />
       <div className="px-4">
         <h1 className="text-2xl font-semibold text-gray-900">

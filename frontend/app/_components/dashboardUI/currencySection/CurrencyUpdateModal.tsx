@@ -128,12 +128,12 @@ export function CreateCurrencyModal({
 
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed px-4 inset-0 z-50 flex items-center justify-center">
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+        <div className="absolute -mt-6 inset-0 bg-black/50" onClick={onClose} />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <div className="relative lg:left-[5%] xl:left-0 bg-white rounded-lg shadow-lg w-full max-w-md p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">
@@ -162,7 +162,7 @@ export function CreateCurrencyModal({
                 onChange={handleInputChange}
                 placeholder="e.g., EUR"
                 maxLength={3}
-                className="uppercase"
+                className="uppercase text-gray-800 border rounded-lg"
                 disabled={createCurrencyMutation.isPending}
               />
               <p className="mt-1 text-xs text-gray-500">
@@ -174,6 +174,7 @@ export function CreateCurrencyModal({
               <Input
                 label="Currency Name"
                 name="name"
+                className="text-gray-800 border rounded-lg"
                 value={formData.name}
                 onChange={handleInputChange}
                 placeholder="e.g., Euro"
@@ -185,6 +186,7 @@ export function CreateCurrencyModal({
               <Input
                 label="Currency Symbol"
                 name="symbol"
+                className="text-gray-800 border rounded-lg"
                 value={formData.symbol}
                 onChange={handleInputChange}
                 placeholder="e.g., €"
@@ -198,6 +200,7 @@ export function CreateCurrencyModal({
                 label="Exchange Rate (1 USD =)"
                 name="exchange_rate"
                 type="number"
+                className="text-gray-800 border rounded-lg"
                 value={formData.exchange_rate}
                 onChange={handleInputChange}
                 placeholder="e.g., 0.85"
@@ -222,6 +225,7 @@ export function CreateCurrencyModal({
               </Button>
               <Button
                 type="submit"
+                className="bg-slate-700 hover:bg-slate-800"
                 isLoading={createCurrencyMutation.isPending}
                 disabled={createCurrencyMutation.isPending}
               >

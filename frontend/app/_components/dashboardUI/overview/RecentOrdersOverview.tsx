@@ -17,14 +17,14 @@ const OrderStatusBadge = ({ status }: { status: AdminOrder['order_status'] }) =>
     };
 
     return (
-        <span
-            className={`
-        px-2.5 py-0.5 text-xs font-medium rounded-full border
+      <span
+        className={`
+        px-2.5 py-1 text-base font-medium lg:landscape:text-sm rounded-full border
         ${statusStyles[status]}
       `}
-        >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-        </span>
+      >
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
     );
 };
 
@@ -38,42 +38,42 @@ const OrderRow = ({ order }: { order: AdminOrder }) => {
     };
 
     return (
-        <tr className="hover:bg-gray-50">
-            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                <Link
-                    href={`/admin/orders/${order.id}`}
-                    className="text-blue-600 hover:text-blue-800"
-                >
-                    #{order.id}
-                </Link>
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {format(new Date(order.created_at), "MMM d, yyyy h:mm a")}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm font-medium text-gray-900">
-                    {order.customer_name}
-                </div>
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {order.items_count} items
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatCurrency(order.total_amount)}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap">
-                <OrderStatusBadge status={order.order_status} />
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <Link
-                    href={`/admin/orders/${order.id}`}
-                    className="text-blue-600 hover:text-blue-800 inline-flex items-center space-x-1"
-                >
-                    <span>View</span>
-                    <ExternalLink className="h-4 w-4" />
-                </Link>
-            </td>
-        </tr>
+      <tr className="hover:bg-gray-50">
+        <td className="px-6 py-4 whitespace-nowrap text-base tracking-wide lg:landscape:text-sm">
+          <Link
+            href={`/admin/orders/${order.id}`}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            #{order.id}
+          </Link>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-base text-gray-700 lg:landscape:text-sm">
+          {format(new Date(order.created_at), "MMM d, yyyy h:mm a")}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="text-base font-medium text-gray-900 lg:landscape:text-sm">
+            {order.customer_name}
+          </div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-base text-gray-700 lg:landscape:text-sm">
+          {order.items_count} items
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-base text-gray-700 lg:landscape:text-sm">
+          {formatCurrency(order.total_amount)}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <OrderStatusBadge status={order.order_status} />
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-base text-gray-700 lg:landscape:text-sm">
+          <Link
+            href={`/admin/orders/${order.id}`}
+            className="text-blue-600 hover:text-blue-800 inline-flex items-center space-x-1"
+          >
+            <span>View</span>
+            <ExternalLink className="h-4 w-4" />
+          </Link>
+        </td>
+      </tr>
     );
 };
 
@@ -82,7 +82,7 @@ export function RecentOrders() {
     const { data, isLoading, error } = useQuery({
         queryKey: ['recentOrders'],
         queryFn: () => adminDashboardService.getRecentOrders(5),
-        refetchInterval: 30000, // Refetch every 30 seconds
+        refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
     });
     
 
@@ -90,7 +90,7 @@ export function RecentOrders() {
         return (
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
             </div>
           </div>
         );
@@ -113,13 +113,13 @@ export function RecentOrders() {
 
 
     return (
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="bg-white overflow-x-hidden max-h-[25rem] overflow-auto rounded-lg shadow">
+        <div className="px-6 py-4 border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-gray-900">Recent Orders</h2>
+            <h2 className="text-lg md:text-xl font-medium text-gray-900 lg:landscape:text-base">Recent Orders</h2>
             <Link
               href="/admin/orders"
-              className="text-sm text-blue-600 hover:text-blue-800 inline-flex items-center space-x-1"
+              className="text-sm md:text-base text-blue-600 hover:text-blue-800 lg:landscape:text-sm inline-flex items-center space-x-1"
             >
               <span>View all</span>
               <ExternalLink className="h-4 w-4" />
@@ -128,29 +128,29 @@ export function RecentOrders() {
         </div>
 
         {orders.length > 0 ? (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full mx-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-100 rounded-xl">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-[0.95rem] font-medium text-gray-700 lg:landscape:text-[0.8rem] uppercase">
                     Order ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-[0.95rem] font-medium text-gray-700 lg:landscape:text-[0.8rem] uppercase">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-[0.95rem] font-medium text-gray-700 lg:landscape:text-[0.8rem] uppercase">
                     Customer
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-[0.95rem] font-medium text-gray-700 lg:landscape:text-[0.8rem] uppercase">
                     Items
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-[0.95rem] font-medium text-gray-700 lg:landscape:text-[0.8rem] uppercase">
                     Total
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-[0.95rem] font-medium text-gray-700 lg:landscape:text-[0.8rem] uppercase">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-[0.95rem] font-medium text-gray-700 lg:landscape:text-[0.8rem] uppercase">
                     Actions
                   </th>
                 </tr>

@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { MoreVertical, Eye } from "lucide-react";
 import { ReturnRequest } from "@/src/types";
-import { PriceDisplay } from "../../UI/PriceDisplay";
 import { Button } from "../../UI/Button";
 import { useState } from "react";
 
@@ -27,10 +26,10 @@ export default function ReturnsList({
 
   const getStatusStyle = (status: string) => {
     const styles = {
-      pending: "bg-yellow-100 text-yellow-800",
-      approved: "bg-green-100 text-green-800",
-      rejected: "bg-red-100 text-red-800",
-      completed: "bg-blue-100 text-blue-800",
+      pending: "bg-yellow-100 px-2 py-1 text-yellow-800",
+      approved: "bg-green-100 px-2 py-1 text-green-800",
+      rejected: "bg-red-100 px-2 py-1 text-red-800",
+      completed: "bg-blue-100 px-2 py-1 text-blue-800",
     };
 
     return styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800";
@@ -38,58 +37,57 @@ export default function ReturnsList({
 
   const getRefundStatusStyle = (status: string) => {
     const styles = {
-      pending: "bg-yellow-100 text-yellow-800",
-      processing: "bg-blue-100 text-blue-800",
-      completed: "bg-green-100 text-green-800",
-      failed: "bg-red-100 text-red-800",
+      pending: "bg-yellow-100 px-2 py-1 text-yellow-800",
+      processing: "bg-blue-100 px-2 py-1 text-blue-800",
+      completed: "bg-green-100 px-2 py-1 text-green-800",
+      failed: "bg-red-100 px-2 py-1 text-red-800",
     };
 
     return styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800";
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
-  const startItem = (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalCount);
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-white overflow-hidden">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
               >
                 Return ID
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
               >
                 Order
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
               >
                 Customer
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
               >
                 Status
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
               >
                 Refund
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
               >
                 Date
               </th>
@@ -104,7 +102,7 @@ export default function ReturnsList({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link
                     href={`/admin/orders/returns/${returnRequest.id}`}
-                    className="text-blue-600 hover:text-blue-900"
+                    className="text-blue-600 text-base xl:text-sm hover:text-blue-900"
                   >
                     #{returnRequest.id}
                   </Link>
@@ -112,19 +110,19 @@ export default function ReturnsList({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link
                     href={`/admin/orders/${returnRequest.order_number}`}
-                    className="text-blue-600 hover:text-blue-900"
+                    className="text-blue-600 text-base xl:text-sm hover:text-blue-900"
                   >
                     Order #{returnRequest.order_number}
                   </Link>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-base md:text-base xl:text-sm font-medium text-gray-900">
                     {returnRequest.customer_name}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusStyle(
+                    className={`px-2 inline-flex text-sm leading-5 font-semibold rounded-full ${getStatusStyle(
                       returnRequest.return_status
                     )}`}
                   >
@@ -135,24 +133,16 @@ export default function ReturnsList({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex flex-col space-y-1">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRefundStatusStyle(
+                      className={`px-2 inline-flex text-sm leading-5 font-semibold rounded-full ${getRefundStatusStyle(
                         returnRequest.refund_status
                       )}`}
                     >
                       {returnRequest.refund_status.charAt(0).toUpperCase() +
                         returnRequest.refund_status.slice(1)}
                     </span>
-                    {returnRequest.refund_amount || 0 > 0 && (
-                      <span className="text-sm text-gray-500">
-                        <PriceDisplay
-                          amount={returnRequest.refund_amount || 0}
-                          sourceCurrency="USD"
-                        />
-                      </span>
-                    )}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-base xl:text-sm text-gray-900">
                   {format(new Date(returnRequest.created_at), "MMM d, yyyy")}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -165,7 +155,7 @@ export default function ReturnsList({
                             : returnRequest.id
                         )
                       }
-                      className="text-gray-400 hover:text-gray-500"
+                      className="text-gray-600 hover:text-gray-700"
                     >
                       <MoreVertical className="h-5 w-5" />
                     </button>
@@ -175,7 +165,7 @@ export default function ReturnsList({
                         <div className="py-1" role="menu">
                           <Link
                             href={`/admin/orders/returns/${returnRequest.id}`}
-                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            className="flex items-center px-4 py-2 text-base xl:text-sm text-gray-900 hover:bg-gray-100"
                             onClick={() => setSelectedReturn(null)}
                           >
                             <Eye className="h-4 w-4 mr-2" />
@@ -193,17 +183,15 @@ export default function ReturnsList({
       </div>
 
       {/* Pagination */}
-      <div className="px-6 py-4 border-t border-gray-200">
+      <div className="px-6 py-4 border-t border-gray-200 bg-white">
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">{startItem}</span> to{" "}
-            <span className="font-medium">{endItem}</span> of{" "}
-            <span className="font-medium">{totalCount}</span> returns
+          <div className="text-sm text-gray-700 -ml-[2%] md:pl-4">
+            Showing <span className="font-medium">{endItem}</span> of{" "}
+            <span className="font-medium">{totalCount}</span> orders
           </div>
           <div className="flex space-x-2">
             <Button
-              variant="outline"
-              size="sm"
+              className="rounded-lg bg-slate-700 border border-slate-700 hover:bg-slate-800 text-sm py-2 px-1 md:text-base xl:text-sm"
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
             >
@@ -230,8 +218,7 @@ export default function ReturnsList({
             </div>
 
             <Button
-              variant="outline"
-              size="sm"
+              className="rounded-lg bg-slate-700 border border-slate-700 hover:bg-slate-800 text-sm py-2 px-1 md:text-base xl:text-sm"
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
             >

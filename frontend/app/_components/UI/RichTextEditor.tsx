@@ -389,7 +389,7 @@ export function RichTextEditor({
     },
     editorProps: {
       attributes: {
-        class: "prose max-w-none p-4 min-h-[200px] focus:outline-none",
+        class: "prose max-w-none min-h-[200px] focus:outline-none",
       },
     },
     immediatelyRender: false,
@@ -401,7 +401,7 @@ export function RichTextEditor({
       <MenuBar editor={editor} onImageUpload={onImageUpload} />
       <EditorContent
         editor={editor}
-        className="prose max-w-none p-4 min-h-[200px] focus:outline-none"
+        className="prose max-w-none px-2 py-2 text-base text-gray-900 min-h-[200px] focus:outline-none"
       />
     </div>
   );

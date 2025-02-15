@@ -2,13 +2,12 @@
 
 import { Breadcrumb } from "@/app/_components/UI/Breadcrumb";
 import AdminProfile from "@/app/_components/dashboardUI/profileSection/AdminProfile";
-import { useAppSelector } from "@/src/libs/_redux/hooks";
-import { selectIsAuthenticated } from "@/src/libs/_redux/authSlice";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useAuth } from "@/src/libs/customHooks/useAuth";
 
 export default function ProfilePage() {
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
 
   // Redirect to login if not authenticated
@@ -23,8 +22,11 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <Breadcrumb />
+    <div className="space-y-6 md:mt-4 xl:-mt-4 md:h-screen">
+      <div className="px-2">
+        <Breadcrumb />
+      </div>
+
       <AdminProfile />
     </div>
   );

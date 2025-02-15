@@ -7,15 +7,17 @@ import { useAuth } from "@/src/libs/customHooks/useAuth";
 
 export function CartInitializer() {
   const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isUser } = useAuth();
 
   useEffect(() => {
     // Initialize cart data in React Query cache
-    queryClient.prefetchQuery({
-      queryKey: ["cart"],
-      queryFn: () => cartService.fetchCart(),
-    });
-  }, [isAuthenticated, queryClient]);
+    if (isAuthenticated && isUser) { 
+      queryClient.prefetchQuery({
+        queryKey: ["cart"],
+        queryFn: () => cartService.fetchCart(),
+      });
+    }
+  }, [isAuthenticated, queryClient, isUser]);
 
   return null;
 }

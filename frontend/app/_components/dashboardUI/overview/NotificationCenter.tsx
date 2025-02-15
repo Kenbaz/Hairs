@@ -112,26 +112,28 @@ export function NotificationCenter() {
     
 
    return (
-     <div className="relative">
+     <div className="relative w-full">
        <button
          onClick={() => setIsOpen(!isOpen)}
-         className="p-2 rounded-full hover:bg-gray-100 relative"
+         className="p-2 border shadow rounded-full hover:bg-gray-100 relative"
        >
-         <Bell className="h-5 w-5" />
+         <Bell className="h-5 w-5 lg:landscape:h-4 lg:landscape:w-4 xl:overide-size text-gray-700" />
          {unreadCount > 0 && (
-           <span className="absolute top-0 right-0 h-5 w-5 flex items-center justify-center text-xs text-white bg-red-500 rounded-full transform -translate-y-1/2 translate-x-1/2">
+           <span className="absolute top-0 right-0 h-5 w-5 lg:landscape:h-4 lg:landscape:w-4 lg:landscape:text-[0.8rem] xl:overide-size flex items-center justify-center text-xs text-white bg-red-500 rounded-full transform -translate-y-[50%] translate-x-[50%]">
              {unreadCount}
            </span>
          )}
        </button>
 
        {isOpen && (
-         <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-50">
+         <div className="absolute -ml-[45vw] mt-[1.6vh] w-[92vw] bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-50 md:w-[55vw] md:-right-[1rem] lg:w-[45vw] xl:w-[35vw] 2xl:w-[25vw]">
            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-             <h2 className="text-lg font-semibold">Notifications</h2>
+             <h2 className="text-lg lg:landscape:text-base text-gray-700 font-semibold">
+               Notifications
+             </h2>
              <button
                onClick={handleManualRefresh}
-               className="p-2 hover:bg-gray-100 rounded-full"
+               className="p-2 hover:bg-gray-100 text-gray-700 rounded-full"
                title="Refresh notifications"
              >
                <svg
@@ -156,7 +158,7 @@ export function NotificationCenter() {
                  <span className="loading loading-spinner"></span>
                </div>
              ) : notifications.length === 0 ? (
-               <div className="p-4 text-center text-gray-500">
+               <div className="p-4 text-center lg:landscape:text-sm text-gray-500">
                  No notifications
                </div>
              ) : (

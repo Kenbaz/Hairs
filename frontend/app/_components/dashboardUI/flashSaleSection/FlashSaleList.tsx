@@ -13,12 +13,14 @@ import {
   Edit,
   Trash2,
   BarChart2,
+  Search,
 } from "lucide-react";
 import { FlashSale } from "@/src/types";
 import Link from "next/link";
 import { Button } from "@/app/_components/UI/Button";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { Input } from "../../UI/Input";
 
 const getStatusColor = (status: FlashSale["status"]) => {
   const colors = {
@@ -56,7 +58,7 @@ const SortButton = ({
   return (
     <button
       onClick={() => onSort(field)}
-      className="flex items-center space-x-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+      className="flex items-center space-x-1 text-sm md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 hover:text-gray-900"
     >
       <span>{field.charAt(0).toUpperCase() + field.slice(1)}</span>
       <div className="flex flex-col">
@@ -141,19 +143,19 @@ export default function FlashSalesList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-700" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 h-full">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center pt-2">
         <h1 className="text-2xl font-semibold text-gray-900">Flash Sales</h1>
         <Button
           onClick={() => router.push("/admin/marketing/flash_sale/create")}
-          className="flex items-center space-x-2"
+          className="flex bg-slate-700 hover:bg-slate-800 items-center space-x-2"
         >
           <TagsIcon className="h-4 w-4" />
           <span>Create Flash Sale</span>
@@ -161,182 +163,190 @@ export default function FlashSalesList() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <div className="flex items-center space-x-4">
-          <div className="flex-1">
-            <input
-              type="text"
+      <div className="bg-white py-4 h-[95%] rounded-lg shadow space-y-4">
+        <div className="grid grid-cols-1 px-2 items-center space-y-4">
+          <div className="relative flex-1 md:flex md:h-[2.7rem] xl:h-[3rem]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-500" />
+            <Input
               placeholder="Search flash sales..."
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="pl-10 w-full md:w-[70%] xl:w-[50%] md:h-full rounded-full text-gray-600 text-base"
               value={filters.search}
               onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
-          <div className="flex items-center space-x-2">
-            {["all", "scheduled", "active", "ended", "cancelled"].map(
-              (status) => (
-                <button
-                  key={status}
-                  onClick={() =>
-                    handleStatusFilter(status === "all" ? "" : status)
-                  }
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    filters.status === (status === "all" ? "" : status)
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </button>
-              )
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Flash Sales List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left">
-                  <SortButton
-                    field="name"
-                    currentSort={sort}
-                    onSort={handleSort}
-                  />
-                </th>
-                <th className="px-6 py-3 text-left">
-                  <SortButton
-                    field="start_time"
-                    currentSort={sort}
-                    onSort={handleSort}
-                  />
-                </th>
-                <th className="px-6 py-3 text-left">Duration</th>
-                <th className="px-6 py-3 text-left">Discount</th>
-                <th className="px-6 py-3 text-left">Status</th>
-                <th className="px-6 py-3 text-left">Progress</th>
-                <th className="px-6 py-3 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {data &&
-                data.map((sale) => (
-                  <tr key={sale.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {sale.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {sale.products.length} products
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {format(
-                          parseISO(sale.start_time),
-                          "MMM d, yyyy h:mm a"
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        to{" "}
-                        {format(parseISO(sale.end_time), "MMM d, yyyy h:mm a")}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 text-gray-400 mr-1" />
-                        <span className="text-sm text-gray-900">
-                          {format(
-                            parseISO(sale.end_time).getTime() -
-                              parseISO(sale.start_time).getTime(),
-                            "d 'days' H 'hours'"
-                          )}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-medium text-gray-900">
-                        {sale.discount_type === "percentage"
-                          ? `${sale.discount_value}% off`
-                          : `$${sale.discount_value} off`}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                          sale.status
-                        )}`}
-                      >
-                        {sale.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div
-                          className="bg-blue-600 h-2.5 rounded-full"
-                          style={{ width: `${getProgressPercentage(sale)}%` }}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center space-x-2">
-                        <Link
-                          href={`/admin/marketing/flash_sale/${sale.id}/stats`}
-                          className="p-1 hover:bg-gray-100 rounded-full"
-                          title="View Statistics"
-                        >
-                          <BarChart2 className="h-5 w-5 text-gray-600" />
-                        </Link>
-                        <Link
-                          href={`/admin/marketing/flash_sale/${sale.id}/edit`}
-                          className="p-1 hover:bg-gray-100 rounded-full"
-                          title="Edit"
-                        >
-                          <Edit className="h-5 w-5 text-gray-600" />
-                        </Link>
-                        <button
-                          onClick={() => setDeletingId(sale.id)}
-                          className="p-1 hover:bg-gray-100 rounded-full"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-5 w-5 text-red-600" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Empty State */}
-        {(!data || data.length === 0) && (
-          <div className="text-center py-12">
-            <TagsIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              No flash sales
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Get started by creating a new flash sale.
-            </p>
-            <div className="mt-6">
-              <Button
-                onClick={() =>
-                  router.push("/admin/marketing/flash_sale/create")
-                }
-              >
-                Create Flash Sale
-              </Button>
+          <div className="overflow-x-hidden">
+            <div className="flex items-center py-2 space-x-2 overflow-x-auto layout-container">
+              {["all", "scheduled", "active", "ended", "cancelled"].map(
+                (status) => (
+                  <button
+                    key={status}
+                    onClick={() =>
+                      handleStatusFilter(status === "all" ? "" : status)
+                    }
+                    className={`px-3 py-1 rounded-full text-[0.8rem] md:text-base lg:landscape:text-[0.9rem] font-medium ${
+                      filters.status === (status === "all" ? "" : status)
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </button>
+                )
+              )}
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Flash Sales List */}
+        <div className="bg-white shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-100 text-gray-600">
+                <tr>
+                  <th className="px-6 py-3 text-left">
+                    <SortButton
+                      field="name"
+                      currentSort={sort}
+                      onSort={handleSort}
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left">
+                    <SortButton
+                      field="start_time"
+                      currentSort={sort}
+                      onSort={handleSort}
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left font-medium text-sm md:text-base lg:landscape:text-[0.9rem]">
+                    Duration
+                  </th>
+                  <th className="px-6 py-3 text-left font-medium text-sm md:text-base lg:landscape:text-[0.9rem]">
+                    Discount
+                  </th>
+                  <th className="px-6 py-3 text-left font-medium text-sm md:text-base lg:landscape:text-[0.9rem]">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left font-medium text-sm md:text-base lg:landscape:text-[0.9rem]">
+                    Progress
+                  </th>
+                  <th className="px-6 py-3 text-center font-medium text-sm md:text-base lg:landscape:text-[0.9rem]">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {data &&
+                  data.map((sale) => (
+                    <tr key={sale.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div>
+                            <div className="font-medium text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] text-gray-900">
+                              {sale.name}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {sale.products.length} products
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] text-gray-900">
+                          {format(
+                            parseISO(sale.start_time),
+                            "MMM d, yyyy h:mm a"
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          to{" "}
+                          {format(
+                            parseISO(sale.end_time),
+                            "MMM d, yyyy h:mm a"
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div>
+                            <Clock className="h-4 w-4 text-gray-400 mr-1" />
+                          </div>
+                          <span className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] text-gray-900">
+                            {format(
+                              parseISO(sale.end_time).getTime() -
+                                parseISO(sale.start_time).getTime(),
+                              "d 'days' H 'hours'"
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-900">
+                          {sale.discount_type === "percentage"
+                            ? `${sale.discount_value}% off`
+                            : `$${sale.discount_value} off`}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${getStatusColor(
+                            sale.status
+                          )}`}
+                        >
+                          {sale.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div
+                            className="bg-blue-600 h-2.5 rounded-full"
+                            style={{ width: `${getProgressPercentage(sale)}%` }}
+                          />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center space-x-2">
+                          <Link
+                            href={`/admin/marketing/flash_sale/${sale.id}/stats`}
+                            className="p-1 hover:bg-gray-100 rounded-full"
+                            title="View Statistics"
+                          >
+                            <BarChart2 className="h-5 w-5 text-gray-600" />
+                          </Link>
+                          <Link
+                            href={`/admin/marketing/flash_sale/${sale.id}/edit`}
+                            className="p-1 hover:bg-gray-100 rounded-full"
+                            title="Edit"
+                          >
+                            <Edit className="h-5 w-5 text-gray-600" />
+                          </Link>
+                          <button
+                            onClick={() => setDeletingId(sale.id)}
+                            className="p-1 hover:bg-gray-100 rounded-full"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-5 w-5 text-red-600" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Empty State */}
+          {(!data || data.length === 0) && (
+            <div className="text-center py-12">
+              <TagsIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No flash sales
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Get started by creating a new flash sale.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}

@@ -1,3 +1,5 @@
+'use client'
+
 import SalesAnalyticsPage from "@/app/_components/dashboardUI/analyticsSection/SalesAnalyticsPage";
 
 

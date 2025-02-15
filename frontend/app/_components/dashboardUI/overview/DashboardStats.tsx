@@ -20,30 +20,59 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, trend, icon: Icon, tr
     const isPositive = trend === 'up';
 
     return (
-    <div className="bg-white p-6 rounded-lg shadow-sm">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className={`p-2 rounded-lg ${isPositive ? 'bg-green-100' : 'bg-blue-100'}`}>
-            <Icon className={`h-6 w-6 ${isPositive ? 'text-green-600' : 'text-blue-600'}`} />
+      <div className="bg-white p-6 lg:pl-2 rounded-lg shadow-sm">
+        <div className="flex items-center justify-between relative">
+          <div className="flex items-center space-x-3">
+            <div
+              className={`p-2 rounded-lg ${
+                isPositive ? "bg-green-100" : "bg-red-100"
+              }`}
+            >
+              <Icon
+                className={`h-6 w-6 lg:landscape:h-5 lg:landscape:w-5 xl:hidden ${
+                  isPositive ? "text-green-600" : "text-red-600"
+                }`}
+              />
+              <Icon
+                className={`hidden xl:block h-6 w-6 ${
+                  isPositive ? "text-green-600" : "text-red-600"
+                }`}
+              />
+            </div>
+            <div>
+              <p className="text-base lg:landscape:text-sm xl:hidden  fomt-medium text-gray-600">
+                {title}
+              </p>
+              <p className="text-2xl md:text-3xl xl:hidden lg:landscape:text-xl text-gray-800 font-semibold">
+                {value}
+              </p>
+              <p className="hidden xl:block text-base fomt-medium text-gray-600">
+                {title}
+              </p>
+              <p className="hidden xl:block text-2xl text-gray-800 font-semibold">
+                {value}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-gray-500">{title}</p>
-            <p className="text-2xl font-semibold">{value}</p>
-          </div>
+          {trendValue !== undefined && (
+            <div
+              className={`flex items-center lg:absolute 2xl:relative lg:-top-4 lg:-right-3 space-x-1 ${
+                isPositive ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {isPositive ? (
+                <TrendingUp className="h-4 w-4" />
+              ) : (
+                <TrendingDown className="h-4 w-4" />
+              )}
+              <span className="text-sm font-medium">
+                {trendValue.toFixed(1)}%
+              </span>
+            </div>
+          )}
         </div>
-        {trendValue !== undefined && (
-          <div className={`flex items-center space-x-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-            {isPositive ? (
-              <TrendingUp className="h-4 w-4" />
-            ) : (
-              <TrendingDown className="h-4 w-4" />
-            )}
-            <span className="text-sm font-medium">{trendValue.toFixed(1)}%</span>
-          </div>
-        )}
       </div>
-    </div>
-  );
+    );
 };
 
 

@@ -44,7 +44,7 @@ export function EmailPreviewModal({
 
       {/* Modal */}
       <div className="relative min-h-screen flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-lg shadow-xl w-full max-w-4xl">
+        <div className="relative bg-white rounded-lg shadow-xl w-full md:w-[80%] max-w-4xl">
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -71,12 +71,12 @@ export function EmailPreviewModal({
 
             {/* Metadata */}
             <div className="space-y-2 mb-6">
-              <div className="flex items-center text-sm text-gray-500">
+              <div className="flex items-center text-sm md:text-base lg:landscape:text-[0.9rem] text-gray-500">
                 <Mail className="h-4 w-4 mr-2" />
                 <span className="font-medium">From:</span>
                 <span className="ml-2">{email.from_email}</span>
               </div>
-              <div className="flex items-center text-sm text-gray-500">
+              <div className="flex items-center text-sm md:text-base lg:landscape:text-[0.9rem] text-gray-500">
                 <Mail className="h-4 w-4 mr-2" />
                 <span className="font-medium">To:</span>
                 <span className="ml-2">
@@ -85,7 +85,7 @@ export function EmailPreviewModal({
                     : email.to_email}
                 </span>
               </div>
-              <div className="flex items-center text-sm text-gray-500">
+              <div className="flex items-center text-sm md:text-base lg:landscape:text-[0.9rem] text-gray-500">
                 <Calendar className="h-4 w-4 mr-2" />
                 <span className="font-medium">Date:</span>
                 <span className="ml-2">
@@ -96,14 +96,14 @@ export function EmailPreviewModal({
 
             {/* Email Body */}
             <div
-              className="prose max-w-none mb-6"
+              className="prose max-w-none mb-6 text-gray-900 md:text-base lg:landscape:text-[0.9rem]"
               dangerouslySetInnerHTML={{ __html: email.body }}
             />
 
             {/* Attachments */}
             {email.attachments && email.attachments.length > 0 && (
               <div className="border-t border-gray-200 pt-4">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">
+                <h4 className="text-sm md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-900 mb-2">
                   Attachments
                 </h4>
                 <div className="space-y-2">

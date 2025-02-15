@@ -45,24 +45,24 @@ export default function OrderInformation({ order }: OrderInformationProps) {
     };
 
     return (
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white h-full rounded-2xl md:rounded-lg shadow">
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-lg font-medium text-gray-900">
             Order Information
           </h2>
         </div>
-        <div className="p-6">
+        <div className="px-6 py-6">
           {/* Order Details Grid */}
           <dl className="grid grid-cols-2 gap-4 mb-8">
             <div>
-              <dt className="text-sm font-medium text-gray-500">Order Date</dt>
+              <dt className="text-sm font-medium text-gray-600">Order Date</dt>
               <dd className="mt-1 text-sm text-gray-900">
                 {format(new Date(order.created_at), "PPPp")}
               </dd>
             </div>
 
             <div>
-              <dt className="text-sm font-medium text-gray-500">
+              <dt className="text-sm font-medium text-gray-600">
                 Last Updated
               </dt>
               <dd className="mt-1 text-sm text-gray-900">
@@ -71,12 +71,12 @@ export default function OrderInformation({ order }: OrderInformationProps) {
             </div>
 
             <div>
-              <dt className="text-sm font-medium text-gray-500">
+              <dt className="text-sm font-medium text-gray-600">
                 Payment Status
               </dt>
               <dd className="mt-1">
                 <span
-                  className={`inline-flex rounded-full px-2 text-xs font-semibold ${
+                  className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                     order.payment_status
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
@@ -89,7 +89,7 @@ export default function OrderInformation({ order }: OrderInformationProps) {
 
             {order.tracking_number && (
               <div>
-                <dt className="text-sm font-medium text-gray-500">
+                <dt className="text-sm font-medium text-gray-600">
                   Tracking Number
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900">
@@ -104,31 +104,31 @@ export default function OrderInformation({ order }: OrderInformationProps) {
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               Order Items
             </h3>
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border shadow-sm rounded-lg overflow-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wide"
                     >
                       Product
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wide"
                     >
                       Quantity
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wide"
                     >
                       Price
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wide"
                     >
                       Subtotal
                     </th>
@@ -172,16 +172,16 @@ export default function OrderInformation({ order }: OrderInformationProps) {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         {item.quantity}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         <PriceDisplay
                           amount={item.price}
                           sourceCurrency="USD"
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         <PriceDisplay
                           amount={item.price * item.quantity}
                           sourceCurrency="USD"
@@ -194,9 +194,9 @@ export default function OrderInformation({ order }: OrderInformationProps) {
             </div>
 
             {/* Order Summary */}
-            <div className="mt-6 bg-gray-50 rounded-lg p-4">
+            <div className="mt-6 border-t shadow-sm rounded-lg p-4">
               <dl className="space-y-2">
-                <div className="border-t border-gray-200 pt-2 flex items-center justify-between">
+                <div className=" pt-2 flex items-center justify-between">
                   <dt className="text-base font-medium text-gray-900">Total</dt>
                   <dd className="text-base font-medium text-gray-900">
                     <PriceDisplay amount={total} sourceCurrency="USD" />

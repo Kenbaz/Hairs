@@ -252,7 +252,7 @@ export interface TopProduct {
     total_sold: number;
     revenue: number;
     stock: number;
-    image?: string;
+    images: ProductImage[];
     growth_rate: number;
 }
 

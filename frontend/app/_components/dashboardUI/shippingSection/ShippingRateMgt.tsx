@@ -12,6 +12,7 @@ import { ModalForComponents } from "@/app/_components/UI/ModalForComponents";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ConfirmModal } from "../../UI/ConfirmModal";
 
 
 // Form validation schema
@@ -57,12 +58,13 @@ function ShippingRateForm({ onSubmit, initialData, isLoading }: ShippingRateForm
             error={errors.currency_code?.message}
             placeholder="e.g., USD"
             maxLength={3}
-            className="uppercase"
+            className="uppercase border rounded-lg text-gray-800"
           />
 
           <Input
             type="number"
             label="Flat Rate"
+            className="border rounded-lg text-gray-800"
             step="0.01"
             {...register("flat_rate", { valueAsNumber: true })}
             error={errors.flat_rate?.message}
@@ -78,7 +80,11 @@ function ShippingRateForm({ onSubmit, initialData, isLoading }: ShippingRateForm
           </label>
         </div>
 
-        <Button type="submit" disabled={isLoading}>
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="bg-slate-700 hover:bg-slate-800"
+        >
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {initialData ? "Update" : "Create"} Shipping Rate
         </Button>
@@ -96,8 +102,16 @@ function formatRate(rate: number | string): string {
 export default function ShippingRates() {
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [rateToDelete, setRateToDelete] = useState<ShippingRate | null>(null);
     const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
     const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+    
+    
+    const showAlert = (type: "success" | "error", message: string) => {
+      setAlert({ type, message });
+      setTimeout(() => setAlert(null), 5000);
+    };
 
 
     // Fetch shipping rates
@@ -112,11 +126,11 @@ export default function ShippingRates() {
         mutationFn: (data: ShippingRateFormData) => adminShippingService.createShippingRate(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['shipping-rates'] });
-            setAlert({ type: 'success', message: 'Shipping rate created successfully' });
+            showAlert('success', 'Shipping rate created successfully');
             setIsModalOpen(false);
         },
         onError: () => {
-            setAlert({ type: 'error', message: 'Failed to create shipping rate' });
+          showAlert('error', 'Failed to create shipping rate');
         },
     });
 
@@ -127,15 +141,12 @@ export default function ShippingRates() {
         adminShippingService.updateShippingRate(id, data),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["shipping-rates"] });
-        setAlert({
-          type: "success",
-          message: "Shipping rate updated successfully",
-        });
+        showAlert('success', 'Shipping rate updated successfully');
         setIsModalOpen(false);
         setSelectedRate(null);
       },
       onError: () => {
-        setAlert({ type: "error", message: "Failed to update shipping rate" });
+        showAlert('error', 'Failed to update shipping rate');
       },
     });
 
@@ -144,13 +155,28 @@ export default function ShippingRates() {
     const deleteRateMutation = useMutation({
         mutationFn: (id: number) => adminShippingService.deleteShippingRate(id),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['shipping-rates'] });
-            setAlert({ type: 'success', message: 'Shipping rate deleted successfully' });
+          queryClient.invalidateQueries({ queryKey: ['shipping-rates'] });
+          showAlert('success', 'Shipping rate deleted successfully');
+          setDeleteModalOpen(false);
+          setRateToDelete(null);
         },
         onError: () => {
-            setAlert({ type: 'error', message: 'Failed to delete shipping rate' });
+          showAlert('error', 'Failed to delete shipping rate');  
+          setDeleteModalOpen(false);
         },
     });
+  
+  
+     const handleDeleteClick = (rate: ShippingRate) => {
+       setRateToDelete(rate);
+       setDeleteModalOpen(true);
+     };
+
+     const handleConfirmDelete = () => {
+       if (rateToDelete) {
+         deleteRateMutation.mutate(rateToDelete.id);
+       }
+     };
 
 
     const handleSubmit = (data: ShippingRateFormData) => {
@@ -163,12 +189,31 @@ export default function ShippingRates() {
 
 
     return (
-      <div className="p-6 max-w-6xl mx-auto">
-        <div className="mb-6 flex justify-between items-center">
+      <div className=" max-w-6xl mx-auto h-full">
+        <div className="md:hidden mb-6 space-y-7">
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Shipping Rates
+          </h1>
+          <div className="flex items-center justify-between">
+            <div></div>
+            <Button
+              className="bg-slate-700 hover:bg-slate-800"
+              onClick={() => {
+                setSelectedRate(null);
+                setIsModalOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Shipping Rate
+            </Button>
+          </div>
+        </div>
+        <div className="hidden mb-6 md:flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-900">
             Shipping Rates
           </h1>
           <Button
+            className="bg-slate-700 hover:bg-slate-800"
             onClick={() => {
               setSelectedRate(null);
               setIsModalOpen(true);
@@ -185,94 +230,88 @@ export default function ShippingRates() {
 
         {isLoading ? (
           <div className="flex justify-center my-8">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-slate-800" />
           </div>
         ) : (
-          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Currency
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Flat Rate
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Last Updated
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {data?.results.map((rate) => (
-                  <tr key={rate.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {rate.currency_code}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {formatRate(rate.flat_rate)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          rate.is_active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {rate.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(rate.updated_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => {
-                          setSelectedRate(rate);
-                          setIsModalOpen(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                        title="Edit"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              "Are you sure you want to delete this shipping rate?"
-                            )
-                          ) {
-                            deleteRateMutation.mutate(rate.id);
-                          }
-                        }}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {data?.results.length === 0 && (
+          <div className="bg-white h-[90%] shadow-sm rounded-lg overflow-hidden py-1">
+            <div className="overflow-x-auto border-b">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-100">
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="px-6 py-4 text-center text-gray-500"
-                    >
-                      No shipping rates found
-                    </td>
+                    <th className="px-6 py-3 text-left text-[0.8rem] md:text-base lg:landscape:text-sm font-medium text-gray-600 uppercase tracking-wide">
+                      Currency
+                    </th>
+                    <th className="px-6 py-3 text-left text-[0.8rem] md:text-base lg:landscape:text-sm font-medium text-gray-600 uppercase tracking-wide">
+                      Flat Rate
+                    </th>
+                    <th className="px-6 py-3 text-left text-[0.8rem] md:text-base lg:landscape:text-sm font-medium text-gray-600 uppercase tracking-wide">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-[0.8rem] md:text-base lg:landscape:text-sm font-medium text-gray-600 uppercase tracking-wide">
+                      Last Updated
+                    </th>
+                    <th className="px-6 py-3 text-right text-[0.8rem] md:text-base lg:landscape:text-sm font-medium text-gray-500 uppercase tracking-wide">
+                      Actions
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {data?.results.map((rate) => (
+                    <tr key={rate.id}>
+                      <td className="px-6 py-4 md:text-base lg:landscape:text-sm text-gray-900 whitespace-nowrap">
+                        {rate.currency_code}
+                      </td>
+                      <td className="px-6 py-4 md:text-base lg:landscape:text-sm text-gray-900 whitespace-nowrap">
+                        {formatRate(rate.flat_rate)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 inline-flex text-[0.8rem] leading-5 font-semibold rounded-full ${
+                            rate.is_active
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {rate.is_active ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base lg:landscape:text-sm text-gray-700">
+                        {new Date(rate.updated_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm md:text-base lg:landscape:text-sm font-medium">
+                        <button
+                          onClick={() => {
+                            setSelectedRate(rate);
+                            setIsModalOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-900 mr-4"
+                          title="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(rate)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {data?.results.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-6 py-4 text-center text-gray-500"
+                      >
+                        No shipping rates found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -291,10 +330,27 @@ export default function ShippingRates() {
             <ShippingRateForm
               onSubmit={handleSubmit}
               initialData={selectedRate || undefined}
-              isLoading={createRateMutation.isPending || updateRateMutation.isPending}
+              isLoading={
+                createRateMutation.isPending || updateRateMutation.isPending
+              }
             />
           </div>
         </ModalForComponents>
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmModal
+          isOpen={deleteModalOpen}
+          onClose={() => {
+            setDeleteModalOpen(false);
+            setRateToDelete(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          title="Delete Shipping Rate"
+          message={`Are you sure you want to delete the shipping rate for ${rateToDelete?.currency_code}? This action cannot be undone.`}
+          confirmText="Delete Rate"
+          cancelText="Cancel"
+          variant="danger"
+        />
       </div>
     );
 }

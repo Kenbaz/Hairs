@@ -16,7 +16,7 @@ export default function CustomerDetailsPage({
   const { id } = use(params);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2 md:px-0 min-h-screen md:mt-[2%] lg:mt-4 xl:-mt-4">
       <Breadcrumb />
       <CustomerDetails customerId={Number(id)} />
     </div>

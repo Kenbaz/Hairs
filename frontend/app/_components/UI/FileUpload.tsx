@@ -152,7 +152,7 @@ export function FileUpload({
       >
         <input {...getInputProps()} />
         <Upload className="mx-auto h-12 w-12 text-gray-400" />
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-gray-700">
           Drop files here, or click to select
         </p>
         <p className="mt-1 text-xs text-gray-500">

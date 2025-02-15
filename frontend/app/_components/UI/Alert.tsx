@@ -10,10 +10,10 @@ interface AlertProps {
 
 export function Alert({ type = "info", message, className = "" }: AlertProps) {
   const types = {
-    success: "bg-green-50 text-green-800 border-green-200",
-    error: "bg-red-50 text-red-800 border-red-200",
-    warning: "bg-yellow-50 text-yellow-800 border-yellow-200",
-    info: "bg-blue-50 text-blue-800 border-blue-200",
+    success: "bg-green-500/20 text-green-800 border-green-500/20",
+    error: "bg-red-500/20 text-red-800 border-red-500/20",
+    warning: "bg-yellow-500/20 text-yellow-800 border-yellow-500/20",
+    info: "bg-blue-500/20 text-blue-800 border-blue-500/20",
   };
 
   return (

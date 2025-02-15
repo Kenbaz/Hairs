@@ -142,28 +142,28 @@ export function CurrencyList({ currencies, onUpdate }: CurrencyListProps) {
 
 
     return (
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white h-[92%] py-1 rounded-lg shadow">
         {alert && (
           <Alert type={alert.type} message={alert.message} className="mb-4" />
         )}
 
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-[0.8rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 uppercase tracking-wide">
                   Currency
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-[0.8rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 uppercase tracking-wide">
                   Code
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-[0.8rem] md:text-[0.9rem] font-medium text-gray-600 uppercase tracking-wide">
                   Exchange Rate (1 USD =)
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-[0.8rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 uppercase tracking-wide">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-[0.8rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-600 uppercase tracking-wide">
                   Actions
                 </th>
               </tr>
@@ -173,14 +173,16 @@ export function CurrencyList({ currencies, onUpdate }: CurrencyListProps) {
                 <tr key={currency.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <span className="text-xl mr-2">{currency.symbol}</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-xl text-gray-600 mr-2">
+                        {currency.symbol}
+                      </span>
+                      <span className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-900">
                         {currency.name}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100">
+                    <span className="px-2.5 py-1 rounded-full text-xs md:text-sm font-medium bg-gray-100 text-gray-900">
                       {currency.code}
                     </span>
                   </td>
@@ -191,12 +193,13 @@ export function CurrencyList({ currencies, onUpdate }: CurrencyListProps) {
                           type="number"
                           value={editRate}
                           onChange={(e) => setEditRate(e.target.value)}
-                          className="w-32"
+                          className="w-32 text-gray-700 border rounded-lg bg-gray-50"
                           step="0.000001"
                           min="0.000001"
                         />
                         <Button
                           size="sm"
+                          className="bg-slate-700 hover:bg-slate-800"
                           onClick={() => handleSave(currency.id)}
                           isLoading={updateRateMutation.isPending}
                         >
@@ -212,7 +215,7 @@ export function CurrencyList({ currencies, onUpdate }: CurrencyListProps) {
                       </div>
                     ) : (
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-900">
+                        <span className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] text-gray-900">
                           {currency.exchange_rate}
                         </span>
                         {currency.code !== "USD" && (
@@ -228,7 +231,7 @@ export function CurrencyList({ currencies, onUpdate }: CurrencyListProps) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {currency.code === "USD" ? (
-                      <span className="text-sm text-gray-500">
+                      <span className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] text-gray-600">
                         Base Currency
                       </span>
                     ) : (
@@ -247,7 +250,7 @@ export function CurrencyList({ currencies, onUpdate }: CurrencyListProps) {
                       </button>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {currency.last_updated
                       ? new Date(currency.last_updated).toLocaleString()
                       : "-"}

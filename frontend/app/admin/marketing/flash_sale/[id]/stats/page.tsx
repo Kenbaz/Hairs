@@ -21,7 +21,7 @@ export default function FlashSaleStatsPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2 md:px-0 pb-[10%] md:mt-4 xl:-mt-4">
       <FlashSaleStats flashSaleId={flashSaleId} />
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../UI/Button";
 import { Input } from "../UI/Input";
 import { Alert } from "../UI/Alert";
@@ -12,8 +12,13 @@ export function PasswordResetForm() {
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [adminRoute, setAdminRoute] = useState(false);
     
-    const adminRoute = window.location.pathname.startsWith('/admin');
+     useEffect(() => {
+       if (typeof window !== "undefined") {
+         setAdminRoute(window.location.pathname.startsWith("/admin"));
+       }
+     }, []);
     
   
     const handleSubmit = async (e: React.FormEvent) => {

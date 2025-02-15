@@ -39,7 +39,7 @@ export default function CurrencyManagementPage() {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-96">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-slate-800" />
             </div>
         );
     };
@@ -54,50 +54,73 @@ export default function CurrencyManagementPage() {
 
 
     return (
-    <div className="space-y-6">
-      <div className="px-4 py-2">
-        <Breadcrumb />
-      </div>
-
-      {alert && (
-        <Alert type={alert.type} message={alert.message} className="mb-4" />
-      )}
-
-      {/* Header */}
-      <div className="flex items-center justify-between px-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Currency Management
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage exchange rates and available currencies
-          </p>
+      <div className="space-y-6 h-screen px-2 md:px-0 md:mt-4 xl:-mt-4">
+        <div className="py-2">
+          <Breadcrumb />
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Currency
-        </Button>
+
+        {alert && (
+          <Alert type={alert.type} message={alert.message} className="mb-4" />
+        )}
+
+        {/* Header */}
+        <div className="md:hidden space-y-7">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">
+              Currency Management
+            </h1>
+            <p className="mt-1 text-sm text-gray-600">
+              Manage exchange rates and available currencies
+            </p>
+          </div>
+          <div className="flex items-center justify-between">
+            <div></div>
+            <Button
+              className="bg-slate-700 hover:bg-slate-800"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Currency
+            </Button>
+          </div>
+        </div>
+        <div className="hidden md:flex items-center justify-between px-2">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">
+              Currency Management
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Manage exchange rates and available currencies
+            </p>
+          </div>
+          <Button
+            className="bg-slate-700 hover:bg-slate-800"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Currency
+          </Button>
+        </div>
+
+        {/* Currency List */}
+        <CurrencyList
+          currencies={currencies || []}
+          onUpdate={() => {
+            refetch();
+            showAlert("success", "Currency updated successfully");
+          }}
+        />
+
+        {/* Create Currency Modal */}
+        <CreateCurrencyModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={() => {
+            setIsCreateModalOpen(false);
+            refetch();
+            showAlert("success", "Currency added successfully");
+          }}
+        />
       </div>
-
-      {/* Currency List */}
-      <CurrencyList
-        currencies={currencies || []}
-        onUpdate={() => {
-          refetch();
-          showAlert('success', 'Currency updated successfully');
-        }}
-      />
-
-      {/* Create Currency Modal */}
-      <CreateCurrencyModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={() => {
-          setIsCreateModalOpen(false);
-          refetch();
-          showAlert('success', 'Currency added successfully');
-        }}
-      />
-    </div>
-  );
+    );
 }

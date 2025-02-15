@@ -30,7 +30,7 @@ interface SummaryCardProps {
 function SummaryCard({ title, value, subValue }: SummaryCardProps) {
     return (
         <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+            <h3 className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-500">{title}</h3>
             <p className="mt-2 text-3xl font-semibold text-gray-900">{value}</p>
             {subValue && (
                 <p className="mt-1 text-sm text-gray-500">{subValue}</p>
@@ -64,7 +64,7 @@ export function ReconciliationDashboard() {
     if (isLoading)
       return (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin" />
+          <Loader2 className="w-8 h-8 animate-spin text-slate-700" />
         </div>
       );
 
@@ -79,7 +79,7 @@ export function ReconciliationDashboard() {
     return (
         <div className="space-y-8">
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 <SummaryCard
                     title="Total Payments"
                     value={data.summary.total_payments}
@@ -102,7 +102,7 @@ export function ReconciliationDashboard() {
 
             {/* Daily Transactions Chart */}
             <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-4">Daily Transactions</h3>
+                <h3 className="text-lg text-gray-800 font-semibold mb-4">Daily Transactions</h3>
                 <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data.daily_transactions}>
@@ -133,9 +133,9 @@ export function ReconciliationDashboard() {
             </div>
 
             {/* Payment Method Distribution */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <div className="bg-white p-4 rounded-lg shadow">
-                    <h3 className="text-lg font-semibold mb-4">Payment Methods</h3>
+                    <h3 className="text-lg text-gray-800 font-semibold mb-4">Payment Methods</h3>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={data.payment_methods}>
@@ -152,7 +152,7 @@ export function ReconciliationDashboard() {
 
                 {/* Currency Distribution */}
                 <div className="bg-white p-4 rounded-lg shadow">
-                    <h3 className="text-lg font-semibold mb-4">Currency Distribution</h3>
+                    <h3 className="text-lg text-gray-800 font-semibold mb-4">Currency Distribution</h3>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>

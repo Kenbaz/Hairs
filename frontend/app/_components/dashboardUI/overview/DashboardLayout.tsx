@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Menu, ChevronDown, Search } from 'lucide-react';
+import { Menu, ChevronDown, LogOut } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/src/libs/_redux/hooks';
 import { selectUser, loadUser, logout } from '@/src/libs/_redux/authSlice';
 import Link from 'next/link';
@@ -77,12 +77,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
 
     return (
-      <div className="min-h-screen bg-customWhite2 flex">
+      <div className="h-screen overflow-hidden bg-GreyClear sm:grid lg:grid-style">
         {/* Sidebar */}
         <aside
           className={`
             fixed inset-y-0 left-0 z-50 h-screen
-            w-64 bg-white border-r border-gray-200
+            w-64 bg-customWhite3 border-r shadow-xl lg:shadow-none border-gray-200
             transition-transform duration-300 ease-in-out
             ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
             lg:translate-x-0 lg:static
@@ -91,17 +91,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         >
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-4 border-b">
-            <Link
-              href="/admin/dashboard"
-              className="flex items-center space-x-2"
-            >
-              <span className="text-xl font-bold">Admin Panel</span>
-            </Link>
+            <div className="flex items-center space-x-2">
+              <Image
+                src="/Mizviv-Logo.jpg"
+                priority
+                alt="Admin Logo"
+                width={50}
+                height={50}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="rounded-full"
+              />
+              <Link href="/admin/dashboard" className="flex items-center ">
+                <span className="text-lg lg:landscape:text-base text-gray-700 font-bold">
+                  Miz Viv Hairs
+                </span>
+              </Link>
+            </div>
+
             <button
               onClick={() => setIsSidebarOpen(false)}
               className="lg:hidden p-2 rounded-md hover:bg-gray-100"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5 text-gray-500" />
             </button>
           </div>
 
@@ -112,42 +123,36 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </aside>
 
         {/* Main Content */}
-        <div className={`flex-1 ${isSidebarOpen ? "" : ""}`}>
+        <div className={`flex-1 overflow-auto layout-container ${isSidebarOpen ? "" : ""}`}>
           {/* Top Navigation */}
-          <header className="h-16 bg-customWhite3 border-b border-gray-200">
-            <div className="h-full px-4 flex items-center justify-between">
+          <header className="h-16 fixed top-0 right-0 z-20 w-full bg-customWhite3 border-b">
+            <div className="h-full px-4 gap-3 flex items-center justify-between">
               <div className="flex items-center">
                 {/* Mobile menu button */}
                 <button
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                   className="p-2 rounded-md lg:hidden hover:bg-gray-100"
                 >
-                  <Menu className="h-5 w-5" />
+                  <Menu className="h-5 w-5 text-gray-700" />
                 </button>
 
                 {/* Search Bar */}
-                <div className="ml-4">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      className="w-full md:w-72 pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                    <CurrencySelector />
-                  </div>
+                <div className="ml-4 lg:ml-[26vw] xl:ml-[21vw] 2xl:ml-[17vw]">
+                  <CurrencySelector />
                 </div>
               </div>
 
               {/* Right Side Items */}
               <div className="flex items-center space-x-4">
                 {/* Notifications */}
-                <NotificationCenter />
+                <div>
+                  <NotificationCenter />
+                </div>
 
                 {/* User Menu */}
                 <div className="relative">
                   <button
-                    className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100"
+                    className="flex items-center space-x-2 md:space-x-3 px-2 py-1 md:py-2 rounded-full hover:bg-gray-100"
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   >
                     {user?.avatar_url ? (
@@ -159,35 +164,48 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         className="rounded-full"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                        {user?.first_name?.[0]}
-                      </div>
+                      <>
+                        <div className="w-8 h-8 md:text-base rounded-full bg-gray-50 flex items-center justify-center text-gray-900 lg:landscape:text-sm xl:hidden">
+                          {user?.first_name?.[0]}
+                        </div>
+                        <div className="hidden w-8 h-8 text-base rounded-full bg-gray-50 items-center justify-center text-gray-900 xl:flex">
+                          {user?.first_name?.[0]}
+                        </div>
+                      </>
                     )}
-                    <span className="hidden md:inline">
-                      {user?.first_name} {user?.last_name}
-                    </span>
-                    <ChevronDown className="h-4 w-4" />
+                    <>
+                      <span className="md:inline md:text-base text-gray-900 lg:landscape:text-sm xl:hidden">
+                        {user?.first_name} {user?.last_name}
+                      </span>
+                      <span className="hidden xl:inline text-base text-gray-900">
+                        {user?.first_name} {user?.last_name}
+                      </span>
+                    </>
+
+                    <ChevronDown className="h-4 w-4 text-gray-900" />
                   </button>
 
                   {/* User Dropdown Menu */}
                   {isMobileMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg md:text-base lg:landscape:text-sm shadow-lg xl:overide text-gray-700 border-gray-300 border py-2">
                       <Link
                         href="/admin/profile"
-                        className="block px-4 py-2 hover:bg-gray-50"
+                        className="block px-2 py-2 hover:bg-gray-50 w-[95%] rounded-md mx-auto"
                       >
                         Profile
                       </Link>
                       <Link
                         href="/admin/settings"
-                        className="block px-4 py-2 hover:bg-gray-50"
+                        className="block px-2 py-2 hover:bg-gray-50 w-[95%] rounded-md mx-auto lg:landscape:text-sm xl:overide"
                       >
                         Settings
                       </Link>
+                      <hr className="my-2 w-[90%] m-auto border-gray-100" />
                       <button
-                        className="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-600"
+                        className="block px-2 py-2 lg:landscape:text-sm hover:bg-gray-50 w-[95%] rounded-md mx-auto text-red-600 hover:text-red-700 xl:overide"
                         onClick={handleLogout}
                       >
+                        <LogOut className="h-5 w-5 lg:landscape:h-4 lg:landscape:w-4 xl:overide-size inline-block mr-2" />
                         Logout
                       </button>
                     </div>
@@ -198,7 +216,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </header>
 
           {/* Main Content Area */}
-          <main className="p-4 md:p-6 max-w-[1920px] mx-auto">{children}</main>
+          <main className="main-container py-4 mt-[14%] h-screen overflow-y-auto md:mt-[4%] md:p-6 max-w-[100%] xl:mt-[6.4%] 2xl:mt-[4.8%]">
+            {children}
+          </main>
         </div>
       </div>
     );

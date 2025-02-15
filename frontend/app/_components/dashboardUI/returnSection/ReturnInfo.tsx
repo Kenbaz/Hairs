@@ -57,7 +57,7 @@ export default function ReturnInformation({
 
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white h-full rounded-lg shadow">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <h2 className="text-lg font-medium text-gray-900">
@@ -69,7 +69,7 @@ export default function ReturnInformation({
         {/* Return Details */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-500">
+            <label className="text-sm font-medium text-gray-600">
               Return Date
             </label>
             <p className="mt-1 text-sm text-gray-900">
@@ -78,7 +78,7 @@ export default function ReturnInformation({
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-500">
+            <label className="text-sm font-medium text-gray-600">
               Last Updated
             </label>
             <p className="mt-1 text-sm text-gray-900">
@@ -89,7 +89,7 @@ export default function ReturnInformation({
 
         {/* Return Reason */}
         <div>
-          <label className="text-sm font-medium text-gray-500">
+          <label className="text-sm font-medium text-gray-600">
             Return Reason
           </label>
           <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
@@ -99,91 +99,92 @@ export default function ReturnInformation({
 
         {/* Return Items */}
         <div>
-          <h3 className="text-sm font-medium text-gray-500 mb-3">
+          <h3 className="text-sm font-medium text-gray-600 mb-3">
             Items Being Returned
           </h3>
-          <div className="border rounded-lg divide-y divide-gray-200">
-             {returnRequest.items.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              <Package className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <p>No return items found</p>
-            </div>
-          ) : (
-            returnRequest.items.map((item) => (
-              <div key={item.id} className="p-4">
-                <div className="flex items-start space-x-4">
-                  {/* Image handling */}
-                  {item.images && item.images.length > 0 ? (
-                    <div className="relative h-16 w-16 rounded-lg overflow-hidden">
-                      <Image
-                        src={getImageUrl(item.images?.[0]?.image) || ""}
-                        alt={item.product_name}
-                        fill
-                        priority
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        style={{ objectFit: "cover" }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center">
-                      <Package className="h-8 w-8 text-gray-400" />
-                    </div>
-                  )}
-
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium text-gray-900">
-                        {item.product_name}
-                      </h4>
-                      <span className="text-sm text-gray-500">
-                        Qty: {item.quantity}
-                      </span>
-                    </div>
-
-                    <p className="mt-1 text-sm text-gray-500">
-                      Condition:{" "}
-                      {item.condition.charAt(0).toUpperCase() +
-                        item.condition.slice(1)}
-                    </p>
-
-                    <p className="mt-1 text-sm text-gray-500">
-                      Reason: {item.reason}
-                    </p>
-
-                    {/* Item Images Gallery */}
-                    {item.images && item.images.length > 0 && (
-                      <div className="mt-2 flex -space-x-2 overflow-hidden">
-                        {item.images.map((image) => {
-                          const imageUrl = getImageUrl(image.image);
-                          if (!imageUrl) return null;
-
-                          return (
-                            <div
-                              key={image.id}
-                              className="relative h-8 w-8 rounded-full border-2 border-white"
-                            >
-                              <Image
-                                src={imageUrl}
-                                alt={`${item.product_name} image ${image.id}`}
-                                fill
-                                priority
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                style={{ objectFit: "cover" }}
-                              />
-                            </div>
-                          );
-                        })}
+          <div className="border shadow rounded-lg divide-y divide-gray-200">
+            {returnRequest.items.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                <Package className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p>No return items found</p>
+              </div>
+            ) : (
+              returnRequest.items.map((item) => (
+                <div key={item.id} className="p-4">
+                  <div className="flex items-start space-x-4">
+                    {/* Image handling */}
+                    {item.images && item.images.length > 0 ? (
+                      <div className="relative h-16 w-16 rounded-lg overflow-hidden">
+                        <Image
+                          src={getImageUrl(item.images?.[0]?.image) || ""}
+                          alt={item.product_name}
+                          fill
+                          priority
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          style={{ objectFit: "cover" }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <Package className="h-8 w-8 text-gray-400" />
                       </div>
                     )}
+
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium text-gray-900">
+                          {item.product_name}
+                        </h4>
+                        <span className="text-sm text-gray-600">
+                          Qty: {item.quantity}
+                        </span>
+                      </div>
+
+                      <p className="mt-1 text-sm text-gray-600">
+                        Condition:{" "}
+                        {item.condition.charAt(0).toUpperCase() +
+                          item.condition.slice(1)}
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-600">
+                        Reason: {item.reason}
+                      </p>
+
+                      {/* Item Images Gallery */}
+                      {item.images && item.images.length > 0 && (
+                        <div className="mt-2 flex -space-x-2 overflow-hidden">
+                          {item.images.map((image) => {
+                            const imageUrl = getImageUrl(image.image);
+                            if (!imageUrl) return null;
+
+                            return (
+                              <div
+                                key={image.id}
+                                className="relative h-8 w-8 rounded-full border-2 border-white"
+                              >
+                                <Image
+                                  src={imageUrl}
+                                  alt={`${item.product_name} image ${image.id}`}
+                                  fill
+                                  priority
+                                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                  style={{ objectFit: "cover" }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )))}
+              ))
+            )}
           </div>
         </div>
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-500">
+            <h3 className="text-sm font-medium text-gray-600">
               Refund Information
             </h3>
             {!showRefundUpdate && (
@@ -206,6 +207,7 @@ export default function ReturnInformation({
                 <div className="mt-1">
                   <Input
                     type="number"
+                    className="rounded-lg text-gray-900 border"
                     value={refundAmount}
                     onChange={(e) => setRefundAmount(Number(e.target.value))}
                     step="0.01"
@@ -290,13 +292,13 @@ export default function ReturnInformation({
         </div>
 
         {/* Return History */}
-        <div>
-          <h3 className="text-sm font-medium text-gray-500 mb-3">History</h3>
-          <div className="border rounded-lg divide-y divide-gray-200">
+        <div className="hidden md:grid ">
+          <h3 className="text-base font-medium text-gray-600 mb-3">History</h3>
+          <div className="border rounded-lg divide-y divide-gray-200 max-h-[60vh] overflow-y-auto">
             {returnRequest.history.map((entry) => (
               <div key={entry.id} className="p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-base font-medium text-gray-900">
                     {entry.status}
                   </span>
                   <span className="text-sm text-gray-500">
@@ -306,7 +308,7 @@ export default function ReturnInformation({
                 {entry.notes && (
                   <p className="mt-1 text-sm text-gray-500">{entry.notes}</p>
                 )}
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-[0.8rem] text-gray-400">
                   by {entry.created_by_name}
                 </p>
               </div>

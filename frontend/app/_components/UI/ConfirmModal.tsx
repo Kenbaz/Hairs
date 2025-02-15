@@ -31,10 +31,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+        <div className="absolute -mt-6 inset-0 bg-black/50" onClick={onClose} />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <div className="relative bg-white rounded-lg shadow-lg w-[94%] max-w-md p-6 lg:left-[13%] xl:left-[10%] 2xl:left-[5%]">
           {/* Close button */}
           <button
             onClick={onClose}

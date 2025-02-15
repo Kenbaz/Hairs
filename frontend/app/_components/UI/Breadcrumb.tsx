@@ -27,7 +27,7 @@ export function Breadcrumb() {
 
       return (
         <li key={href} className="flex items-center">
-          <ChevronRight className="h-4 w-4 mx-2 text-gray-400" />
+          <ChevronRight className="h-4 w-4 mx-2 text-gray-500" />
           {isLast || isNumericId ? (
             <span
               className={`text-gray-700 ${
@@ -52,9 +52,9 @@ export function Breadcrumb() {
         <li>
           <Link
             href="/admin/dashboard"
-            className="text-gray-600 hover:text-gray-800"
+            className="text-gray-600 text-base hover:text-gray-800"
           >
-            <Home className="h-4 w-4" />
+            <Home className="h-4 w-4 md:h-5 md:w-5" />
           </Link>
         </li>
         {generateBreadcrumbs()}

@@ -23,7 +23,7 @@ const getGreetings = (): string => {
   } else if (hour >= 17 && hour < 21) {
     return 'Good evening';
   } else {
-    return 'Good night';
+    return 'Happy late night';
   }
 };
 
@@ -33,13 +33,13 @@ export default function DashboardOverview() {
     const { data: stats, isLoading, error } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: () => adminDashboardService.getStats(),
-    refetchInterval: 300000, // 5 minutes
+    refetchInterval: 5 * 60 * 1000, // 5 minutes
   });
 
     if (isLoading) {
       return (
         <div className="w-full h-96 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
         </div>
       );
     }
@@ -53,28 +53,38 @@ export default function DashboardOverview() {
     }
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 h-auto pt-[4%] md:pt-[4%] pb-[15%] md:pb-[10%] lg:-mt-[3%] lg:pt-[8%] xl:pt-[3%]">
         {/* Page Title */}
-        <div className="px-2">
-          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-600">
+        <div className="px-2 md:space-y-3 lg:landscape:space-y-2">
+          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 lg:landscape:text-2xl xl:overide-size2">
+            Dashboard
+          </h1>
+          <p className="mt-1 text-base lg:landscape:text-sm xl:overide text-gray-600">
             {getGreetings()}, {user?.first_name}! Welcome to your dashboard.
           </p>
         </div>
 
         {/* Key Metrics */}
-        <div className="px-2">{stats && <DashboardStats stats={stats} />}</div>
+        <div>{stats && <DashboardStats stats={stats} />}</div>
 
         {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-2">
+        <div className=" grid grid-cols-1 gap-6">
+          <div className="hidden xl:grid gap-6 border">
+            <RecentOrders />
+            <div className="grid-style3 gap-6 min-h-[300px]">
+              <RevenueChart />
+              <LowStockAlerts />
+            </div>
+            <ProductPerformance />
+          </div>
           {/* Left Column */}
-          <div className="space-y-6">
+          <div className="space-y-6 xl:hidden">
             <RecentOrders />
             <LowStockAlerts />
           </div>
 
           {/* Right Column */}
-          <div className="space-y-6">
+          <div className="space-y-6 xl:hidden">
             <RevenueChart />
             <ProductPerformance />
           </div>

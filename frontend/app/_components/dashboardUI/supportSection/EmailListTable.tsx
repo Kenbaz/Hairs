@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Mail, Eye, Star, Clock, MoreVertical, Loader2, Trash } from "lucide-react";
+import { Mail, Star, Clock, MoreVertical, Loader2, Trash } from "lucide-react";
 import { EmailPreviewModal } from "./EmailPreviewModal";
 import Link from "next/link";
 import { EmailItem, EmailFilters } from "@/src/types";
@@ -71,10 +71,12 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
     return <Star className="h-5 w-5 text-gray-500" />;
   };
 
+  const currentPage = filters.page || 1;
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
       </div>
     );
   }
@@ -110,24 +112,24 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
         cancelText="Cancel"
         variant="danger"
       />
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg overflow-hidden pb-[14%]">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base lg:landscape:text-[0.8rem] uppercase">
                   Priority
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base lg:landscape:text-[0.8rem] uppercase">
                   Subject
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base lg:landscape:text-[0.8rem] uppercase">
                   Customer
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base lg:landscape:text-[0.8rem] uppercase">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base lg:landscape:text-[0.8rem] uppercase">
                   Date
                 </th>
                 <th className="relative px-6 py-3">
@@ -147,8 +149,11 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
                       className="w-full text-left hover:bg-gray-50 rounded-md p-1 -m-1"
                     >
                       <div className="flex items-center">
-                        <Mail className="h-5 w-5 text-gray-400 mr-2" />
-                        <div className="text-sm font-medium text-gray-900">
+                        <div>
+                          <Mail className="h-5 w-5 text-gray-400 mr-2" />
+                        </div>
+
+                        <div className="text-[0.9rem] md:text-base font-medium lg:landscape:text-[0.9rem] text-gray-900">
                           {email.subject}
                         </div>
                       </div>
@@ -156,7 +161,7 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-900">
                         {email.customer_name}
                       </div>
                       <div className="text-sm text-gray-500">
@@ -173,7 +178,7 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
                       {email.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] text-gray-600">
                     {email.sent_at ? (
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-1" />
@@ -191,7 +196,7 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
                             selectedEmail === email.id ? null : email.id
                           )
                         }
-                        className="text-gray-400 hover:text-gray-500"
+                        className="text-gray-500 hover:text-gray-600"
                       >
                         <MoreVertical className="h-5 w-5" />
                       </button>
@@ -199,17 +204,10 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
                       {selectedEmail === email.id && (
                         <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                           <div className="py-1">
-                            <Link
-                              href={`/admin/support/emails/${email.id}`}
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </Link>
                             {email.status === "draft" && (
                               <Link
                                 href={`/admin/support/emails/compose?draft=${email.id}`}
-                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                className="flex items-center px-4 py-2 text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] text-gray-700 hover:bg-gray-100"
                               >
                                 <Mail className="h-4 w-4 mr-2" />
                                 Edit Draft
@@ -220,7 +218,7 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
                                 setEmailToDelete(email);
                                 setSelectedEmail(null);
                               }}
-                              className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                              className="w-full flex items-center px-4 py-2 text-[0.9rem] md:text-base lg:landscape:text-[0.9rem] text-red-600 hover:bg-red-50"
                             >
                               <Trash className="h-4 w-4 mr-2" />
                               Delete
@@ -243,12 +241,6 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
               <div className="text-sm text-gray-700">
                 Showing{" "}
                 <span className="font-medium">
-                  {(filters.page || 1) * (filters.page_size || 10) -
-                    (filters.page_size || 10) +
-                    1}
-                </span>{" "}
-                to{" "}
-                <span className="font-medium">
                   {Math.min(
                     (filters.page || 1) * (filters.page_size || 10),
                     data.count
@@ -258,15 +250,36 @@ export function EmailListTable({ filters, onPageChange }: EmailListTableProps) {
               </div>
               <div className="flex space-x-2">
                 <Button
-                  variant="outline"
+                  className="rounded-lg bg-slate-700 border border-slate-700 hover:bg-slate-800 text-sm py-2 px-1 md:text-base lg:landscape:text-[0.8rem]"
                   size="sm"
                   onClick={() => onPageChange((filters.page || 1) - 1)}
                   disabled={!data.previous}
                 >
                   Previous
                 </Button>
+                {/* Page Numbers */}
+                <div className="hidden md:flex items-center gap-1">
+                  {Array.from(
+                    {
+                      length: Math.ceil(data.count / (filters.page_size || 10)),
+                    },
+                    (_, i) => i + 1
+                  ).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => onPageChange(page)}
+                      className={`px-3 py-1 text-sm rounded-md ${
+                        page === currentPage
+                          ? "bg-slate-100 text-slate-700 font-medium"
+                          : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
                 <Button
-                  variant="outline"
+                  className="rounded-lg bg-slate-700 border border-slate-700 hover:bg-slate-800 text-sm py-2 px-1 md:text-base lg:landscape:text-[0.8rem]"
                   size="sm"
                   onClick={() => onPageChange((filters.page || 1) + 1)}
                   disabled={!data.next}

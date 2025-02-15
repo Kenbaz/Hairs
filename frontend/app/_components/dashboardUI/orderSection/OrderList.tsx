@@ -43,49 +43,48 @@ export default function OrderList({
     };
 
     const totalPages = Math.ceil(totalCount / pageSize);
-    const startItem = (currentPage - 1) * pageSize + 1;
     const endItem = Math.min(currentPage * pageSize, totalCount);
 
 
     return (
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
                 >
                   Order ID
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
                 >
                   Date
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
                 >
                   Customer
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
                 >
                   Total
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
                 >
                   Status
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-700 md:text-base xl:text-[0.8rem] uppercase"
                 >
                   Payment
                 </th>
@@ -100,31 +99,32 @@ export default function OrderList({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
                       href={`/admin/orders/${order.id}`}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-blue-600 text-base xl:text-sm hover:text-blue-900"
                     >
                       #{order.id}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-[0.9rem] text-gray-600 md:text-base xl:text-sm">
                     {format(new Date(order.created_at), "MMM d, yyyy h:mm a")}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-base xl:text-sm font-medium text-gray-900">
                       {order.customer_name}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-base xl:text-sm text-gray-500">
                       {order.customer_email}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                     <PriceDisplay
                       amount={order.total_amount}
+                      className="text-base xl:text-sm"
                       sourceCurrency="USD"
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusStyle(
+                      className={`px-2 py-1 inline-flex text-[0.9rem] md:text-base xl:text-sm leading-5 font-semibold rounded-full ${getStatusStyle(
                         order.order_status
                       )}`}
                     >
@@ -134,7 +134,7 @@ export default function OrderList({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      className={`px-2 py-1 inline-flex text-[0.9rem] md:text-base xl:text-sm leading-5 font-semibold rounded-full ${
                         order.payment_status
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
@@ -151,7 +151,7 @@ export default function OrderList({
                             selectedOrder === order.id ? null : order.id
                           )
                         }
-                        className="text-gray-400 hover:text-gray-500"
+                        className="text-gray-500 hover:text-gray-600"
                       >
                         <MoreVertical className="h-5 w-5" />
                       </button>
@@ -161,13 +161,13 @@ export default function OrderList({
                           <div className="py-1" role="menu">
                             <Link
                               href={`/admin/orders/${order.id}`}
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              className="flex items-center px-4 py-2 text-base xl:text-sm text-gray-900 hover:bg-gray-200"
                             >
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </Link>
                             <button
-                              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              className="w-full flex items-center px-4 py-2 text-base xl:text-sm text-gray-900 hover:bg-gray-200"
                               onClick={() => {
                                 // Handle order tracking
                                 setSelectedOrder(null);
@@ -177,7 +177,7 @@ export default function OrderList({
                               Track Order
                             </button>
                             <button
-                              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              className="w-full flex items-center px-4 py-2 text-base xl:text-sm text-gray-900 hover:bg-gray-200"
                               onClick={() => {
                                 // Handle invoice download
                                 setSelectedOrder(null);
@@ -200,15 +200,13 @@ export default function OrderList({
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-200 bg-white">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              Showing <span className="font-medium">{startItem}</span> to{" "}
-              <span className="font-medium">{endItem}</span> of{" "}
+            <div className="text-sm text-gray-700 -ml-[2%] md:pl-4">
+              Showing <span className="font-medium">{endItem}</span> of{" "}
               <span className="font-medium">{totalCount}</span> orders
             </div>
             <div className="flex space-x-2">
               <Button
-                variant="outline"
-                size="sm"
+                className="rounded-lg bg-slate-700 border border-slate-700 hover:bg-slate-800 text-sm py-2 px-1 md:text-base xl:text-sm"
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
               >
@@ -235,8 +233,7 @@ export default function OrderList({
               </div>
 
               <Button
-                variant="outline"
-                size="sm"
+                className="rounded-lg bg-slate-700 border border-slate-700 hover:bg-slate-800 text-sm py-2 px-1 md:text-base xl:text-sm"
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >

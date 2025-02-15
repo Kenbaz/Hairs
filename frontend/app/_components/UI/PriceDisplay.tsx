@@ -1,5 +1,5 @@
 import { useCurrency } from "../_providers/CurrencyContext";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { adminCurrencyService } from "@/src/libs/services/adminServices/adminCurrencyService";
 import { Loader2 } from "lucide-react";
 
@@ -33,9 +33,10 @@ export function PriceDisplay({
       enabled:
         sourceCurrency !== selectedCurrency && amount != null && amount > 0,
       // Cache result for 5 minutes
-      staleTime: 5 * 60 * 1000,
+      staleTime: 120 * 60 * 1000,
       // Don't refetch on window focus
       refetchOnWindowFocus: false,
+      placeholderData: keepPreviousData,
     });
 
     if (amount == null) {

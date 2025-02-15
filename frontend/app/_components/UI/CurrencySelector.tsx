@@ -1,86 +1,92 @@
+"use client";
+
 import { useCurrency } from "../_providers/CurrencyContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
 import { useAppSelector } from "@/src/libs/_redux/hooks";
 import { selectIsAuthenticated } from "@/src/libs/_redux/authSlice";
+import { Listbox, ListboxOption, ListboxButton, ListboxOptions, Transition } from "@headlessui/react";
+import { Fragment } from "react";
 
-
-interface CurrencySelectorProps { 
-    className?: string;
+interface CurrencySelectorProps {
+  className?: string;
 }
 
+export function CurrencySelector({ className = "" }: CurrencySelectorProps) {
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
-export function CurrencySelector({ className = '' }: CurrencySelectorProps) {
-    const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const {
+    selectedCurrency,
+    updateCurrency,
+    availableCurrencies,
+    isLoading,
+    error,
+  } = useCurrency();
 
-    const {
-        selectedCurrency,
-        updateCurrency,
-        availableCurrencies,
-        isLoading,
-        error,
-    } = useCurrency();
+  if (!isAuthenticated) return null;
 
-
-    // Don't show anything if not authenticated
-    if (!isAuthenticated) {
-        return null;
-    }
-
-
-    if (isLoading) {
-        return (
-          <div className="flex items-center space-x-2 px-3 py-2 text-gray-500">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Loading currencies...</span>
-          </div>
-        );
-    };
-
-
-    if (error || !availableCurrencies.length) {
-        return null;
-    };
-
-
+  if (isLoading) {
     return (
-      <div className="relative">
-        <select
-          value={selectedCurrency}
-          onChange={(e) => updateCurrency(e.target.value)}
-          className={`
-                    block w-full rounded-lg border border-gray-300 
-                    bg-white px-3 py-2 pr-10 
-                    focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-                    sm:text-sm
-                    ${className}
-                `}
-        >
-          {availableCurrencies.map((currency) => (
-            <option key={currency.code} value={currency.code}>
-              {currency.code === selectedCurrency ? (
-                <>
-                  {currency.symbol} {currency.code} (Selected)
-                </>
-              ) : (
-                <>
-                  {currency.symbol} {currency.code}
-                </>
-              )}
-            </option>
-          ))}
-        </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-          {selectedCurrency !== "USD" && (
-            <span className="text-xs text-gray-500">
-              1 USD ={" "}
+      <div className="flex items-center space-x-2 px-3 py-2 text-gray-500">
+        <Loader2 className="h-4 w-4 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !availableCurrencies.length) return null;
+
+  return (
+    <div className={`relative ${className}`}>
+      <Listbox value={selectedCurrency} onChange={updateCurrency}>
+        <div className="relative">
+          <ListboxButton
+            className="flex w-[30vw] md:w-[20vw] lg:landscape:w-[14vw] items-center justify-between rounded-lg border bg-white px-3 py-2 text-gray-800 shadow-sm text-base lg:landscape:text-sm 2xl:currency-list-style  
+                      focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm md:text-base"
+          >
+            <span>
               {
                 availableCurrencies.find((c) => c.code === selectedCurrency)
-                  ?.exchange_rate
+                  ?.symbol
               }{" "}
               {selectedCurrency}
             </span>
-          )}
+            <ChevronDown className="h-4 w-4 text-gray-500" />
+          </ListboxButton>
+
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <ListboxOptions className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none md:text-base sm:text-sm lg:landscape:text-sm xl:overide">
+              {availableCurrencies.map((currency) => (
+                <ListboxOption
+                  key={currency.code}
+                  value={currency.code}
+                  className={({ active }) =>
+                    `cursor-pointer select-none px-3 py-2 ${
+                      active ? "bg-gray-100" : ""
+                    }`
+                  }
+                >
+                  {({ selected }) => (
+                    <span
+                      className={`flex items-center ${
+                        selected ? "font-medium text-blue-600" : "text-gray-800"
+                      }`}
+                    >
+                      {currency.symbol} {currency.code}
+                    </span>
+                  )}
+                </ListboxOption>
+              ))}
+            </ListboxOptions>
+          </Transition>
         </div>
-      </div>
-    );
+      </Listbox>
+    </div>
+  );
 }

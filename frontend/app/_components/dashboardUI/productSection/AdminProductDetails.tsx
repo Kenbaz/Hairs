@@ -6,7 +6,6 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, ArrowLeft, Edit, Star, Package, X, UploadCloud } from "lucide-react";
 import Image from "next/image";
-import { Breadcrumb } from "../../UI/Breadcrumb";
 import { Button } from "../../UI/Button";
 import { Alert } from "../../UI/Alert";
 import { ImageUpload } from "../../UI/ImageUpload";
@@ -203,7 +202,7 @@ export default function ProductDetailsPage() {
     if (isLoading) {
         return (
           <div className="flex justify-center items-center h-96">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
           </div>
         );
     };
@@ -222,23 +221,23 @@ export default function ProductDetailsPage() {
 
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 pb-[10%] md:pb-0">
         {/* Header */}
-        <div className="px-4 py-2">
-          <Breadcrumb />
-        </div>
         {alert && (
           <Alert type={alert.type} message={alert.message} className="mb-4" />
         )}
         {/* Actions Bar */}
         <div className="flex items-center justify-between px-4">
-          <Button variant="outline" onClick={() => router.back()}>
+          <Button
+            onClick={() => router.back()}
+            className="border border-slate-700 bg-slate-700 hover:bg-slate-800"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
           <div className="space-x-2">
             <Button
-              variant="outline"
+              className="border border-slate-700 bg-slate-700 hover:bg-slate-800"
               onClick={() => router.push(`/admin/products/${product.id}/edit`)}
             >
               <Edit className="h-4 w-4 mr-2" />
@@ -302,16 +301,17 @@ export default function ProductDetailsPage() {
 
                 <div className="mt-2 space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500">Category</p>
-                    <p className="font-medium">{product.category.name}</p>
+                    <p className="text-base text-gray-900">Category</p>
+                    <p className="font-medium text-gray-500">{product.category.name}</p>
                   </div>
 
-                  <div className="flex space-x-8">
+                  <div className="flex space-x-[10%]">
                     <div>
-                      <p className="text-sm text-gray-500">Price</p>
+                      <p className="text-base text-gray-900">Price</p>
                       <p className="font-medium">
                         <PriceDisplay
                           amount={product.price}
+                          className='text-gray-500'
                           sourceCurrency="USD"
                         />
                       </p>
@@ -326,12 +326,12 @@ export default function ProductDetailsPage() {
                     </div>
 
                     <div>
-                      <p className="text-sm text-gray-500">Stock</p>
-                      <div className="flex items-center space-x-2">
-                        <p className="font-medium">{product.stock} units</p>
+                      <p className="text-base text-gray-900">Stock</p>
+                      <div className="flex items-center">
+                        <p className="font-medium text-gray-500">{product.stock} units</p>
                         {status && (
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${status.className}`}
+                            className={`px-2 hidden md:inline-block py-1 relative bottom-[0.6rem] rounded-full text-xs font-medium ${status.className}`}
                           >
                             {status.label}
                           </span>
@@ -349,7 +349,7 @@ export default function ProductDetailsPage() {
                 <h3 className="text-lg font-medium text-gray-900 mb-3">
                   Description
                 </h3>
-                <p className="text-gray-600 whitespace-pre-wrap">
+                <p className="text-gray-600 text-base whitespace-pre-wrap">
                   {product.description}
                 </p>
               </div>
@@ -361,17 +361,17 @@ export default function ProductDetailsPage() {
                 <dl className="divide-y divide-gray-200">
                   {product.hair_type && (
                     <div className="py-3 flex justify-between">
-                      <dt className="text-sm font-medium text-gray-500">
+                      <dt className="text-base font-medium text-gray-500">
                         Hair Type
                       </dt>
-                      <dd className="text-sm text-gray-900">
+                      <dd className="text-base text-gray-900">
                         {product.hair_type}
                       </dd>
                     </div>
                   )}
                   {product.length && (
                     <div className="py-3 flex justify-between">
-                      <dt className="text-sm font-medium text-gray-500">
+                      <dt className="text-base font-medium text-gray-500">
                         Length
                       </dt>
                       <dd className="text-sm text-gray-900">
@@ -380,18 +380,18 @@ export default function ProductDetailsPage() {
                     </div>
                   )}
                   <div className="py-3 flex justify-between">
-                    <dt className="text-sm font-medium text-gray-500">
+                    <dt className="text-base font-medium text-gray-500">
                       Low Stock Alert
                     </dt>
-                    <dd className="text-sm text-gray-900">
+                    <dd className="text-base text-gray-900">
                       {product.low_stock_threshold} units
                     </dd>
                   </div>
                   <div className="py-3 flex justify-between">
-                    <dt className="text-sm font-medium text-gray-500">
+                    <dt className="text-base font-medium text-gray-500">
                       Status
                     </dt>
-                    <dd className="text-sm text-gray-900">
+                    <dd className="text-base text-gray-900">
                       {product.is_available ? "Active" : "Inactive"}
                     </dd>
                   </div>
@@ -400,14 +400,14 @@ export default function ProductDetailsPage() {
             </div>
 
             {/* Product Images Gallery */}
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-white border mt-[2%] rounded-lg shadow">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">
+                  <h3 className="text-lg flex-1 font-medium text-gray-900">
                     Product Images
                   </h3>
                   <Button
-                    variant="outline"
+                    variant='outline'
                     onClick={() => setShowImageUpload(!showImageUpload)}
                   >
                     <UploadCloud className="h-4 w-4 mr-2" />
@@ -440,6 +440,7 @@ export default function ProductDetailsPage() {
                           Cancel
                         </Button>
                         <Button
+                          variant='outline'
                           onClick={() =>
                             addImageMutation.mutateAsync(selectedImages)
                           }
@@ -521,11 +522,11 @@ export default function ProductDetailsPage() {
 
             {/* Care Instructions */}
             {product.care_instructions && (
-              <div className="mt-8">
+              <div className="mt-8 pb-[10%] md:pb-[7%]">
                 <h3 className="text-lg font-medium text-gray-900 mb-3">
                   Care Instructions
                 </h3>
-                <p className="text-gray-600 whitespace-pre-wrap">
+                <p className="text-gray-600 text-base whitespace-pre-wrap">
                   {product.care_instructions}
                 </p>
               </div>

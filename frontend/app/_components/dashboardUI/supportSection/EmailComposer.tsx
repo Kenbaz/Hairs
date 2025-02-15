@@ -188,13 +188,14 @@ export default function EmailComposer({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 pb-[14%]">
       {alert && <Alert type={alert.type} message={alert.message} />}
 
       {/* Recipient */}
       <Input
         label="To"
         type="email"
+        className="border rounded-lg text-base lg:landscape:text-[0.9rem] bg-gray-50 text-gray-900"
         value={formData.to_email}
         onChange={(e) =>
           setFormData((prev) => ({
@@ -208,6 +209,7 @@ export default function EmailComposer({
       {/* Subject */}
       <Input
         label="Subject"
+        className="border rounded-lg text-base lg:landscape:text-[0.9rem] bg-gray-50 text-gray-900"
         value={formData.subject}
         onChange={(e) =>
           setFormData((prev) => ({
@@ -220,7 +222,7 @@ export default function EmailComposer({
 
       {/* Rich Text Editor */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-700 mb-1">
           Message
         </label>
         <RichTextEditor
@@ -237,7 +239,7 @@ export default function EmailComposer({
 
       {/* File Attachments */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm md:text-base lg:landscape:text-[0.9rem] font-medium text-gray-700 mb-1">
           Attachments
         </label>
         <FileUpload
@@ -254,6 +256,7 @@ export default function EmailComposer({
         {onPreview && (
           <Button
             type="button"
+            size="sm"
             variant="outline"
             onClick={() => onPreview(formData as EmailItem)}
           >
@@ -264,16 +267,19 @@ export default function EmailComposer({
 
         <Button
           type="button"
+          size="sm"
           variant="outline"
           onClick={handleSaveDraft}
           disabled={saveDraftMutation.isPending}
         >
-          <Save className="h-4 w-4 mr-2" />
+          <Save className="h-4 w-4 hidden md:inline-flex mr-2"/>
           Save Draft
         </Button>
 
         <Button
           type="submit"
+          className="bg-slate-700 hover:bg-slate-800"
+          size="sm"
           disabled={sendMutation.isPending}
           isLoading={sendMutation.isPending}
         >

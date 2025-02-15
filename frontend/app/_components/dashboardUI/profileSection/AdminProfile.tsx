@@ -102,13 +102,13 @@ export default function AdminProfile() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-3 md:px-0 h-[90%] pb-[14%] md:pb-0">
       {/* Tabs Navigation */}
       <div className="flex border-b border-gray-200 mb-6">
         <button
-          className={`px-4 py-2 font-medium text-sm ${
+          className={`px-4 py-2 font-medium text-[0.9rem] md:text-base lg:landscape:text-sm ${
             activeTab === "general"
-              ? "border-b-2 border-blue-500 text-blue-600"
+              ? "border-b-2 border-slate-700 text-slate-800"
               : "text-gray-500 hover:text-gray-700"
           }`}
           onClick={() => setActiveTab("general")}
@@ -116,9 +116,9 @@ export default function AdminProfile() {
           General Information
         </button>
         <button
-          className={`px-4 py-2 font-medium text-sm ${
+          className={`px-4 py-2 font-medium text-[0.9rem] md:text-base lg:landscape:text-sm ${
             activeTab === "security"
-              ? "border-b-2 border-blue-500 text-blue-600"
+              ? "border-b-2 border-slate-700 text-slate-800"
               : "text-gray-500 hover:text-gray-700"
           }`}
           onClick={() => setActiveTab("security")}
@@ -128,7 +128,7 @@ export default function AdminProfile() {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-lg shadow-sm">
+      <div className="bg-white h-full rounded-lg shadow-sm">
         {activeTab === "general" && (
           <div className="p-6">
             <div className="mb-6">
@@ -151,7 +151,7 @@ export default function AdminProfile() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Avatar Upload */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-[0.9rem] md:text-base lg:landscape:text-sm font-medium text-gray-700 mb-2">
                   Profile Picture
                 </label>
                 <div className="mt-2">
@@ -169,11 +169,13 @@ export default function AdminProfile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   label="First Name"
+                  className="text-gray-900 border rounded-lg"
                   {...register("first_name")}
                   error={errors.first_name?.message}
                 />
                 <Input
                   label="Last Name"
+                  className="text-gray-900 border rounded-lg"
                   {...register("last_name")}
                   error={errors.last_name?.message}
                 />
@@ -182,13 +184,14 @@ export default function AdminProfile() {
               <Input
                 label="Email Address"
                 type="email"
+                className="text-gray-900 border rounded-lg"
                 {...register("email")}
                 error={errors.email?.message}
               />
 
               <Button
                 type="submit"
-                className="w-full md:w-auto"
+                className="w-full md:w-auto bg-slate-700 hover:bg-slate-800"
                 disabled={mutation.isPending}
               >
                 {mutation.isPending && (

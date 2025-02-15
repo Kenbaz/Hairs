@@ -34,7 +34,7 @@ export default function OrderCancellation({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white rounded-2xl md:rounded-lg shadow">
       <div className="p-4 border-b border-gray-200">
         <h2 className="text-lg font-medium text-gray-900">
           Order Cancellation
@@ -46,16 +46,16 @@ export default function OrderCancellation({
           <div className="space-y-4">
 
             <div>
-              <label className="block text-sm font-medium text-gray-500">
+              <label className="block text-sm font-medium text-gray-700">
                 Cancelled At
               </label>
-              <p className="mt-1 text-sm text-gray-900">
+              <p className="mt-1 text-base xl:text-sm text-gray-900">
                 {new Date(order.cancelled_at!).toLocaleString()}
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-500">
+              <label className="block text-sm font-medium text-gray-700">
                 Refund Status
               </label>
               <div className="mt-1 flex items-center space-x-2">
@@ -68,7 +68,7 @@ export default function OrderCancellation({
                     order.refund_status.slice(1)}
                 </span>
                 {order.refund_amount && (
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-600">
                     (
                     <PriceDisplay
                       amount={order.refund_amount}
@@ -82,7 +82,7 @@ export default function OrderCancellation({
 
             {order.refund_status !== "completed" &&
               order.refund_status !== "failed" && (
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
                     onClick={() => onUpdateRefund("completed")}
@@ -104,12 +104,12 @@ export default function OrderCancellation({
           <div>
             {["pending", "processing"].includes(order.order_status) ? (
               <div>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-base text-gray-900 mb-4">
                   Cancel this order if the customer requests cancellation or if
                   the order cannot be fulfilled.
                 </p>
                 <Button
-                  variant="outline"
+                  className="bg-red-600 hover:bg-red-700"
                   onClick={() => setShowCancellationDialog(true)}
                   disabled={isLoading}
                 >

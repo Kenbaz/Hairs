@@ -25,8 +25,8 @@ export function ModalForComponents({
       />
 
       {/* Modal */}
-      <div className="relative min-h-screen flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-lg shadow-xl w-full max-w-4xl">
+      <div className="relative min-h-full flex items-center justify-center p-4">
+        <div className="relative bg-white rounded-lg shadow-xl w-full md:w-[80%] lg:w-[70%] xl:w-[60%] max-w-4xl">
           {showCloseButton && (
             <button
               onClick={onClose}

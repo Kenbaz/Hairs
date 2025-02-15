@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
-import { Loader2, ArrowLeft, ClipboardCheck, Download } from "lucide-react";
+import { useParams } from "next/navigation";
+import { Loader2, Download } from "lucide-react";
 import { Button } from "../../UI/Button";
 import { Alert } from "../../UI/Alert";
 import { Breadcrumb } from "../../UI/Breadcrumb";
@@ -17,7 +17,6 @@ import OrderCancellation from "./OrderCancellation";
 
 export default function OrderDetails() {
   const params = useParams();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [alert, setAlert] = useState<{
     type: "success" | "error";
@@ -36,18 +35,21 @@ export default function OrderDetails() {
   });
 
 
+  const showAlert = (type: "success" | "error", message: string) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 5000);
+  };
+
+
   const updateStatusMutation = useMutation({
     mutationFn: ({ status }: { status: string }) =>
       adminOrderService.updateOrderStatus(orderId, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders", orderId] });
-      setAlert({
-        type: "success",
-        message: "Order status updated successfully",
-      });
+      showAlert("success", "Order status updated successfully");
     },
     onError: () => {
-      setAlert({ type: "error", message: "Failed to update order status" });
+      showAlert("error", "Failed to update order status");
     },
   });
 
@@ -56,10 +58,10 @@ export default function OrderDetails() {
     mutationFn: (orderId: number) => adminOrderService.cancelOrder(orderId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders", orderId] });
-      setAlert({ type: "success", message: "Order cancelled successfully" });
+      showAlert("success", "Order cancelled successfully");
     },
     onError: () => {
-      setAlert({ type: "error", message: "Failed to cancel order" });
+      showAlert("error", "Failed to cancel order");
     },
   });
 
@@ -69,13 +71,10 @@ export default function OrderDetails() {
       adminOrderService.updateRefundStatus(orderId, refundStatus),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders", orderId] });
-      setAlert({
-        type: "success",
-        message: "Refund status updated successfully",
-      });
+      showAlert("success", "Refund status updated successfully");
     },
     onError: () => {
-      setAlert({ type: "error", message: "Failed to update refund status" });
+      showAlert("error", "Failed to update refund status");
     },
   });
 
@@ -103,10 +102,10 @@ export default function OrderDetails() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      setAlert({ type: "success", message: "Invoice downloaded successfully" });
+      showAlert("success", "Invoice downloaded successfully");
     } catch (error) {
       console.error("Failed to download invoice:", error);
-      setAlert({ type: "error", message: "Failed to download invoice" });
+      showAlert("error", "Failed to download invoice");
     }
   };
 
@@ -114,7 +113,7 @@ export default function OrderDetails() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-800" />
       </div>
     );
   }
@@ -125,18 +124,14 @@ export default function OrderDetails() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2 md:mt-[2%] md:pt-[1%] xl:-mt-[2%]">
       <Breadcrumb />
 
       {alert && <Alert type={alert.type} message={alert.message} />}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="outline" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between space-x-4">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">
               Order #{order.id}
@@ -145,24 +140,11 @@ export default function OrderDetails() {
               {new Date(order.created_at).toLocaleString()}
             </p>
           </div>
-        </div>
 
-        <div className="flex items-center space-x-2">
           <Button
-            variant="outline"
-            onClick={() => {
-              // Copy order details to clipboard
-              navigator.clipboard.writeText(`Order #${order.id}`);
-              setAlert({
-                type: "success",
-                message: "Order ID copied to clipboard",
-              });
-            }}
+            className="border border-slate-700 bg-slate-700 hover:bg-slate-800"
+            onClick={handleInvoiceDownload}
           >
-            <ClipboardCheck className="h-4 w-4 mr-2" />
-            Copy
-          </Button>
-          <Button variant="outline" onClick={handleInvoiceDownload}>
             <Download className="h-4 w-4 mr-2" />
             Download Invoice
           </Button>
@@ -170,14 +152,14 @@ export default function OrderDetails() {
       </div>
 
       {/* Content Grid */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:h-screen md:grid-style4 gap-6 md:gap-4">
         {/* Main Content - 2 columns */}
         <div className="col-span-2 space-y-6">
           <OrderInformation order={order} />
         </div>
 
         {/* Sidebar - 1 column */}
-        <div className="space-y-6">
+        <div className="space-y-6 md:space-y-4 md:h-full col-span-2 md:col-span-1">
           <OrderStatusUpdate
             currentStatus={order.order_status}
             onUpdateStatus={handleUpdateStatus}

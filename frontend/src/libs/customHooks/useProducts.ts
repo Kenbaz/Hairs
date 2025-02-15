@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppSelector, useAppDispatch } from "../_redux/hooks";
 import {
   selectFilters,
@@ -31,8 +31,8 @@ export const useProductsQuery = () => {
   } = useQuery({
     queryKey: ["products", {...filters, search: debouncedSearchQuery}],
     queryFn: () => productService.getProducts({...filters, search: debouncedSearchQuery}),
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    placeholderData: (previousData) => previousData, // Keep old data while fetching new data
+    staleTime: 60 * 60 * 1000, // Consider data fresh for 5 minutes
+    placeholderData: keepPreviousData // Keep old data while fetching new data
   });
 
 
@@ -40,7 +40,7 @@ export const useProductsQuery = () => {
   const { data: categories, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories"],
     queryFn: () => productService.getCategories(),
-    staleTime: 30 * 60 * 1000, // Categories can be cached longer
+    staleTime: 60 * 60 * 1000, // Categories can be cached longer
   });
 
 
@@ -48,7 +48,7 @@ export const useProductsQuery = () => {
   const { data: featuredProducts, isLoading: isLoadingFeatured } = useQuery({
     queryKey: ["featured-products"],
     queryFn: () => productService.getFeaturedProducts(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 60 * 1000,
   });
 
   
