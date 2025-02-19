@@ -4,9 +4,8 @@ import { createContext, useCallback, useContext, useState, useEffect, PropsWithC
 import type { Currency } from "@/src/types";
 import { useQuery } from "@tanstack/react-query";
 import { adminCurrencyService } from "@/src/libs/services/adminServices/adminCurrencyService";
-import { publicCurrencyService } from "@/src/libs/services/customerServices/publicCurrencyService";
-import { useAppSelector } from "@/src/libs/_redux/hooks";
-import { selectIsAdmin } from "@/src/libs/_redux/authSlice";
+import { currencyService } from "@/src/libs/services/customerServices/currencyService";
+import { useAuth } from "@/src/libs/customHooks/useAuth";
 
 
 interface CurrencyContextType {
@@ -26,7 +25,7 @@ const DEFAULT_CURRENCY = 'USD';
 
 export function CurrencyProvider({ children }: PropsWithChildren) {
     // Get authentication status
-    const isAdmin = useAppSelector(selectIsAdmin);
+    const { isAdmin } = useAuth();
 
     // Initialize from local storage with USD fallback
     const [selectedCurrency, setSelectedCurrency] = useState(() => {
@@ -47,7 +46,7 @@ export function CurrencyProvider({ children }: PropsWithChildren) {
       queryFn: () =>
         isAdmin
           ? adminCurrencyService.getActiveCurrencies()
-          : publicCurrencyService.getPublicCurrencies(),
+          : currencyService.getActiveCurrencies(),
       staleTime: 120 * 60 * 1000, // cache for 2 hours
       refetchOnWindowFocus: false,
     });

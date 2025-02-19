@@ -1,7 +1,9 @@
 import { useCurrency } from "../_providers/CurrencyContext";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { adminCurrencyService } from "@/src/libs/services/adminServices/adminCurrencyService";
+import { currencyService } from "@/src/libs/services/customerServices/currencyService";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/src/libs/customHooks/useAuth";
 
 
 interface PriceDisplayProps { 
@@ -19,16 +21,29 @@ export function PriceDisplay({
     showLoader = true
 }: PriceDisplayProps) {
     const { selectedCurrency, availableCurrencies } = useCurrency();
+  const { isAdmin } = useAuth();
 
     // Only query if currencies are different
     const { data: convertedPrice, isLoading } = useQuery({
-      queryKey: ["price-conversion", amount, sourceCurrency, selectedCurrency],
+      queryKey: [
+        "price-conversion",
+        amount,
+        sourceCurrency,
+        selectedCurrency,
+        isAdmin,
+      ],
       queryFn: () =>
-        adminCurrencyService.convertPrice(
-          amount,
-          sourceCurrency,
-          selectedCurrency
-        ),
+        isAdmin
+          ? adminCurrencyService.convertPrice(
+              amount,
+              sourceCurrency,
+              selectedCurrency
+            )
+          : currencyService.convertPrice(
+              amount,
+              sourceCurrency,
+              selectedCurrency
+            ),
       // Only convert if currencies are different or the amount is valid
       enabled:
         sourceCurrency !== selectedCurrency && amount != null && amount > 0,

@@ -310,18 +310,26 @@ export interface Category {
   slug: string;
 }
 
+export interface CategoryResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Category[];
+}
+
 export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 
 export interface ProductFilters {
-    search?: string;
-    category?: string;
-    stock_status?: StockStatus;
-    min_price?: number;
-    max_price?: number;
-    is_featured?: boolean;
-    ordering?: string;
-    page: number;
-    page_size: number;
+  search?: string;
+  category?: string;
+  stock_status?: StockStatus;
+  min_price?: number;
+  max_price?: number;
+  is_featured?: boolean;
+  ordering?: string;
+  page: number;
+  page_size: number;
+  hair_type?: "raw" | "virgin" | "single donor";
 }
 
 export interface ProductResponse {
@@ -1296,4 +1304,94 @@ export interface MoveToCartResponse {
     wishlist: Wishlist;
     message: string;
     cart?: CartResponse; // Optional cart response if needed
+}
+
+// Review types
+export interface Review {
+    id: number;
+    user: {
+        id: number;
+        first_name: string;
+        last_name: string;
+    };
+    product: {
+        id: number;
+        name: string;
+    };
+    rating: number;
+    comment: string;
+    verified_purchase: boolean;
+    created_at: string;
+}
+
+export interface ReviewResponse {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: Review[];
+    total_reviews: number;
+    average_rating: number;
+}
+
+
+// Store types for the frontend
+export interface StoreProduct {
+  id: number;
+  name: string;
+  slug: string;
+  category: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+  primary_image: {
+    id: number;
+    url: string;
+    public_id: string;
+    is_primary: boolean;
+  };
+  price_data: {
+    amount: number;
+    currency: string;
+    formatted: string;
+    is_discounted: boolean;
+    discount_amount: number;
+    discount_formatted: string;
+    savings_percentage: number;
+  };
+  description?: string;
+  is_featured: boolean;
+  stock: number;
+  low_stock_threshold?: number;
+}
+
+export interface StoreProductResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: StoreProduct[];
+}
+
+export interface StoreCategory {
+  id: number;
+  name: string;
+  slug: string;
+  product_count?: number;
+}
+
+// For product details page
+export interface StoreProductDetails extends StoreProduct {
+  description: string;
+  hair_type: string | null;
+  care_instructions: string;
+  images: ProductImage[];
+}
+
+export interface InstantSearchResult {
+  id: number;
+  name: string;
+  slug: string;
+  primary_image: {
+    image: string | null;
+  };
 }

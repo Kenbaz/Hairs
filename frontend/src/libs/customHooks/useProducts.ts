@@ -96,7 +96,7 @@ export const useProductsQuery = () => {
     // Data
     products: productsData?.results || [],
     totalCount: productsData?.count || 0,
-    categories: categories || [],
+    categories: categories?.results || [],
     featuredProducts: featuredProducts || [],
 
     // Loading states

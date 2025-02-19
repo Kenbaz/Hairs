@@ -88,7 +88,7 @@ class AdminProductService {
     id: number,
     productData: FormData
   ): Promise<AdminProduct> {
-    const response = await axiosInstance.put<AdminProduct>(
+    const response = await axiosInstance.patch<AdminProduct>(
       `/api/v1/admin/products/${id}/`,
       productData,
       {

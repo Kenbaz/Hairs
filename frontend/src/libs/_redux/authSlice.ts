@@ -168,7 +168,7 @@ export const logout = createAsyncThunk(
 
         // Redirect to appropriate login page
         const loginUrl = new URL(
-          isAdminPath ? "/admin/login" : "/auth/login",
+          isAdminPath ? "/admin-auth/login" : "/auth/login",
           window.location.origin
         );
         loginUrl.searchParams.set("from", currentPath);
@@ -310,9 +310,9 @@ const authSlice = createSlice({
         // Redirect to login with current path
         if (typeof window !== "undefined") {
           const currentPath = window.location.pathname;
-          const isAdminPath = currentPath.startsWith("/admin");
+          const isAdminPath = currentPath.startsWith("/admin-auth");
           const loginUrl = new URL(
-            isAdminPath ? "/admin/login" : "/auth/login",
+            isAdminPath ? "/admin-auth/login" : "/auth/login",
             window.location.origin
           );
           loginUrl.searchParams.set("from", currentPath);
@@ -343,8 +343,10 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload ?? "Failed to load user";
 
-        // End session if user load fails
-        SessionManager.getInstance().endSession();
+        // Only end session if there was an actual session
+        if (state.accessToken || state.refreshToken) {
+          SessionManager.getInstance().endSession();
+        }
       });
 
       builder.addCase(verificationSuccess.fulfilled, (state, action) => {

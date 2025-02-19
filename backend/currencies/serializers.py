@@ -14,7 +14,7 @@ class CurrencySerializer(serializers.ModelSerializer):
             return value.upper()
 
 
-class CurrencyConversionSerializer(serializers.ModelSerializer):
+class CurrencyConversionSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
     from_currency = serializers.CharField(max_length=3)
     to_currency = serializers.CharField(max_length=3)

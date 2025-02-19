@@ -1,189 +1,279 @@
 import axiosInstance from "@/src/utils/_axios";
 import { AxiosError } from "axios";
-import { AdminProduct, Category, ProductFilters, ProductResponse, ApiError } from "@/src/types";
+import { InstantSearchResult, StoreProductDetails, StoreProduct, StoreProductResponse, Category, CategoryResponse, ProductFilters, ApiError, Review, ReviewResponse } from "@/src/types";
 
 
 class ProductService {
-    private readonly baseUrl = '/api/v1/products/';
-    private readonly categoryUrl = '/api/v1/categories/';
+  private readonly baseUrl = "/api/v1/products/";
+  private readonly categoryUrl = "/api/v1/categories/";
+  private readonly reviewsUrl = "/api/v1/reviews/";
 
-    // Get all products with filters
-    async getProducts(filters: Partial<ProductFilters>): Promise<ProductResponse> {
-        try {
-            // convert filters to query params
-            const params = new URLSearchParams();
+  // Get all products with filters
+  async getProducts(
+    filters: Partial<ProductFilters>
+  ): Promise<StoreProductResponse> {
+    try {
+      // convert filters to query params
+      const params = new URLSearchParams();
 
-            if (filters.search) params.append('search', filters.search);
-            if (filters.category) params.append('category', filters.category);
-            if (filters.stock_status) params.append('stock_status', filters.stock_status);
-            if (filters.min_price) params.append('min_price', filters.min_price.toString());
-            if (filters.max_price) params.append('max_price', filters.max_price.toString());
-            if (filters.is_featured) params.append('is_featured', filters.is_featured.toString());
-            if (filters.ordering) params.append('ordering', filters.ordering);
-            if (filters.page) params.append('page', filters.page.toString());
-            if (filters.page_size) params.append('page_size', filters.page_size.toString());
-
-            const response = await axiosInstance.get<ProductResponse>(
-                `${this.baseUrl}?${params.toString()}`
-            );
-
-            return response.data;
-        } catch (error) {
-            const err = error as AxiosError<ApiError>;
-            throw new Error(
-                err.response?.data?.detail || err.response?.data?.message || 'Failed to fetch products'
-            );
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined) {
+          params.append(key, value.toString());
         }
-    };
+      });
 
+      const response = await axiosInstance.get<StoreProductResponse>(
+        `${this.baseUrl}?${params.toString()}`
+      );
 
-    // Get single product by slug
-    async getProductBySlug(slug: string): Promise<AdminProduct> {
-        try {
-            const response = await axiosInstance.get<AdminProduct>(
-                `${this.baseUrl}${slug}/`
-            );
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to fetch products"
+      );
+    }
+  }
 
-            return response.data;
-        } catch (error) {
-            const err = error as AxiosError<ApiError>;
-            throw new Error(
-                err.response?.data?.detail || err.response?.data?.message || 'Failed to fetch product'
-            );
+  // Get single product by slug
+  async getProductBySlug(slug: string): Promise<StoreProductDetails> {
+    try {
+      const response = await axiosInstance.get<StoreProductDetails>(
+        `${this.baseUrl}${slug}/`
+      );
+
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to fetch product"
+      );
+    }
+  }
+
+  // Get all categories
+  async getCategories(): Promise<CategoryResponse> {
+    try {
+      const response = await axiosInstance.get<CategoryResponse>(this.categoryUrl);
+
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to fetch categories"
+      );
+    }
+  }
+
+  // Get featured products
+  async getFeaturedProducts(): Promise<StoreProduct[]> {
+    try {
+      const response = await axiosInstance.get<StoreProductResponse>(
+        `${this.baseUrl}featured/`
+      );
+
+      return response.data.results;
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to fetch featured products"
+      );
+    }
+  }
+
+  // Search products
+  async searchProducts(query: string): Promise<StoreProductResponse> {
+    try {
+      const response = await axiosInstance.get<StoreProductResponse>(
+        `${this.baseUrl}`,
+        {
+          params: { search: query },
         }
-    };
+      );
 
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to search products"
+      );
+    }
+  }
 
-    // Get all categories
-    async getCategories(): Promise<Category[]> { 
-        try {
-            const response = await axiosInstance.get<Category[]>(
-                this.categoryUrl
-            );
-
-            return response.data;
-        } catch (error) { 
-            const err = error as AxiosError<ApiError>;
-            throw new Error(
-                err.response?.data?.detail || err.response?.data?.message || 'Failed to fetch categories'
-            )
+  // Get products by category
+  async getProductsByCategory(categorySlug: string): Promise<StoreProductResponse> {
+    try {
+      const response = await axiosInstance.get<StoreProductResponse>(
+        `${this.baseUrl}`,
+        {
+          params: { category: categorySlug },
         }
-    };
+      );
 
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to fetch products by category"
+      );
+    }
+  }
 
-    // Get featured products
-    async getFeaturedProducts(): Promise<AdminProduct[]> {
-        try {
-            const response = await axiosInstance.get<ProductResponse>(
-                `${this.baseUrl}featured/`
-            );
+  // Get products with price range
+  async getProductsInPriceRange(
+    minPrice: number,
+    maxPrice: number
+  ): Promise<StoreProductResponse> {
+    try {
+      const response = await axiosInstance.get<StoreProductResponse>(this.baseUrl, {
+        params: {
+          min_price: minPrice,
+          max_price: maxPrice,
+        },
+      });
 
-            return response.data.results;
-        } catch (error) {
-            const err = error as AxiosError<ApiError>;
-            throw new Error(
-                err.response?.data?.detail || err.response?.data?.message || 'Failed to fetch featured products'
-            );
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to fetch products in price range"
+      );
+    }
+  }
+
+  // Get category by slug
+  async getCategoryBySlug(slug: string): Promise<Category> {
+    try {
+      const response = await axiosInstance.get<Category>(
+        `${this.categoryUrl}${slug}/`
+      );
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to fetch category"
+      );
+    }
+  }
+
+  // Instant search (for autocomplete)
+  async instantSearch(query: string): Promise<InstantSearchResult[]> {
+    try {
+      const response = await axiosInstance.get<InstantSearchResult[]>(
+        `${this.baseUrl}instant_search/`,
+        {
+          params: { query },
         }
-    };
+      );
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to perform instant search"
+      );
+    }
+  }
 
-
-    // Search products
-    async searchProducts(query: string): Promise<ProductResponse> {
-        try {
-            const response = await axiosInstance.get<ProductResponse>(
-                `${this.baseUrl}`,
-                {
-                    params: { search: query }
-                }
-            );
-
-            return response.data;
-        } catch (error) {
-            const err = error as AxiosError<ApiError>;
-            throw new Error(
-                err.response?.data?.detail || err.response?.data?.message || 'Failed to search products'
-            )
+  // Related products
+  async getRelatedProducts(
+    productId: number,
+    categoryId: number
+  ): Promise<StoreProduct[]> {
+    try {
+      const response = await axiosInstance.get<StoreProductResponse>(
+        `${this.baseUrl}`,
+        {
+          params: {
+            category: categoryId,
+            exclude: productId,
+            page_size: 4,
+          },
         }
-    };
+      );
 
+      return response.data.results;
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to fetch related products"
+      );
+    }
+  }
 
-    // Get products by category
-    async getProductsByCategory(categorySlug: string): Promise<ProductResponse> {
-        try {
-            const response = await axiosInstance.get<ProductResponse>(
-                `${this.baseUrl}`,
-                {
-                    params: { category: categorySlug }
-                }
-            );
-
-            return response.data;
-        } catch (error) {
-            const err = error as AxiosError<ApiError>;
-            throw new Error(
-                err.response?.data?.detail || err.response?.data?.message || 'Failed to fetch products by category'
-            )
+  // Get product reviews
+  async getProductReviews(
+    productId: number,
+    page: number = 1
+  ): Promise<{
+    reviews: Review[];
+    total_reviews: number;
+    average_rating: number;
+  }> {
+    try {
+      const response = await axiosInstance.get<ReviewResponse>(
+        `${this.reviewsUrl}`,
+        {
+          params: {
+            product_id: productId,
+            page,
+          },
         }
-    };
+      );
+      return {
+        reviews: response.data.results,
+        total_reviews: response.data.count,
+        average_rating: response.data.average_rating,
+      };
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to fetch reviews"
+      );
+    }
+  }
 
-
-    // Get products with price range
-    async getProductsInPriceRange(minPrice: number, maxPrice: number): Promise<ProductResponse> {
-        try {
-            const response = await axiosInstance.get<ProductResponse>(
-                this.baseUrl,
-                {
-                    params: {
-                        min_price: minPrice,
-                        max_price: maxPrice
-                    }
-                }
-            );
-
-            return response.data;
-        } catch (error) {
-            const err = error as AxiosError<ApiError>;
-            throw new Error(
-                err.response?.data?.detail || err.response?.data?.message || 'Failed to fetch products in price range'
-            );
-        }
-    };
-
-
-    // Get category by slug
-    async getCategoryBySlug(slug: string): Promise<Category> {
-        try {
-            const response = await axiosInstance.get<Category>(
-                `${this.categoryUrl}${slug}/`
-            );
-            return response.data;
-        } catch (error) {
-            const err = error as AxiosError<ApiError>;
-            throw new Error(
-                err.response?.data?.detail || err.response?.data?.message || 'Failed to fetch category'
-            );
-        }
-    };
-
-
-    // Instant search (for autocomplete)
-    async instantSearch(query: string): Promise<AdminProduct[]> {
-        try {
-            const response = await axiosInstance.get<AdminProduct[]>(
-                `${this.baseUrl}instant_search/`,
-                {
-                    params: { query }
-                }
-            );
-            return response.data;
-        } catch (error) {
-            const err = error as AxiosError<ApiError>;
-            throw new Error(
-                err.response?.data?.detail || err.response?.data?.message || 'Failed to perform instant search'
-            )
-        }
-    };
+  async submitReview(
+    productId: number,
+    rating: number,
+    comment: string
+  ): Promise<void> {
+    try {
+      await axiosInstance.post(`${this.reviewsUrl}`, {
+        product_id: productId,
+        rating,
+        comment,
+      });
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      throw new Error(
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to submit review"
+      );
+    }
+  }
 };
 
 export const productService = new ProductService();

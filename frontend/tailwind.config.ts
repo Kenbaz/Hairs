@@ -34,6 +34,10 @@ export default {
         customGray3: "#CCCCCC",
         shimmerColor: "rgba(255, 255, 255, 0.01)",
         whiteShimmer: "rgba(209, 213, 219, 0.30)",
+        lynxWhite: '#F7F7F7',
+        coldMorning: '#E6E5E4',
+        craterCrawler: '#C8CED6',
+        curshedAlmond: '#736A86',
       },
       scale: {
         20: "0.3",

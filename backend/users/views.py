@@ -81,7 +81,7 @@ class ResetPasswordEmailView(generics.GenericAPIView):
 
             # Check is user is admin
             is_admin = user.is_staff or user.is_superuser
-            base_path = 'admin' if is_admin else 'auth'
+            base_path = 'admin-auth' if is_admin else 'auth'
 
             # Construct reset URL with the combined token
             reset_url = f"{

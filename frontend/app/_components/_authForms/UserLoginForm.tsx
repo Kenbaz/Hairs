@@ -31,7 +31,7 @@ export default function UserLoginForm() {
             await dispatch(login(data)).unwrap();
 
             // Redirect to home page if authentication was successful
-            router.push('/');
+            router.push('/shop');
         } catch {
             setError('Login failed. Please check your credentials.');
         }

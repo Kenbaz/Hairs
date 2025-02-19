@@ -1,17 +1,21 @@
 "use client";
 
 import { useCurrency } from "../_providers/CurrencyContext";
-import { useAuth } from "@/src/libs/customHooks/useAuth";
 import { Loader2, ChevronDown } from "lucide-react";
-import { Listbox, ListboxOption, ListboxButton, ListboxOptions, Transition } from "@headlessui/react";
+import {
+  Listbox,
+  ListboxOption,
+  ListboxButton,
+  ListboxOptions,
+  Transition,
+} from "@headlessui/react";
 import { Fragment } from "react";
 
-interface CurrencySelectorProps {
+interface RegionSelectorProps {
   className?: string;
 }
 
-export function CurrencySelector({ className = "" }: CurrencySelectorProps) {
-  const { isAuthenticated } = useAuth();
+export function RegionSelector({ className = "" }: RegionSelectorProps) {
 
   const {
     selectedCurrency,
@@ -20,8 +24,6 @@ export function CurrencySelector({ className = "" }: CurrencySelectorProps) {
     isLoading,
     error,
   } = useCurrency();
-
-  if (!isAuthenticated) return null;
 
   if (isLoading) {
     return (

@@ -51,8 +51,8 @@ export function PasswordResetConfirmation({ token }: PasswordResetConfirmationPr
 
           if (success) {
             // Check for admin route
-            const isAdminRoute = window.location.pathname.startsWith('/admin');
-            router.push(isAdminRoute ? "/admin/login" : "/auth/login");
+            const isAdminRoute = window.location.pathname.startsWith('/admin-auth');
+            router.push(isAdminRoute ? "/admin-auth/login" : "/auth/login");
           }
         } catch {
           setError("Failed to reset password. The link may have expired.");

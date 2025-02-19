@@ -16,7 +16,7 @@ export function PasswordResetForm() {
     
      useEffect(() => {
        if (typeof window !== "undefined") {
-         setAdminRoute(window.location.pathname.startsWith("/admin"));
+         setAdminRoute(window.location.pathname.startsWith("/admin-auth"));
        }
      }, []);
     
@@ -43,7 +43,7 @@ export function PasswordResetForm() {
                 <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => adminRoute ? (window.location.href = "/admin/login") : (window.location.href = "/auth/login")}
+                    onClick={() => adminRoute ? (window.location.href = "/admin-auth/login") : (window.location.href = "/auth/login")}
                 >
                     Return to Login
                 </Button>
@@ -84,7 +84,7 @@ export function PasswordResetForm() {
 
         <div className="text-center">
           <Link
-            href={adminRoute ? "/admin/login" : "/auth/login"}
+            href={adminRoute ? "/admin-auth/login" : "/auth/login"}
             className="text-sm text-blue-600 hover:text-blue-500"
           >
             Back to Login

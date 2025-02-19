@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
+import { ToastProvider } from "./_components/_providers/ToastProvider";
 import { ReduxProvider } from "@/src/libs/_redux/Provider";
 import { QueryProvider } from "./_components/_providers/QueryProvider";
 import { CurrencyProvider } from "./_components/_providers/CurrencyContext";
@@ -34,15 +34,7 @@ export default function RootLayout({
                 <CartInitializer />
                 <WishlistInitializer />
                 {children}
-                <Toaster
-                  position="top-right"
-                  toastOptions={{
-                    duration: 3000,
-                    style: {
-                      minWidth: "250px",
-                    },
-                  }}
-                />
+                <ToastProvider />
               </CurrencyProvider>
             </PaymentProvider>
           </ReduxProvider>
