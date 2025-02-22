@@ -33,7 +33,6 @@ export function Header() {
 
   const navigationLinks = [
     { href: "/products", label: "Products" },
-    { href: "/categories", label: "Categories" },
     { href: "/contact", label: "Contact" },
   ];
 

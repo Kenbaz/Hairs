@@ -70,3 +70,35 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity}x {self.product.name} in Cart {self.cart.id}"
+
+
+class GuestCart(models.Model):
+    session_id = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['session_id'], name='guest_cart_session_idx')
+        ]
+        verbose_name = 'Guest Cart'
+        verbose_name_plural = 'Guest Carts'
+
+    def __str__(self):
+        return f"Guest Cart {self.session_id}"
+
+
+class GuestCartItem(models.Model):
+    cart = models.ForeignKey(GuestCart, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey('products.Product', on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    price_at_add = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Guest Cart Item'
+        verbose_name_plural = 'Guest Cart Items'
+        unique_together = ['cart', 'product']
+
+    def __str__(self):
+        return f"{self.quantity}x {self.product.name} in Guest Cart {self.cart.session_id}"

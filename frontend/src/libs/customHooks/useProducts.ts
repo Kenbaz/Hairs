@@ -21,7 +21,7 @@ export const useProductsQuery = () => {
   const currentPage = useAppSelector(selectCurrentPage);
   const searchQuery = useAppSelector(selectSearchQuery);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Products query
   const {
@@ -105,6 +105,7 @@ export const useProductsQuery = () => {
 
     // State
     filters,
+    searchQuery,
     currentPage,
     debouncedSearchQuery,
     totalPages: productsData

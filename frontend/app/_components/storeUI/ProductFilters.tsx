@@ -4,12 +4,12 @@ import { useState } from "react";
 import { Input } from "../UI/Input";
 import { Button } from "../UI/Button";
 import { X } from "lucide-react";
-import { ProductFilters } from "@/src/types";
+import { StoreProductFilters } from "@/src/types";
 
 
 interface ProductFiltersProps {
-    filters: ProductFilters;
-    onFilterChange: (newFilters: Partial<ProductFilters>) => void;
+    filters: StoreProductFilters;
+    onFilterChange: (newFilters: Partial<StoreProductFilters>) => void;
     onClearFilters: () => void;
     categories: Array<{ id: number; name: string; slug: string }>;
     className?: string;
@@ -42,16 +42,19 @@ export function ProductFiltersSelect({
         
         if (value === '' || !isNaN(numValue as number)) {
             onFilterChange({
-                [`${type}_price`]: numValue,
+              [`${type}_price`]: numValue,
+              page: 1,
             });
         }
     };
 
 
     const handleCategoryChange = (categorySlug: string) => {
-        onFilterChange({
-            category: categorySlug === filters.category ? undefined : categorySlug
-        });
+      onFilterChange({
+        category__slug:
+          categorySlug === filters.category__slug ? undefined : categorySlug,
+        page: 1, 
+      });
     };
 
 
@@ -89,7 +92,7 @@ export function ProductFiltersSelect({
               >
                 <input
                   type="checkbox"
-                  checked={filters.category === category.slug}
+                  checked={filters.category__slug === category.slug}
                   onChange={() => handleCategoryChange(category.slug)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
@@ -164,19 +167,6 @@ export function ProductFiltersSelect({
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span>In Stock</span>
-            </label>
-            <label className="flex items-center space-x-2 text-sm">
-              <input
-                type="checkbox"
-                checked={filters.is_featured}
-                onChange={() =>
-                  onFilterChange({
-                    is_featured: !filters.is_featured,
-                  })
-                }
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span>Featured Products</span>
             </label>
           </div>
         </div>

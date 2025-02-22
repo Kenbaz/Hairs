@@ -3,7 +3,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Cart, CartItem
+from .models import Cart, CartItem, GuestCart, GuestCartItem
 from .serializers import CartSerializer
 from products.models import Product
 
@@ -136,50 +136,139 @@ class CartViewSet(viewsets.GenericViewSet):
         cart.items.all().delete()
         serializer = self.get_serializer(cart)
         return Response(serializer.data)
+    
+    
+    @action(detail=False, methods=['post'])
+    def sync_guest(self, request):
+        """Sync guest cart data with server"""
+        try:
+            session_id = request.data.get('session_id')
+            items = request.data.get('items', [])
+
+            if not session_id:
+                return Response(
+                    {"error": "Session ID is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get or create guest cart
+            guest_cart, _ = GuestCart.objects.get_or_create(
+                session_id=session_id)
+
+            # Clear existing items
+            guest_cart.items.all().delete()
+
+            # Add new items
+            valid_items = []
+            for item_data in items:
+                try:
+                    product = Product.objects.get(id=item_data['product_id'])
+                    if product.is_available and product.stock >= item_data['quantity']:
+                        valid_items.append(
+                            GuestCartItem(
+                                cart=guest_cart,
+                                product=product,
+                                quantity=item_data['quantity'],
+                                price_at_add=product.discount_price or product.price
+                            )
+                        )
+                except Product.DoesNotExist:
+                    continue
+
+            # Bulk create items
+            if valid_items:
+                GuestCartItem.objects.bulk_create(valid_items)
+
+            # Return validated cart data
+            return Response({
+                "session_id": session_id,
+                "items": [{
+                    "product_id": item.product.id,
+                    "quantity": item.quantity,
+                    "price_at_add": str(item.price_at_add),
+                    "is_available": item.product.is_available,
+                    "stock": item.product.stock
+                } for item in valid_items]
+            })
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 
     @action(detail=False, methods=['post'])
     def merge(self, request):
-        """Merge anonymous cart with user cart after login"""
+        """Merge cart after login - handles both session and direct cart items"""
         if not request.user.is_authenticated:
             return Response(
                 {"error": "User must be authenticated"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        session_id = request.session.session_key
-        if not session_id:
+        # Get user cart or create if doesn't exist
+        user_cart, _ = Cart.objects.get_or_create(user=request.user)
+        items_merged = False
+
+        # Try session-based merge
+        session_id = request.data.get('session_id')
+        if session_id:
+            try:
+                guest_cart = GuestCart.objects.get(session_id=session_id)
+                self._merge_guest_cart_items(user_cart, guest_cart)
+                guest_cart.delete()
+                items_merged = True
+            except GuestCart.DoesNotExist:
+                pass
+
+        # Try direct items merge
+        direct_items = request.data.get('items', [])
+        if direct_items:
+            self._merge_direct_items(user_cart, direct_items)
+            items_merged = True
+
+        if not items_merged:
             return Response(
-                {"message": "No anonymous cart to merge"},
+                {"message": "No items to merge"},
                 status=status.HTTP_200_OK
             )
 
-        try:
-            # Get both carts
-            user_cart = Cart.objects.get(user=request.user)
-            anonymous_cart = Cart.objects.get(session_id=session_id)
+        serializer = self.get_serializer(user_cart)
+        return Response(serializer.data)
 
-            # Merge items
-            for anon_item in anonymous_cart.items.all():
+
+    def _merge_guest_cart_items(self, user_cart, guest_cart):
+        """Helper method to merge guest cart items"""
+        for guest_item in guest_cart.items.all():
+            user_item, created = CartItem.objects.get_or_create(
+                cart=user_cart,
+                product=guest_item.product,
+                defaults={
+                    'quantity': guest_item.quantity,
+                    'price_at_add': guest_item.product.discount_price or guest_item.product.price
+                }
+            )
+            if not created:
+                user_item.quantity += guest_item.quantity
+                user_item.save()
+
+
+    def _merge_direct_items(self, user_cart, items):
+        """Helper method to merge direct cart items"""
+        for item in items:
+            try:
+                product = Product.objects.get(id=item['product_id'])
                 user_item, created = CartItem.objects.get_or_create(
                     cart=user_cart,
-                    product=anon_item.product,
+                    product=product,
                     defaults={
-                        'quantity': anon_item.quantity,
-                        'price_at_add': anon_item.product.discount_price or anon_item.product.price
+                        'quantity': item['quantity'],
+                        'price_at_add': product.discount_price or product.price
                     }
                 )
                 if not created:
-                    user_item.quantity += anon_item.quantity
+                    user_item.quantity += item['quantity']
                     user_item.save()
-
-            # Delete anonymous cart
-            anonymous_cart.delete()
-
-            serializer = self.get_serializer(user_cart)
-            return Response(serializer.data)
-
-        except Cart.DoesNotExist:
-            return Response(
-                {"message": "No cart to merge"},
-                status=status.HTTP_200_OK
-            )
+            except Product.DoesNotExist:
+                continue

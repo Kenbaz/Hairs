@@ -51,9 +51,6 @@ export function ProductCard({ product, className = "" }: ProductCardProps) {
             {product.name}
           </h3>
 
-          {/* Category */}
-          <p className="text-sm text-gray-500 mt-1">{product.category.name}</p>
-
           {/* Price Display */}
           <div className="mt-2 space-y-1">
             {hasDiscount ? (
@@ -101,6 +98,7 @@ export function ProductCard({ product, className = "" }: ProductCardProps) {
         <AddToCartButton
           productId={product.id}
           stock={product.stock}
+          productData={product}
           showQuantity={false}
           className="flex-1"
         />

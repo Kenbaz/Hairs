@@ -1178,16 +1178,22 @@ export interface UpdateShippingRateData {
 // Cart types
 // Types for cart items and state management
 export interface CartProduct {
+  id: number;
+  name: string;
+  price: number;
+  discount_price?: number;
+  image?: string;
+  primary_image?: {
+    url: string;
+    id: number;
+    public_id: string;
+    is_primary: boolean;
+  };
+  stock: number;
+  category: {
     id: number;
     name: string;
-    price: number;
-    discount_price?: number;
-    image?: string;
-    stock: number;
-    category: {
-        id: number;
-        name: string;
-    };
+  };
 }
 
 export interface CartItem {
@@ -1217,6 +1223,7 @@ export interface CartState {
 export interface AddToCartData {
     product_id: number;
     quantity: number;
+    productData: StoreProduct;
 }
 
 export interface UpdateCartItemData {
@@ -1247,6 +1254,19 @@ export interface CartError {
     details?: {
         [key: string]: string[];
     };
+}
+
+export interface ValidatedCartItem {
+  product_id: number;
+  quantity: number;
+  price_at_add: string;
+  is_available: boolean;
+  stock: number;
+}
+
+export interface CartValidationResponse {
+  session_id: string;
+  items: ValidatedCartItem[];
 }
 
 // For optimistic updates
@@ -1394,4 +1414,17 @@ export interface InstantSearchResult {
   primary_image: {
     image: string | null;
   };
+}
+
+export interface StoreProductFilters {
+  search?: string;
+  category__slug?: string; // Changed from category to match backend
+  stock_status?: StockStatus;
+  min_price?: number;
+  max_price?: number;
+  is_featured?: boolean;
+  ordering?: string;
+  page: number;
+  page_size: number;
+  hair_type?: "raw" | "virgin" | "single donor";
 }

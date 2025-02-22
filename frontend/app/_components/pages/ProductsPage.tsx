@@ -23,6 +23,7 @@ export default function ProductsPage() {
         updateSearchQuery,
         clearFilters,
         debouncedSearchQuery,
+        searchQuery,
     } = useProductsQuery();
 
     const toggleMobileFilters = () => {
@@ -59,7 +60,7 @@ export default function ProductsPage() {
             <Input
               type="search"
               placeholder="Search products..."
-              value={debouncedSearchQuery}
+              value={searchQuery}
               onChange={(e) => updateSearchQuery(e.target.value)}
               className="pl-10 pr-10"
             />

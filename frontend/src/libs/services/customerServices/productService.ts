@@ -1,6 +1,6 @@
 import axiosInstance from "@/src/utils/_axios";
 import { AxiosError } from "axios";
-import { InstantSearchResult, StoreProductDetails, StoreProduct, StoreProductResponse, Category, CategoryResponse, ProductFilters, ApiError, Review, ReviewResponse } from "@/src/types";
+import { InstantSearchResult, StoreProductDetails, StoreProduct, StoreProductResponse, Category, CategoryResponse, StoreProductFilters, ApiError, Review, ReviewResponse } from "@/src/types";
 
 
 class ProductService {
@@ -10,15 +10,20 @@ class ProductService {
 
   // Get all products with filters
   async getProducts(
-    filters: Partial<ProductFilters>
+    filters: Partial<StoreProductFilters>
   ): Promise<StoreProductResponse> {
     try {
       // convert filters to query params
       const params = new URLSearchParams();
 
       Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined) {
-          params.append(key, value.toString());
+        if (value !== undefined && value !== null && value !== "") {
+          // Special handling for category
+          if (key === "category") {
+            params.append("category__slug", value.toString());
+          } else {
+            params.append(key, value.toString());
+          }
         }
       });
 

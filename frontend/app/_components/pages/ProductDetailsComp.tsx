@@ -137,6 +137,7 @@ export function ProductDetailsComp({ slug }: ProductDetailsCompProps) {
             <AddToCartButton
               productId={product.id}
               stock={product.stock}
+              productData={product}
               className="flex-1"
             />
             <WishlistButton productId={product.id} showText />

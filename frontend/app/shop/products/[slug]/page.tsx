@@ -17,7 +17,11 @@ export async function generateMetadata({
   try {
     // Fetch minimal product data for metadata using fetch API
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/products/${(await params).slug}/`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/products/${
+        (
+          await params
+        ).slug
+      }/`,
       { next: { revalidate: 3600 } } // Cache for 1 hour
     );
 
@@ -26,18 +30,38 @@ export async function generateMetadata({
     }
 
     const product = await response.json();
+    
+    const title = `${product.name} | Miz Viv Hairs`;
+      const description =
+          product.description?.substring(0, 160) || "Premium quality wigs";
+      const imageUrl = product.primary_image?.url;
 
     return {
-      title: `${product.name} | Miz Viv Hairs`,
-      description:
-        product.description?.substring(0, 160) ||
-        "Premium quality hair product", // Truncate description for meta tag
+      title,
+      description,
       openGraph: {
-        title: product.name,
-        description:
-          product.description?.substring(0, 160) ||
-          "Premium quality hair product",
-        images: [product.primary_image?.url || "/placeholder.png"],
+        title,
+        description,
+        images: [
+          {
+            url: imageUrl || "",
+            width: 800,
+            height: 800,
+            alt: product.name,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [imageUrl || ""],
+      },
+      other: {
+        "product:price:amount":
+          product.price_data.discount_amount?.toString() ||
+          product.price_data.amount.toString(),
+        "product:price:currency": "USD",
       },
     };
   } catch {

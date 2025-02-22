@@ -16,6 +16,15 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
   const { updateCartItem, removeFromCart, isUpdatingCart } = useCartQuery();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const getImageUrl = (): string => {
+    if (typeof item.product.image === 'string') {
+      // Guest cart case
+      return item.product.image;
+    }
+    // Authenticated cart case
+    return item.product.primary_image?.url || '';
+  }
+
   const handleQuantityChange = async (value: number) => {
     const newQuantity = item.quantity + value;
     if (newQuantity < 1 || newQuantity > item.product.stock) return;
@@ -31,7 +40,7 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
       {/* Product Image */}
       <div className="relative w-24 h-24 flex-shrink-0">
         <Image
-          src={item.product.image || "/placeholder.png"}
+          src={getImageUrl()}
           alt={`${item.product.name || "Product"} Image`}
           fill
           priority

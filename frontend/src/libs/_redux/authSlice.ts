@@ -8,7 +8,6 @@ import type { RootState } from './reduxTypes';
 import {toast} from 'react-hot-toast';
 import { notificationService } from '../services/adminServices/notificationService';
 import { SessionManager } from '../auth/sessionManager';
-import { cartService } from '../services/customerServices/cartService';
 
 
 // Helper function to safely access LocalStorage
@@ -258,11 +257,6 @@ const authSlice = createSlice({
 
         // Start session monitoring
         SessionManager.getInstance().startSession();
-
-        // Merge guest cart with user cart after login
-        cartService.mergeCart().catch(error => {
-          console.error("Failed to merge cart", error);
-        })
       });
       builder.addCase(login.rejected, (state, action) => {
         state.isLoading = false;

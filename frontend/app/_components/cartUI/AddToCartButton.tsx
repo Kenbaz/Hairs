@@ -3,29 +3,39 @@
 import { useState } from "react";
 import { useCartQuery } from "@/src/libs/customHooks/useCart";
 import { Button } from "../UI/Button";
-import { ShoppingCart, Plus, Minus } from "lucide-react";
-// import { toast } from "react-hot-toast";
+import { ShoppingCart, Plus, Minus, Check } from "lucide-react";
+import { StoreProduct } from "@/src/types";
 
 interface AddToCartButtonProps {
   productId: number;
   stock: number;
   className?: string;
+  productData: StoreProduct;
   showQuantity?: boolean;
 }
 
 export function AddToCartButton({
   productId,
   stock,
+  productData,
   className = "",
   showQuantity = true,
 }: AddToCartButtonProps) {
   const [quantity, setQuantity] = useState(1);
-  const { addToCart, isAddingToCart } = useCartQuery();
+  const { addToCart, isAddingToCart, cart } = useCartQuery();
+
+  // Check if item exists in cart
+  const cartItem = cart?.items.find((item) => item.product.id === productId);
+
+  const isInCart = Boolean(cartItem);
 
   const handleAddToCart = () => {
+    if (isInCart) return;
+
     addToCart({
       product_id: productId,
       quantity,
+      productData
     });
     setQuantity(1);
   };
@@ -39,7 +49,7 @@ export function AddToCartButton({
 
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
-      {showQuantity && stock > 0 && (
+      {showQuantity && stock > 0 && !isInCart && (
         <div className="flex items-center justify-center gap-4">
           <button
             onClick={() => handleQuantityChange(-1)}
@@ -63,12 +73,23 @@ export function AddToCartButton({
 
       <Button
         onClick={handleAddToCart}
-        disabled={stock === 0 || isAddingToCart}
+        disabled={stock === 0 || isAddingToCart || isInCart}
         isLoading={isAddingToCart}
-        className="w-full"
+        className={`w-full ${
+          isInCart ? "bg-green-600 hover:bg-green-700" : ""
+        }`}
       >
-        <ShoppingCart className="mr-2 h-4 w-4" />
-        {stock === 0 ? "Out of Stock" : "Add to Cart"}
+        {isInCart ? (
+          <>
+            <Check className="mr-2 h-4 w-4" />
+            In Cart
+          </>
+        ) : (
+          <>
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            {stock === 0 ? "Out of Stock" : "Add to Cart"}
+          </>
+        )}
       </Button>
     </div>
   );
