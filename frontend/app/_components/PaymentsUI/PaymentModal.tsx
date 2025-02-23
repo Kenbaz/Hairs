@@ -34,7 +34,7 @@ export function PaymentModal({ isOpen, onClose, orderId, email, amount }: Paymen
 
     useEffect(() => {
         if (isOpen) {
-            const callbackUrl = `${window.location.origin}/payment/callback`;
+            const callbackUrl = `${window.location.origin}/shop/payment/callback`;
             initializePayment({
                 order_id: orderId,
                 payment_currency: selectedCurrency,
@@ -68,7 +68,7 @@ export function PaymentModal({ isOpen, onClose, orderId, email, amount }: Paymen
 
     const handleRetry = () => {
         if (orderId && email) {
-            const callbackUrl = `${window.location.origin}/payment/callback`;
+            const callbackUrl = `${window.location.origin}/shop/payment/callback`;
             initializePayment({
                 order_id: orderId,
                 payment_currency: selectedCurrency,
@@ -127,7 +127,7 @@ export function PaymentModal({ isOpen, onClose, orderId, email, amount }: Paymen
                 <Button onClick={() => router.push("/orders")}>
                   View Orders
                 </Button>
-                <Button variant="outline" onClick={() => router.push("/")}>
+                <Button variant="outline" onClick={() => router.push("/shop/products")}>
                   Continue Shopping
                 </Button>
               </div>
@@ -147,7 +147,7 @@ export function PaymentModal({ isOpen, onClose, orderId, email, amount }: Paymen
                 <Button onClick={handleRetry}>Try Again</Button>
                 <Button
                   variant="outline"
-                  onClick={() => router.push("/checkout")}
+                  onClick={() => router.push("/shop/checkout")}
                 >
                   Return to Checkout
                 </Button>

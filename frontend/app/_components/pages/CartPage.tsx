@@ -116,7 +116,7 @@ export default function CartPage() {
                   {/* Product Image */}
                   <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border">
                     <Image
-                      src={item.product.image || "/placeholder.png"}
+                      src={item.product.primary_image?.url || "/placeholder.png"}
                       alt={item.product.name}
                       fill
                       priority

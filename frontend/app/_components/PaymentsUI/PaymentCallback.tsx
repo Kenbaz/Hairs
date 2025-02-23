@@ -15,17 +15,17 @@ export default function PaymentCallbackPage() {
       const reference = searchParams.get("reference");
 
       if (!reference) {
-        router.push("/checkout?status=error");
+        router.push("/shop/checkout?status=error");
         return;
       }
 
       try {
         await verifyPayment(reference);
         // Redirect back to checkout/orders with success status
-        router.push("/checkout?status=success");
+        router.push("/shop/checkout?status=success");
       } catch (error) {
         // Redirect back to checkout with error status
-        router.push("/checkout?status=error");
+        router.push("/shop/checkout?status=error");
         console.error("Payment verification failed:", error);
       }
     };

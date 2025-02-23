@@ -211,13 +211,16 @@ export const loadUser = createAsyncThunk<
                avatar_url: response.data.avatar_url || response.data.avatar || null,
              };
         } catch (error) {
-            if (error instanceof Error) {
-                return rejectWithValue(error.message);
-            }
-            const err = error as AxiosError<ApiError>;
-            return rejectWithValue(
-                err.response?.data?.detail || err.response?.data?.message || 'Failed to load user'
-            );
+          if (error instanceof Error) {
+            return rejectWithValue(error.message);
+          }
+          
+          const err = error as AxiosError<ApiError>;
+          return rejectWithValue(
+            err.response?.data?.detail ||
+              err.response?.data?.message ||
+              "Failed to load user"
+          );
         }
     }
 );

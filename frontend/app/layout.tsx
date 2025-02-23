@@ -8,6 +8,7 @@ import { PaymentProvider } from "./_components/_providers/PaymentContext";
 import { CartInitializer } from "./_components/_providers/CartInitializer";
 import { WishlistInitializer } from "./_components/_providers/WishlistInitializer";
 import { Inter } from 'next/font/google';
+// import { AuthInitializer } from "./_components/_providers/AuthInitializer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,6 +30,7 @@ export default function RootLayout({
       >
         <QueryProvider>
           <ReduxProvider>
+            {/* <AuthInitializer/> */}
             <PaymentProvider>
               <CurrencyProvider>
                 <CartInitializer />

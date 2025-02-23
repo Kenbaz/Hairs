@@ -26,6 +26,12 @@ export function CartSummary({ className = "" }: CartSummaryProps) {
       <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
 
       <div className="space-y-4">
+        {/* Items count */}
+        <div className="text-sm text-gray-500">
+          {cart.items.length} {cart.items.length === 1 ? "item" : "items"}
+        </div>
+
+        {/* Subtotal */}
         <div className="flex justify-between items-center">
           <span className="text-gray-600">Subtotal</span>
           <PriceDisplay

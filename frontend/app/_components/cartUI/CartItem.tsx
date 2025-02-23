@@ -27,6 +27,8 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
 
   const handleQuantityChange = async (value: number) => {
     const newQuantity = item.quantity + value;
+
+    // Validate quantity
     if (newQuantity < 1 || newQuantity > item.product.stock) return;
 
     updateCartItem({
@@ -79,25 +81,32 @@ export const CartItem: FC<CartItemProps> = ({ item }) => {
         </div>
       </div>
 
-      {/* Quantity Controls */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => handleQuantityChange(-1)}
-          disabled={isUpdatingCart || item.quantity <= 1}
-          className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Minus className="h-4 w-4" />
-        </button>
+      {/* Quantity Controls with Stock Warning */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleQuantityChange(-1)}
+            disabled={isUpdatingCart || item.quantity <= 1}
+            className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Minus className="h-4 w-4" />
+          </button>
 
-        <span className="w-8 text-center font-medium">{item.quantity}</span>
+          <span className="w-8 text-center font-medium">{item.quantity}</span>
 
-        <button
-          onClick={() => handleQuantityChange(1)}
-          disabled={isUpdatingCart || item.quantity >= item.product.stock}
-          className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
+          <button
+            onClick={() => handleQuantityChange(1)}
+            disabled={isUpdatingCart || item.quantity >= item.product.stock}
+            className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+        {item.product.stock <= 5 && (
+          <p className="text-xs text-orange-500">
+            Only {item.product.stock} left in stock
+          </p>
+        )}
       </div>
 
       {/* Subtotal & Remove */}
