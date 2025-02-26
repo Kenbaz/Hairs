@@ -104,7 +104,7 @@ export function CartDrawer() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
               </div>
             ) : cart && cart.items.length > 0 ? (
-              <Cart />
+              <Cart isDrawer={true} />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-4">
                 <div className="bg-gray-100 rounded-full p-4 mb-4">

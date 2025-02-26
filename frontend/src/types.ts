@@ -1174,6 +1174,17 @@ export interface UpdateShippingRateData {
     is_active?: boolean;
 }
 
+export interface ShippingCalculationResponse {
+  currency: string;
+  shipping_fee: number;
+  formatted_shipping_fee: string;
+}
+
+export interface ShippingCalculationRequest {
+  currency: string;
+  order_amount: number;
+}
+
 
 // Cart types
 // Types for cart items and state management
@@ -1427,4 +1438,12 @@ export interface StoreProductFilters {
   page: number;
   page_size: number;
   hair_type?: "raw" | "virgin" | "single donor";
+}
+
+// Customer side shipping types
+export interface ShippingFeeCalculation {
+  currency: string;
+  shipping_fee: number;
+  total_amount: number;
+  order_amount: number;
 }

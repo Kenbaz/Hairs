@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Currency } from "@/src/types";
-import { publicCurrencyService } from "@/src/libs/services/customerServices/publicCurrencyService";
+import { currencyService } from "@/src/libs/services/customerServices/currencyService";
 
 interface CountrySelectProps {
   value: string;
@@ -29,7 +29,7 @@ export default function CountrySelect({
   // Fetch active currencies
   const { data: currencies, isLoading } = useQuery<Currency[]>({
     queryKey: ["active-currencies"],
-    queryFn: () => publicCurrencyService.getPublicCurrencies(),
+    queryFn: () => currencyService.getActiveCurrencies(),
   });
 
   // Generate list of available countries based on active currencies

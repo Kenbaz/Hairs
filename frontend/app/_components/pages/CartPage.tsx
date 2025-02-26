@@ -3,12 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useCartQuery } from "@/src/libs/customHooks/useCart";
-import { ShoppingBag, ArrowRight, Trash2, ChevronLeft } from "lucide-react";
+import { ShoppingBag, ArrowRight, Trash2, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/app/_components/UI/Button";
 import { ConfirmModal } from "@/app/_components/UI/ConfirmModal";
 import { PriceDisplay } from "@/app/_components/UI/PriceDisplay";
 import Image from "next/image";
 import { CartItem } from "@/src/types";
+import { ShippingFeeDisplay } from "../storeUI/ShippingFeeDisplay";
+import { CartPriceDisplay } from "../UI/CartPriceDisplay";
+import { useCurrency } from "../_providers/CurrencyContext";
+import { useShippingFee } from "@/src/libs/customHooks/useShippingFee";
 
 
 export default function CartPage() {
@@ -24,9 +28,13 @@ export default function CartPage() {
     isClearingCart,
   } = useCartQuery();
 
+  const { selectedCurrency } = useCurrency();
+  const {shippingFee, isCalculating: isCalculatingShipping} = useShippingFee(cart)
+
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CartItem | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+
 
   // Handle quantity change
   const handleQuantityChange = (itemId: number, newQuantity: number) => {
@@ -49,7 +57,7 @@ export default function CartPage() {
     }
   };
 
-  const { subtotal, shippingFee, total } = CartSummary;
+  const { subtotal } = CartSummary;
 
   if (isLoading) {
     return (
@@ -116,7 +124,9 @@ export default function CartPage() {
                   {/* Product Image */}
                   <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border">
                     <Image
-                      src={item.product.primary_image?.url || "/placeholder.png"}
+                      src={
+                        item.product.primary_image?.url || "/placeholder.png"
+                      }
                       alt={item.product.name}
                       fill
                       priority
@@ -216,26 +226,29 @@ export default function CartPage() {
                 />
               </div>
 
-              <div className="flex justify-between text-base text-gray-900">
-                <span>Shipping</span>
-                {shippingFee > 0 ? (
-                  <PriceDisplay
+              <div className="flex justify-between items-center">
+                <span className="text-gray-900">Shipping</span>
+                {isCalculatingShipping ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                ) : shippingFee > 0 ? (
+                  <ShippingFeeDisplay
                     amount={shippingFee}
-                    sourceCurrency="USD"
-                    className="font-medium"
+                    className="font-medium text-gray-900"
                   />
                 ) : (
-                  <span className="text-green-600 font-medium">Free</span>
+                  <span className="font-medium text-green-600">Free</span>
                 )}
               </div>
 
               <div className="border-t pt-4">
                 <div className="flex justify-between text-base font-medium text-gray-900">
                   <span>Total</span>
-                  <PriceDisplay
-                    amount={total}
+                  <CartPriceDisplay
+                    amount={subtotal}
                     sourceCurrency="USD"
-                    className="font-medium"
+                    additionalAmount={shippingFee}
+                    additionalCurrency={selectedCurrency}
+                    className="text-lg font-semibold text-gray-900"
                   />
                 </div>
               </div>

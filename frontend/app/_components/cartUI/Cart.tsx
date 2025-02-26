@@ -3,43 +3,46 @@
 import { useCartQuery } from "@/src/libs/customHooks/useCart";
 import { useAppDispatch } from "@/src/libs/_redux/hooks";
 import { closeCart } from "@/src/libs/_redux/cartSlice";
-import { CartItem } from "./CartItem";
-import { CartSummary } from "./CartSummary";
-import { Button } from "../UI/Button";
-import { ShoppingBag, ArrowLeft, Loader2, Trash2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { Button } from "../UI/Button";
+import { ShoppingBag, ArrowLeft, Trash2 } from "lucide-react";
+import { PriceDisplay } from "../UI/PriceDisplay";
 import { useState } from "react";
 import { ConfirmModal } from "../UI/ConfirmModal";
 
-export function Cart() {
+interface CartProps {
+  isDrawer?: boolean;
+}
+
+export function Cart({ isDrawer = false }: CartProps) {
   const dispatch = useAppDispatch();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const { cart, isLoading, clearCart, isClearingCart } = useCartQuery();
+  const { cart, isLoading, clearCart, isClearingCart, CartSummary } =
+    useCartQuery();
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+      <div className="flex justify-center items-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900" />
       </div>
     );
   }
 
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <ShoppingBag className="h-16 w-16 text-gray-400" />
-        <h2 className="text-2xl font-semibold text-gray-900">
+      <div className="flex flex-col items-center justify-center p-8 gap-4">
+        <ShoppingBag className="h-12 w-12 text-gray-400" />
+        <h2 className="text-lg font-semibold text-gray-900">
           Your cart is empty
         </h2>
         <p className="text-gray-500 text-center max-w-md">
-          Looks like you haven&apos;t added any items to your cart yet. Start
-          shopping to fill it up!
+          Looks like you haven&apos;t added any items to your cart yet.
         </p>
-        <Link href="/products">
+        <Link href="/shop/products">
           <Button
             variant="outline"
-            className="mt-4"
-            onClick={() => dispatch(closeCart())}
+            onClick={() => isDrawer && dispatch(closeCart())}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Continue Shopping
@@ -50,50 +53,83 @@ export function Cart() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => setShowClearConfirm(true)}
-            className="text-red-600 hover:bg-red-50"
-            disabled={isClearingCart}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Clear Cart
-          </Button>
-          <Link href="/shop/products">
-            <Button variant="outline" onClick={() => dispatch(closeCart())}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Continue Shopping
+    <div className="flex flex-col h-full">
+      {/* Cart Header - only for drawer mode */}
+      {isDrawer && (
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowClearConfirm(true)}
+              disabled={isClearingCart}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear
             </Button>
-          </Link>
+          </div>
+          <div className="text-sm">
+            {cart.items.length} {cart.items.length === 1 ? "item" : "items"}
+          </div>
         </div>
+      )}
+
+      {/* Cart Items */}
+      <div className="flex-grow overflow-auto divide-y">
+        {cart.items.map((item) => (
+          <div key={item.id} className="p-4 flex items-center">
+            <div className="relative h-16 w-16 flex-shrink-0">
+              <Image
+                src={item.product.primary_image?.url || "/placeholder.png"}
+                alt={`${item.product.name || "Product"} Image`}
+                fill
+                sizes="64px"
+                className="object-cover rounded-md"
+              />
+            </div>
+            <div className="ml-4 flex-grow text-gray-900">
+              <p className="font-medium truncate">{item.product.name}</p>
+              <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+            </div>
+            <div className="ml-4">
+              <PriceDisplay
+                amount={item.price_at_add * item.quantity}
+                sourceCurrency="USD"
+                className="font-medium text-gray-900"
+              />
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cart Items */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow">
-            <div className="divide-y">
-              {cart.items.map((item) => (
-                <CartItem key={item.id} item={item} />
-              ))}
-            </div>
-            <div className="p-4 bg-gray-50 rounded-b-lg">
-              <p className="text-sm text-gray-500">
-                Please review your cart before proceeding to checkout. Prices
-                and availability are subject to change.
-              </p>
-            </div>
-          </div>
+      {/* Cart Footer */}
+      <div className="border-t p-4">
+        <div className="flex justify-between mb-4 text-gray-900">
+          <span className="font-medium">Total</span>
+          <PriceDisplay
+            amount={CartSummary.subtotal}
+            sourceCurrency="USD"
+            className="font-semibold text-gray-900"
+          />
         </div>
-
-        {/* Cart Summary */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-4">
-            <CartSummary />
-          </div>
+        <div className="flex gap-2">
+          <Link href="/shop/cart" className="flex-1">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => isDrawer && dispatch(closeCart())}
+            >
+              View Cart
+            </Button>
+          </Link>
+          <Link href="/checkout" className="flex-1">
+            <Button
+              className="w-full"
+              onClick={() => isDrawer && dispatch(closeCart())}
+            >
+              Checkout
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -106,7 +142,7 @@ export function Cart() {
           setShowClearConfirm(false);
         }}
         title="Clear Cart"
-        message="Are you sure you want to remove all items from your cart? This action cannot be undone."
+        message="Are you sure you want to remove all items from your cart?"
         confirmText="Clear Cart"
         variant="danger"
       />

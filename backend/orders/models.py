@@ -45,6 +45,12 @@ class Order(models.Model):
     )
     payment_status = models.BooleanField(default=False)
     tracking_number = models.CharField(max_length=100, blank=True)
+    shipping_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text="Shipping fee at the time of order"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

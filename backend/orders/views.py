@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Order
+from cart.models import Cart
+from shipping.models import ShippingRate
 from .serializers import (
     OrderDetailSerializer,
     OrderListSerializer,
@@ -47,6 +49,25 @@ class OrderViewSet(viewsets.ModelViewSet):
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
+
+        # Get currency from request or use default
+        currency_code = request.data.get('currency', 'USD')
+
+        # Calculate shipping fee
+        cart = Cart.objects.get(user=request.user)
+
+        try:
+            shipping_rate = ShippingRate.objects.get(
+                currency_code=currency_code,
+                is_active=True
+            )
+            shipping_fee = shipping_rate.flat_rate
+        except ShippingRate.DoesNotExist:
+            shipping_fee = 0
+        
+        # Include shipping fee in the context for use in serializer's create method
+        serializer.context['shipping_fee'] = shipping_fee
+
         order = serializer.save()
 
         # Send order confirmation email

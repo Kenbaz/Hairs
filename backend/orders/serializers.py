@@ -31,7 +31,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'id', 'user', 'total_amount', 'shipping_address', 'order_status', 'payment_status', 'tracking_number', 'items', 'created_at', 'updated_at'
+            'id', 'user', 'total_amount', 'shipping_address', 'shipping_fee', 'order_status', 'payment_status', 'tracking_number', 'items', 'created_at', 'updated_at'
         ]
         read_only_fields = ['user', 'total_amount', 'tracking_number']
 
@@ -69,11 +69,13 @@ class CreateOrderSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         items_data = validated_data.pop('items')
+        shipping_fee = self.context.get('shipping_fee', 0)
         
         # Create order with zero total amount initially
         order = Order.objects.create(
             user=self.context['request'].user,
             total_amount=0,
+            shipping_fee=shipping_fee,
             **validated_data
         )
 
@@ -96,7 +98,7 @@ class CreateOrderSerializer(serializers.ModelSerializer):
             total_amount += price * quantity
 
         # Update order total
-        order.total_amount = total_amount
+        order.total_amount = total_amount + shipping_fee
         order.save()
 
         return order
