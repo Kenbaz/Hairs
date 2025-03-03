@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ProductCard } from "./ProductCard";
 import { Loader2 } from "lucide-react";
-import { AdminProduct } from "@/src/types";
+import { StoreProduct } from "@/src/types";
 import { productService } from "@/src/libs/services/customerServices/productService";
 
 
@@ -36,7 +36,7 @@ export function RelatedProducts({ currentProductId, categoryId }: RelatedProduct
           Related Products
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product: AdminProduct) => (
+          {products.map((product: StoreProduct) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

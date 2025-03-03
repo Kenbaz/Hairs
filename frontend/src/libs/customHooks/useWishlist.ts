@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 
 export const useWishlistQuery = (productId?: number) => {
   const queryClient = useQueryClient();
-  const { isAuthenticated, isUser } = useAuth();
+  const { isAuthenticated } = useAuth();
 
     
   // Fetch wishlist
@@ -18,8 +18,8 @@ export const useWishlistQuery = (productId?: number) => {
   } = useQuery({
     queryKey: ["wishlist"],
     queryFn: () => wishlistService.fetchWishlist(),
-    staleTime: 60 * 60 * 1000,
-    enabled: isAuthenticated && isUser,
+    staleTime: 30 * 60 * 1000,
+    enabled: isAuthenticated,
   });
 
     
@@ -34,6 +34,11 @@ export const useWishlistQuery = (productId?: number) => {
     mutationFn: (productId: number) => wishlistService.addToWishlist(productId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+      if (productId) {
+        queryClient.invalidateQueries({
+          queryKey: ["wishlist", "item", productId],
+        });
+      }
       toast.success("Added to wishlist");
     },
     onError: (error) => {
@@ -49,6 +54,11 @@ export const useWishlistQuery = (productId?: number) => {
       wishlistService.removeFromWishlist(productId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+      if (productId) {
+        queryClient.invalidateQueries({
+          queryKey: ["wishlist", "item", productId],
+        });
+      }
       toast.success("Removed from wishlist");
     },
     onError: (error) => {

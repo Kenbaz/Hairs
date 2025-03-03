@@ -4,12 +4,12 @@ import { InitializePaymentData, PaymentResponse, VerifyPaymentResponse, PaymentM
 
 
 class PaymentService {
-    private readonly baseUrl = '/api/v1/payments';
+    private readonly baseUrl = '/api/v1/payments/';
 
     async initializePayment(data: InitializePaymentData): Promise<PaymentResponse> {
         try {
             const response = await axiosInstance.post<PaymentResponse>(
-                `${this.baseUrl}/initialize/`,
+                `${this.baseUrl}initialize/`,
                 data
             );
             return response.data;
@@ -24,7 +24,7 @@ class PaymentService {
     async verifyPayment(reference: string): Promise<VerifyPaymentResponse> {
         try {
             const response = await axiosInstance.post<VerifyPaymentResponse>(
-                `${this.baseUrl}/verify/`,
+                `${this.baseUrl}verify/`,
                 { reference }
             );
             return response.data;
@@ -39,7 +39,7 @@ class PaymentService {
     async getPaymentMethods(currency: string): Promise<PaymentMethodResponse> {
         try {
             const response = await axiosInstance.get<PaymentMethodResponse>(
-                `${this.baseUrl}/methods/`,
+                `${this.baseUrl}methods/`,
                 { params: { currency } }
             );
             return response.data;
@@ -69,7 +69,7 @@ class PaymentService {
     async getPaymentDetails(paymentId: number): Promise<PaymentResponse> {
         try {
             const response = await axiosInstance.get<PaymentResponse>(
-                `${this.baseUrl}/${paymentId}/`
+                `${this.baseUrl}${paymentId}/`
             );
             return response.data;
         } catch (error) {
@@ -83,7 +83,7 @@ class PaymentService {
     async retryPayment(paymentId: number): Promise<PaymentResponse> {
         try {
             const response = await axiosInstance.post<PaymentResponse>(
-                `${this.baseUrl}/${paymentId}/retry/`
+                `${this.baseUrl}${paymentId}/retry/`
             );
             return response.data;
         } catch (error) {

@@ -24,6 +24,7 @@ backend/media/
 backend/static/
 backend/staticfiles/
 backend/payments/
+backend/draft/
 
 # Backend - Django specific
 backend/*.log

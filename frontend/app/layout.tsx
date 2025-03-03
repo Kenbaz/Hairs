@@ -8,7 +8,7 @@ import { PaymentProvider } from "./_components/_providers/PaymentContext";
 import { CartInitializer } from "./_components/_providers/CartInitializer";
 import { WishlistInitializer } from "./_components/_providers/WishlistInitializer";
 import { Inter } from 'next/font/google';
-// import { AuthInitializer } from "./_components/_providers/AuthInitializer";
+import { AuthProvider } from "./_components/_providers/AuthInitializer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,18 +25,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.className} antialiased overflow-y-hidden`}
-      >
+      <body className={`${inter.className} antialiased overflow-y-hidden`}>
         <QueryProvider>
           <ReduxProvider>
-            {/* <AuthInitializer/> */}
             <PaymentProvider>
               <CurrencyProvider>
-                <CartInitializer />
-                <WishlistInitializer />
-                {children}
-                <ToastProvider />
+                <AuthProvider>
+                  <CartInitializer />
+                  <WishlistInitializer />
+                  {children}
+                  <ToastProvider />
+                </AuthProvider>
               </CurrencyProvider>
             </PaymentProvider>
           </ReduxProvider>

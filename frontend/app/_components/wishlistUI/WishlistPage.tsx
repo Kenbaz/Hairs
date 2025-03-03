@@ -1,6 +1,7 @@
 "use client";
 
 import { useWishlistQuery } from "@/src/libs/customHooks/useWishlist";
+import { useCartQuery } from "@/src/libs/customHooks/useCart";
 import { Button } from "@/app/_components/UI/Button";
 import { HeartOff, ShoppingCart, Loader2, Trash2 } from "lucide-react";
 import { ConfirmModal } from "@/app/_components/UI/ConfirmModal";
@@ -11,10 +12,11 @@ import { PriceDisplay } from "@/app/_components/UI/PriceDisplay";
 import { toast } from "react-hot-toast";
 
 export default function WishlistPage() {
-  const { items, isLoading, moveItemToCart, clear, removeItem } = useWishlistQuery();
+  const { items, isLoading, moveItemToCart, clear, removeItem } =
+    useWishlistQuery();
+  const { isItemInCart } = useCartQuery();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-    
   const handleMoveToCart = async (productId: number) => {
     try {
       await moveItemToCart(productId);
@@ -24,7 +26,6 @@ export default function WishlistPage() {
     }
   };
 
-    
   const handleRemoveItem = async (productId: number) => {
     try {
       await removeItem(productId);
@@ -34,7 +35,6 @@ export default function WishlistPage() {
     }
   };
 
-    
   const handleClearWishlist = async () => {
     try {
       await clear();
@@ -44,7 +44,6 @@ export default function WishlistPage() {
     }
   };
 
-    
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -53,7 +52,6 @@ export default function WishlistPage() {
     );
   }
 
-    
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -73,7 +71,6 @@ export default function WishlistPage() {
     );
   }
 
-    
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex items-center justify-between mb-8">
@@ -102,7 +99,7 @@ export default function WishlistPage() {
           >
             <div className="relative aspect-square mb-4">
               <Image
-                src={item.product.image || "/placeholder.png"}
+                src={item.product.primary_image?.url}
                 alt={`${item.product.name || "Product"} Image`}
                 fill
                 priority
@@ -120,22 +117,22 @@ export default function WishlistPage() {
             </div>
 
             <div className="mb-4">
-              {item.product.discount_price ? (
+              {item.product.price_data.discount_amount ? (
                 <div className="flex items-center gap-2">
                   <PriceDisplay
-                    amount={item.product.discount_price}
+                    amount={item.product.price_data.discount_amount}
                     sourceCurrency="USD"
                     className="text-gray-900 font-medium"
                   />
                   <PriceDisplay
-                    amount={item.product.price}
+                    amount={item.product.price_data.amount}
                     sourceCurrency="USD"
                     className="text-sm text-gray-500 line-through"
                   />
                 </div>
               ) : (
                 <PriceDisplay
-                  amount={item.product.price}
+                  amount={item.product.price_data.amount}
                   sourceCurrency="USD"
                   className="text-gray-900 font-medium"
                 />
@@ -146,10 +143,19 @@ export default function WishlistPage() {
               <Button
                 onClick={() => handleMoveToCart(item.product.id)}
                 className="flex-1"
-                disabled={item.product.stock <= 0}
+                disabled={
+                  isItemInCart(item.product.id) ||
+                  (typeof item.product.stock === "number" &&
+                    item.product.stock <= 0)
+                }
               >
                 <ShoppingCart className="h-4 w-4 mr-2" />
-                {item.product.stock > 0 ? "Move to Cart" : "Out of Stock"}
+                {isItemInCart(item.product.id)
+                  ? "Already in Cart"
+                  : typeof item.product.stock === "number" &&
+                    item.product.stock <= 0
+                  ? "Out of Stock"
+                  : "Move to Cart"}
               </Button>
               <Button
                 variant="outline"

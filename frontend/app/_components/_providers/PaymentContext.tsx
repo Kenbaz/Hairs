@@ -4,6 +4,8 @@ import { createContext, useContext, useReducer, ReactNode } from "react";
 import { PaymentState, PaymentContextType, InitializePaymentData, PaymentError } from "@/src/types";
 import { paymentService } from "@/src/libs/services/paymentService/paymentService";
 import { toast } from 'react-hot-toast';
+import { currencyService } from "@/src/libs/services/customerServices/currencyService";
+
 
 interface PaymentProviderProps {
     children: ReactNode;
@@ -71,90 +73,114 @@ function paymentReducer(state: PaymentState, action: PaymentAction): PaymentStat
 export function PaymentProvider({ children }: PaymentProviderProps) { 
     const [state, dispatch] = useReducer(paymentReducer, initialState);
 
-    const handlePaymentTimeout = () => {
-        dispatch({
-            type: 'SET_ERROR',
-            payload: {
-                type: 'TIMEOUT',
-                message: 'Payment request timed out. Please try again.'
-            }
-        });
-        dispatch({ type: 'SET_PAYMENT_STATUS', payload: 'failed' });
-        toast.error('Payment request timed out');
-    };
+    // const handlePaymentTimeout = () => {
+    //     dispatch({
+    //         type: 'SET_ERROR',
+    //         payload: {
+    //             type: 'TIMEOUT',
+    //             message: 'Payment request timed out. Please try again.'
+    //         }
+    //     });
+    //     dispatch({ type: 'SET_PAYMENT_STATUS', payload: 'failed' });
+    //     toast.error('Payment request timed out');
+    // };
 
-    const clearPaymentTimeout = () => {
-        if (state.timeoutId) {
-            clearTimeout(state.timeoutId);
-            dispatch({ type: 'SET_TIMEOUT_ID', payload: null });
-        }
-    };
+    // const clearPaymentTimeout = () => {
+    //     if (state.timeoutId) {
+    //         clearTimeout(state.timeoutId);
+    //         dispatch({ type: 'SET_TIMEOUT_ID', payload: null });
+    //     }
+    // };
 
-    const setPaymentTimeout = () => {
-        clearPaymentTimeout();
-        const timeoutId = setTimeout(
-            handlePaymentTimeout,
-            Number(process.env.NEXT_PUBLIC_PAYMENT_TIMEOUT) || 300000
-        );
-        dispatch({ type: 'SET_TIMEOUT_ID', payload: timeoutId });
-    };
+    // const setPaymentTimeout = () => {
+    //     clearPaymentTimeout();
+    //     const timeoutId = setTimeout(
+    //         handlePaymentTimeout,
+    //         Number(process.env.NEXT_PUBLIC_PAYMENT_TIMEOUT) || 300000
+    //     );
+    //     dispatch({ type: 'SET_TIMEOUT_ID', payload: timeoutId });
+    // };
     
 
     const initializePayment = async (data: InitializePaymentData) => {
-        // Check retry count
-        if (state.retryCount > 3) {
-            dispatch({
-              type: "SET_ERROR",
-              payload: {
-                type: "RETRY_LIMIT",
-                message: "Maximum retry attempts reached. Please contact support.",
-              },
-            });
-            return;
-        }
+      // Validate input data
+      if (!data.email || !data.order_id) {
+        dispatch({
+          type: "SET_ERROR",
+          payload: {
+            type: "VALIDATION",
+            message: "Invalid payment details",
+          },
+        });
+        return;
+      }
 
-        // Check if there is a need to wait between retries
-        if (state.lastAttempt) {
-            const waitTime = 5000; // 5 seconds
-            const timeSinceLastAttempt = Date.now() - state.lastAttempt.getTime();
-            if (timeSinceLastAttempt < waitTime) { 
-                dispatch({
-                  type: "SET_ERROR",
-                  payload: {
-                    type: "RATE_LIMIT",
-                    message: "Please wait a moment before trying again.",
-                  },
-                });
-                return;
-            }
-        }
+      // Check retry count
+      if (state.retryCount > 3) {
+        dispatch({
+          type: "SET_ERROR",
+          payload: {
+            type: "RETRY_LIMIT",
+            message: "Maximum retry attempts reached. Please contact support.",
+          },
+        });
+        return;
+      }
 
-        dispatch({ type: 'START_LOADING' });
-        setPaymentTimeout();
-        
-        try {
-            const response = await paymentService.initializePayment(data);
+      // Determine payment currency (default to NGN for Paystack)
+      const paymentCurrency = ['NGN', 'USD'].includes(data.payment_currency) ? data.payment_currency : 'NGN';
 
-            clearPaymentTimeout();
+      dispatch({ type: "START_LOADING" });
 
-            dispatch({ type: 'SET_PAYMENT_URL', payload: response.authorization_url });
-            dispatch({ type: 'SET_PAYMENT_REFERENCE', payload: response.reference });
-            dispatch({ type: 'SET_PAYMENT_STATUS', payload: 'pending' });
-            dispatch({ type: "INCREMENT_RETRY_COUNT" });
-            dispatch({ type: "SET_LAST_ATTEMPT", payload: new Date() });
-        } catch (error: unknown) {
-            clearPaymentTimeout();
-            const errorMessage = error instanceof Error ? error.message : 'Payment initialization failed';
-            dispatch({
-              type: "SET_ERROR",
-              payload: {
-                type: "NETWORK",
-                message: errorMessage,
-              },
-            });
-            toast.error(errorMessage);
-            console.error(errorMessage);
-        }
+      try {
+        // Currency conversion logic
+        let convertedAmount = data.amount;
+        let exchangeRate = 1;
+
+        if (paymentCurrency !== data.payment_currency) {
+          const amountConversionResult = await currencyService.convertPrice(
+            data.amount,
+            data.payment_currency,
+            paymentCurrency
+          );
+          convertedAmount = amountConversionResult.amount;
+          exchangeRate = amountConversionResult.amount / data.amount;
+        };
+
+        // Prepare payment data
+        const PaymentInitData = {
+          ...data,
+          payment_currency: paymentCurrency,
+          amount: convertedAmount,
+          metadata: {
+            original_currency: data.payment_currency,
+            original_amount: data.amount,
+            exchange_rate: exchangeRate,
+          }
+        };
+
+        // Initialize payment
+        const response = await paymentService.initializePayment(PaymentInitData);
+
+        // Update state
+        dispatch({ type: 'SET_PAYMENT_URL', payload: response.authorization_url });
+        dispatch({ type: 'SET_PAYMENT_REFERENCE', payload: response.reference });
+        dispatch({ type: 'SET_PAYMENT_STATUS', payload: 'pending' });
+        dispatch({ type: "INCREMENT_RETRY_COUNT" });
+        dispatch({ type: "SET_LAST_ATTEMPT", payload: new Date() });
+
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Payment initialization failed';
+        dispatch({
+          type: 'SET_ERROR',
+          payload: {
+            type: 'NETWORK',
+            message: errorMessage,
+          },
+        });
+        toast.error(errorMessage);
+        console.error(errorMessage);
+      }
     };
 
 

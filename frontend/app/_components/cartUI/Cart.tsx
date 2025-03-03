@@ -122,7 +122,7 @@ export function Cart({ isDrawer = false }: CartProps) {
               View Cart
             </Button>
           </Link>
-          <Link href="/checkout" className="flex-1">
+          <Link href="/shop/checkout" className="flex-1">
             <Button
               className="w-full"
               onClick={() => isDrawer && dispatch(closeCart())}

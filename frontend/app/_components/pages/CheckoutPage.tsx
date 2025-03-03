@@ -13,12 +13,19 @@ import {
   ShoppingCart,
   MapPin,
   Check,
+  Loader2,
 } from "lucide-react";
 import { CartItem } from "@/src/types";
 import Image from "next/image";
 import Link from "next/link";
 import { PaymentModal } from "../PaymentsUI/PaymentModal";
 import ShippingAddressForm from "../userRegistration/ShippingAddressForm";
+import { useAppDispatch } from "@/src/libs/_redux/hooks";
+import { loadUser } from "@/src/libs/_redux/authSlice";
+import { useShippingFee } from "@/src/libs/customHooks/useShippingFee";
+import { ShippingFeeDisplay } from "../storeUI/ShippingFeeDisplay";
+import { CartPriceDisplay } from "../UI/CartPriceDisplay";
+import { useCurrency } from "../_providers/CurrencyContext";
 
 
 enum CheckoutStep {
@@ -36,7 +43,12 @@ export default function CheckoutPage() {
     const { cart, CartSummary, isLoading } = useCartQuery();
     const { user, isAuthenticated } = useAuth();
     const router = useRouter();
+    const dispatch = useAppDispatch();
     const searchParams = useSearchParams();
+    const { selectedCurrency } = useCurrency();
+    
+    const { shippingFee, isCalculating: isCalculatingShipping } =
+      useShippingFee(cart);
 
 
     // Handle payment status from callback
@@ -52,6 +64,13 @@ export default function CheckoutPage() {
         setPaymentError(errorMessage || "Payment failed. Please try again.");
       }
     }, [searchParams]);
+  
+  
+    useEffect(() => {
+      if (isAuthenticated && !user) {
+        dispatch(loadUser());
+      }
+    }, [isAuthenticated, user, dispatch]);
 
 
     // Redirect if not authenticated
@@ -76,9 +95,9 @@ export default function CheckoutPage() {
         );
     }
 
-    const hasShippingInfo = Boolean(
-        user?.address && user?.city && user?.state && user?.country
-    );
+    const hasShippingInfo = Boolean(user?.address && user?.city && user?.state && user?.country);
+
+      console.log('hasShippingInfo:', hasShippingInfo);
 
 
     const renderStepIndicator = () => (
@@ -150,20 +169,28 @@ export default function CheckoutPage() {
             <span>Subtotal</span>
             <PriceDisplay amount={CartSummary.subtotal} sourceCurrency="USD" />
           </div>
-          <div className="flex justify-between text-sm">
-            <span>Shipping</span>
-            {CartSummary.shippingFee > 0 ? (
-              <PriceDisplay
-                amount={CartSummary.shippingFee}
-                sourceCurrency="USD"
+          <div className="flex justify-between items-center">
+            <span className="text-gray-900">Shipping</span>
+            {isCalculatingShipping ? (
+              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+            ) : shippingFee > 0 ? (
+              <ShippingFeeDisplay
+                amount={shippingFee}
+                className="font-medium text-gray-900"
               />
             ) : (
-              <span className="text-green-600">Free</span>
+              <span className="font-medium text-green-600">Free</span>
             )}
           </div>
           <div className="flex justify-between text-lg font-semibold">
             <span>Total</span>
-            <PriceDisplay amount={CartSummary.total} sourceCurrency="USD" />
+            <CartPriceDisplay
+              amount={CartSummary.subtotal}
+              sourceCurrency="USD"
+              additionalAmount={shippingFee}
+              additionalCurrency={selectedCurrency}
+              className="text-lg font-semibold text-gray-900"
+            />
           </div>
         </div>
       </div>
@@ -242,6 +269,7 @@ export default function CheckoutPage() {
         const currentIndex = steps.indexOf(currentStep);
 
         if (currentStep === CheckoutStep.SHIPPING && !hasShippingInfo) {
+            console.log('current step is shipping and has no shipping info');
             return;
         }
 
@@ -302,7 +330,6 @@ export default function CheckoutPage() {
         <PaymentModal
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
-          orderId={cart?.id || 0}
           email={user?.email || ""}
           amount={CartSummary.total}
         />

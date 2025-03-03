@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserCircle2, Package, Heart, Settings } from "lucide-react";
+import { UserCircle2, Package, Heart } from "lucide-react";
 import { useAuth } from "@/src/libs/customHooks/useAuth";
 
 
@@ -21,11 +21,6 @@ const navigationItems = [
     name: "Wishlist",
     href: "/shop/dashboard/wishlist",
     icon: Heart,
-  },
-  {
-    name: "Settings",
-    href: "/shop/dashboard/settings",
-    icon: Settings,
   },
 ];
 

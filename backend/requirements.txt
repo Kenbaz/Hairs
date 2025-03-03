@@ -15,6 +15,7 @@ constantly==23.10.4
 coverage==7.6.10
 cryptography==43.0.3
 daphne==4.1.2
+dj-database-url==2.3.0
 Django==5.1.2
 django-cloudinary-storage==0.3.0
 django-cors-headers==4.6.0
@@ -23,6 +24,7 @@ django-redis==5.4.0
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 forex-python==1.8
+gunicorn==23.0.0
 hyperlink==21.0.0
 idna==3.10
 incremental==24.7.2
@@ -58,5 +60,6 @@ tzdata==2024.2
 urllib3==2.3.0
 uuid==1.30
 validators==0.34.0
+whitenoise==6.9.0
 XlsxWriter==3.2.0
 zope.interface==7.1.1

@@ -2,7 +2,7 @@
 
 import { Fragment } from "react";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
-import { User, LogOut, Heart, ShoppingBag, Settings } from "lucide-react";
+import { User, LogOut, Heart, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useAppDispatch } from "@/src/libs/_redux/hooks";
 import { logout } from "@/src/libs/_redux/authSlice";
@@ -16,28 +16,23 @@ export function UserMenu() {
   const menuItems = [
     {
       label: "My Profile",
-      href: "/profile",
+      href: "/shop/dashboard/profile",
       icon: User,
     },
     {
       label: "My Orders",
-      href: "/profile/orders",
+      href: "/shop/dashboard/orders",
       icon: ShoppingBag,
     },
     {
       label: "My Wishlist",
-      href: "/wishlist",
+      href: "/shop/dashboard/wishlist",
       icon: Heart,
-    },
-    {
-      label: "Settings",
-      href: "/profile/settings",
-      icon: Settings,
     },
   ];
 
   return (
-    <Menu as="div" className="relative">
+    <Menu as="div" className="relative z-20">
       <MenuButton className="flex items-center text-gray-700 hover:text-gray-900">
         <span className="sr-only">Open user menu</span>
         {user?.avatar ? (

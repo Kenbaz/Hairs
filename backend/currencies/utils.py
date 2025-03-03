@@ -63,6 +63,25 @@ class CurrencyConverter:
                 raise InvalidExchangeRate("Exchange rate is too large")
         except (InvalidOperation, TypeError) as e:
             raise InvalidExchangeRate(f"Invalid exchange rate: {e}")
+    
+    @classmethod
+    def get_exchange_rate(cls, from_currency: str, to_currency: str) -> Decimal:
+        # Fetch real-time or cached exchange rates
+        currencies = Currency.objects.filter(
+            code__in=[from_currency, to_currency],
+            is_active=True
+        )
+
+        # Validate currencies exist
+        if len(currencies) != 2:
+            raise ValueError("Invalid or unsupported currencies")
+
+        from_rate = next(
+            c.exchange_rate for c in currencies if c.code == from_currency)
+        to_rate = next(
+            c.exchange_rate for c in currencies if c.code == to_currency)
+
+        return to_rate / from_rate
 
 
     @classmethod

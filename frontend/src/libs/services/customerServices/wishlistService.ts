@@ -1,6 +1,6 @@
 import axiosInstance from "@/src/utils/_axios";
 import { AxiosError } from "axios";
-import { Wishlist, ApiError } from "@/src/types";
+import { Wishlist, WishlistResponse, MoveToCartResponse, ApiError } from "@/src/types";
 
 class WishlistService {
   private readonly baseUrl = "/api/v1/wishlist/";
@@ -21,12 +21,13 @@ class WishlistService {
   }
 
   // Add item to wishlist
-  async addToWishlist(productId: number): Promise<Wishlist> {
+  async addToWishlist(productId: number): Promise<WishlistResponse> {
     try {
-      const response = await axiosInstance.post<Wishlist>(
+      const response = await axiosInstance.post<WishlistResponse>(
         `${this.baseUrl}add_item/`,
         { product_id: productId }
       );
+      console.log("Add to wishlist response:", response.data);
       return response.data;
     } catch (error) {
       const err = error as AxiosError<ApiError>;
@@ -39,9 +40,9 @@ class WishlistService {
   }
 
   // Remove item from wishlist
-  async removeFromWishlist(productId: number): Promise<Wishlist> {
+  async removeFromWishlist(productId: number): Promise<WishlistResponse> {
     try {
-      const response = await axiosInstance.post<Wishlist>(
+      const response = await axiosInstance.post<WishlistResponse>(
         `${this.baseUrl}remove_item/`,
         { product_id: productId }
       );
@@ -57,9 +58,9 @@ class WishlistService {
   }
 
   // Clear entire wishlist
-  async clearWishlist(): Promise<Wishlist> {
+  async clearWishlist(): Promise<WishlistResponse> {
     try {
-      const response = await axiosInstance.post<Wishlist>(
+      const response = await axiosInstance.post<WishlistResponse>(
         `${this.baseUrl}clear/`
       );
       return response.data;
@@ -96,12 +97,9 @@ class WishlistService {
   // Move item to cart and remove from wishlist
   async moveToCart(
     productId: number
-  ): Promise<{ wishlist: Wishlist; message: string }> {
+  ): Promise<MoveToCartResponse> {
     try {
-      const response = await axiosInstance.post<{
-        wishlist: Wishlist;
-        message: string;
-      }>(`${this.baseUrl}move_to_cart/`, { product_id: productId });
+      const response = await axiosInstance.post<MoveToCartResponse>(`${this.baseUrl}move_to_cart/`, { product_id: productId });
       return response.data;
     } catch (error) {
       const err = error as AxiosError<ApiError>;

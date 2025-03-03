@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from datetime import timedelta
 import sys
+import secrets
 from decimal import Decimal
 
 
@@ -15,11 +16,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY', secrets.token_hex(32))
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
     'channels',
     'cloudinary_storage',
     'cloudinary',
+    'whitenoise.runserver_nostatic',
 
     # Local apps
     'users',
@@ -97,15 +99,20 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
+
+
+# Whitenoise configuration
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Development frontend
     os.getenv('FRONTEND_URL', 'https://yourdomain.com'),  # Production frontend
-    "https://checkout.paystack.com",
-    "https://standard.paystack.co",
+    os.getenv('PAYSTACK_CHECKOUT'),
+    os.getenv('PAYSTACK_STANDARD')
 ]
 
 
@@ -133,6 +140,14 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
 
 
 ROOT_URLCONF = 'Core.urls'

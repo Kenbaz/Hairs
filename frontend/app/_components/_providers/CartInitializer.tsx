@@ -2,62 +2,55 @@
 
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { cartService } from "@/src/libs/services/customerServices/cartService";
 import { useAuth } from "@/src/libs/customHooks/useAuth";
 import { useCartQuery } from "@/src/libs/customHooks/useCart";
 import { showToast } from "@/app/_components/_providers/ToastProvider";
 
 export function CartInitializer() {
   const queryClient = useQueryClient();
-  const { isAuthenticated, isUser } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { mergeCart, refreshCart } = useCartQuery();
   const hasMergedRef = useRef(false);
 
   // Handle cart merging
   useEffect(() => {
-    const handleMergeCart = async () => {
-      if (isAuthenticated && isUser && !hasMergedRef.current) {
-        try {
-          // Check if there's a guest cart to merge
-          const guestCart = localStorage.getItem("guestCart");
-          if (!guestCart) {
-            await queryClient.invalidateQueries({ queryKey: ["cart"] });
-            return;
-          }
+    const handleCartInitialization = async () => {
+      // Prevent multiple executions
+      if (!isAuthenticated || hasMergedRef.current) return;
 
+      try {
+        // Check if there's a guest cart to merge
+        const guestCart = localStorage.getItem("guestCart");
+
+        if (guestCart) {
           const guestCartItems = JSON.parse(guestCart);
-          if (!guestCartItems.length) return;
+          if (guestCartItems.length) {
+            // Mark as merged to prevent repeated attempts
+            hasMergedRef.current = true;
 
-          hasMergedRef.current = true;
+            // Merge cart
+            await mergeCart.mutateAsync();
 
-          // Merge cart and invalidate cache
-          await mergeCart.mutateAsync();
+            // Clear guest cart after successful merge
+            localStorage.removeItem("guestCart");
 
-          // Force a fresh fetch of cart data
-          await queryClient.invalidateQueries({ queryKey: ["cart"] });
-          await refreshCart();
-
-          showToast.success("Cart merged successfully");
-        } catch (error) {
-          console.error("Failed to merge cart:", error);
-          hasMergedRef.current = false;
-          showToast.error("Failed to merge cart");
+            // Show toast only if merge actually occurred
+            showToast.success("Cart updated successfully");
+          }
         }
+
+        // Invalidate and refetch cart data
+        await queryClient.invalidateQueries({ queryKey: ["cart"] });
+        await refreshCart();
+      } catch (error) {
+        console.error("Failed to initialize cart:", error);
+        hasMergedRef.current = false;
+        showToast.error("Failed to update cart");
       }
     };
 
-    handleMergeCart();
-  }, [isAuthenticated, mergeCart, isUser, refreshCart, queryClient]);
-
-  // Initialize cart data in React Query cache
-  useEffect(() => {
-    if (isAuthenticated && isUser) {
-      queryClient.prefetchQuery({
-        queryKey: ["cart"],
-        queryFn: () => cartService.fetchCart(),
-      });
-    }
-  }, [isAuthenticated, queryClient, isUser]);
+    handleCartInitialization();
+  }, [isAuthenticated, mergeCart, refreshCart, queryClient]);
 
   return null;
 }

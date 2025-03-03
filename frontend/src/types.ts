@@ -983,6 +983,7 @@ export interface InitializePaymentData {
   payment_method?: string;
   email: string;
   callback_url: string;
+  amount: number;
 }
 
 export interface PaymentContextType extends PaymentState {
@@ -1296,18 +1297,7 @@ export interface ShippingFee {
 // Wishlist Types
 export interface WishlistItem {
     id: number;
-    product: {
-        id: number;
-        name: string;
-        price: number;
-        discount_price?: number;
-        stock: number;
-        image?: string;
-        category: {
-            id: number;
-            name: string;
-        };
-    };
+    product: StoreProduct;
     added_at: string;
 }
 
@@ -1446,4 +1436,62 @@ export interface ShippingFeeCalculation {
   shipping_fee: number;
   total_amount: number;
   order_amount: number;
+}
+
+// customer Order Types
+
+export interface CustomerOrderItem {
+  id: number;
+  quantity: number;
+  price: string;
+  product: {
+    id: number;
+    name: string;
+    slug: string;
+    primary_image: {
+      id: number;
+      url: string;
+      public_id: string;
+      is_primary: boolean;
+    };
+    category: {
+      id: number;
+      name: string;
+      slug: string;
+    };
+    price_data: {
+      amount: number;
+      currency: string;
+      formatted: string;
+      is_discounted: boolean;
+      discount_amount: number;
+    };
+    is_featured: boolean;
+  };
+}
+
+export interface CustomerOrder {
+  id: number;
+  created_at: string;
+  updated_at: string;
+  order_status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  payment_status: boolean;
+  total_amount: number;
+  shipping_fee: number;
+  shipping_address: string;
+  tracking_number?: string;
+  items: CustomerOrderItem[];
+  items_count: number;
+}
+
+export interface CustomerOrderResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: CustomerOrder[];
+}
+
+export interface CreateOrderData {
+  shipping_address: string;
+  items: Array<{ product_id: number; quantity: number }>;
 }
