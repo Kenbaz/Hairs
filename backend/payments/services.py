@@ -473,8 +473,7 @@ class PaymentService:
                 status='processing',
                 amount=refund_amount,
                 response_data=response,
-                response_message=f"Refund initiated: {
-                    reason}" if reason else "Refund initiated"
+                response_message=f"Refund initiated: {reason}" if reason else "Refund initiated"
             )
 
             # Update payment status
