@@ -65,9 +65,6 @@ class InvoiceGenerator:
 
     def generateInvoice(self):
         try:
-            logger.info(f"Starting invoice generation for order {
-                        self.order.id}")
-
             # Create document elements list
             elements = []
 
