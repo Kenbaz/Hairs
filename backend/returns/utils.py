@@ -51,8 +51,7 @@ def notify_admins_of_return_request(return_request):
             user=admin,
             type='return_request',
             title='New Return Request',
-            message=f'Return request received for Order #{
-                return_request.order.id}',
+            message=f"Return request received for Order #{return_request.order.id}",
             reference_id=return_request.id,
             link=f'/admin/returns/{return_request.id}'
         )
@@ -64,15 +63,15 @@ def send_return_status_email(return_request):
     status_config = {
         'pending': {
             'template': 'return_request_received',
-            'subject': f'Return Request Received - Order #{return_request.order.id}'
+            'subject': f"Return Request Received - Order #{return_request.order.id}",
         },
         'approved': {
             'template': 'return_request_approved',
-            'subject': f'Return Request Approved - Order #{return_request.order.id}'
+            'subject': f"Return Request Approved - Order #{return_request.order.id}",
         },
         'rejected': {
             'template': 'return_request_rejected',
-            'subject': f'Return Request Update - Order #{return_request.order.id}'
+            'subject': f"Return Request Update - Order #{return_request.order.id}"
         }
     }
 
