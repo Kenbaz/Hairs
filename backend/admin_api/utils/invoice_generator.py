@@ -128,12 +128,9 @@ class InvoiceGenerator:
             # Add payment status and notes
             elements.append(Spacer(1, 30))
             elements.append(Paragraph(
-                f"Payment Status: {
-                    'Paid' if self.order.payment_status else 'Unpaid'
-                }",
+                f"Payment Status: {'Paid' if self.order.payment_status else 'Unpaid'}",
                 self.styles['Normal']
             ))
-
             if self.order.tracking_number:
                 elements.append(Paragraph(
                     f"Tracking Number: {self.order.tracking_number}",
