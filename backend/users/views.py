@@ -84,8 +84,7 @@ class ResetPasswordEmailView(generics.GenericAPIView):
             base_path = 'admin-auth' if is_admin else 'auth'
 
             # Construct reset URL with the combined token
-            reset_url = f"{
-                settings.FRONTEND_URL}/{base_path}/password-reset/{reset_token}"
+            reset_url = f"{settings.FRONTEND_URL}/{base_path}/password-reset/{reset_token}"
 
             print(f"Debug - Reset URL: {reset_url}")  # Debug log
 
