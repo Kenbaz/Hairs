@@ -129,7 +129,8 @@ class InvoiceGenerator:
             elements.append(Spacer(1, 30))
             elements.append(Paragraph(
                 f"Payment Status: {
-                    'Paid' if self.order.payment_status else 'Unpaid'}",
+                    'Paid' if self.order.payment_status else 'Unpaid'
+                }",
                 self.styles['Normal']
             ))
 
