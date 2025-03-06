@@ -106,6 +106,5 @@ class PaymentRefundError(PaymentError):
     def __init__(self, message: str = None, payment_id: str = None, amount: float = None):
         self.payment_id = payment_id
         self.amount = amount
-        message = message or f"Error processing refund for payment {
-            payment_id}"
+        message = message or f"Error processing refund for payment {payment_id}"
         super().__init__(message, "refund_error")
