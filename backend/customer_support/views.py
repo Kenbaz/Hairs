@@ -133,8 +133,7 @@ class CustomerEmailViewSet(viewsets.ModelViewSet):
                     successful_sends += 1
 
                 except Exception as e:
-                    logger.error(f"Failed to send email to customer {
-                                 customer_id}: {str(e)}")
+                    logger.error(f"Failed to send email to customer {customer_id}: {str(e)}")
                     failed_sends += 1
 
             return Response({
