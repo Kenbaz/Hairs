@@ -182,8 +182,7 @@ class SendVerificationEmailView(generics.GenericAPIView):
         user.save()
 
         # Prepare email context
-        verification_url = f"{
-            settings.FRONTEND_URL}/verify-email/{verification_token}"
+        verification_url = f"{settings.FRONTEND_URL}/verify-email/{verification_token}"
         context = {
             'user': user,
             'verification_url': verification_url,
