@@ -138,8 +138,7 @@ class PaymentInitializeSerializer(serializers.Serializer):
 
         if value < settings.MINIMUM_PAYMENT_AMOUNT:
             raise PaymentAmountError(
-                f"Payment amount must be at least {
-                    settings.MINIMUM_PAYMENT_AMOUNT}"
+                f"Payment must be at least {settings.MINIMUM_PAYMENT_AMOUNT}"
             )
 
         return value

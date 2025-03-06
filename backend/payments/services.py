@@ -123,10 +123,12 @@ class PaystackService:
                   json.dumps(data, indent=2))
             
             # Log conversion details for tracking
-            logger.info(
-                f"Payment Initialization - Currency Conversion: {payment.payment_currency} to NGN")
-            logger.info(
-                f"Original Amount: {payment.amount}, Converted Amount: {data['amount']/100}")
+            # logger.info(
+            #     f"Payment Initialization - Currency Conversion: {payment.payment_currency} to NGN"
+            # )
+            # logger.info(
+            #     f"Original Amount: {payment.amount}, Converted Amount: {data['amount']/100}"
+            # )
 
             # Initialize transaction with Paystack
             response = self._make_request(
@@ -157,7 +159,8 @@ class PaystackService:
         
         except Exception as e:
             logger.error(
-                f"Payment Initialization Currency Conversion Error: {str(e)}")
+                f"Payment Initialization Currency Conversion Error: {str(e)}"
+            )
 
             # Log failed transaction
             PaymentTransaction.objects.create(
