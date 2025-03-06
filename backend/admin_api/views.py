@@ -636,97 +636,96 @@ class DashboardViewSet(viewsets.ViewSet):
             raise ValueError(f"Unsupported data type: {data_type}")
 
 
-    def _export_csv(self, data, data_type):
-        """Export data as CSV"""
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="{
-            data_type}_analytics.csv"'
+    # def _export_csv(self, data, data_type):
+    #     """Export data as CSV"""
+    #     response = HttpResponse(content_type='text/csv')
+    #     response['Content-Disposition'] = f"attachment; filename={data_type}_analytics.csv"
 
-        writer = csv.writer(response)
+    #     writer = csv.writer(response)
 
-        if data_type == 'sales':
-            # Write sales data
-            writer.writerow(['Period', 'Total Sales', 'Order Count'])
-            for item in data['trend_data']:
-                writer.writerow([
-                    item['period'],
-                    item['total_sales'],
-                    item['order_count']
-                ])
-        else:
-            # Write revenue data
-            writer.writerow(['Period', 'Revenue'])
-            for item in data['trend_data']:
-                writer.writerow([
-                    item['period'],
-                    item['revenue']
-                ])
+    #     if data_type == 'sales':
+    #         # Write sales data
+    #         writer.writerow(['Period', 'Total Sales', 'Order Count'])
+    #         for item in data['trend_data']:
+    #             writer.writerow([
+    #                 item['period'],
+    #                 item['total_sales'],
+    #                 item['order_count']
+    #             ])
+    #     else:
+    #         # Write revenue data
+    #         writer.writerow(['Period', 'Revenue'])
+    #         for item in data['trend_data']:
+    #             writer.writerow([
+    #                 item['period'],
+    #                 item['revenue']
+    #             ])
 
-        return response
+    #     return response
     
 
-    def _export_excel(self, data, data_type):
-        """Export data as Excel"""
-        output = BytesIO()
-        workbook = xlsxwriter.Workbook(output)
-        worksheet = workbook.add_worksheet()
+    # def _export_excel(self, data, data_type):
+    #     """Export data as Excel"""
+    #     output = BytesIO()
+    #     workbook = xlsxwriter.Workbook(output)
+    #     worksheet = workbook.add_worksheet()
 
-        # Add headers and data based on type
-        if data_type == 'sales':
-            headers = ['Period', 'Total Sales', 'Order Count']
-            for i, item in enumerate(data['trend_data'], start=1):
-                worksheet.write(i, 0, str(item['period']))
-                worksheet.write(i, 1, item['total_sales'])
-                worksheet.write(i, 2, item['order_count'])
-        else:
-            headers = ['Period', 'Revenue']
-            for i, item in enumerate(data['trend_data'], start=1):
-                worksheet.write(i, 0, str(item['period']))
-                worksheet.write(i, 1, item['revenue'])
+    #     # Add headers and data based on type
+    #     if data_type == 'sales':
+    #         headers = ['Period', 'Total Sales', 'Order Count']
+    #         for i, item in enumerate(data['trend_data'], start=1):
+    #             worksheet.write(i, 0, str(item['period']))
+    #             worksheet.write(i, 1, item['total_sales'])
+    #             worksheet.write(i, 2, item['order_count'])
+    #     else:
+    #         headers = ['Period', 'Revenue']
+    #         for i, item in enumerate(data['trend_data'], start=1):
+    #             worksheet.write(i, 0, str(item['period']))
+    #             worksheet.write(i, 1, item['revenue'])
 
-        # Write headers
-        for col, header in enumerate(headers):
-            worksheet.write(0, col, header)
+    #     # Write headers
+    #     for col, header in enumerate(headers):
+    #         worksheet.write(0, col, header)
 
-        workbook.close()
-        output.seek(0)
+    #     workbook.close()
+    #     output.seek(0)
 
-        response = HttpResponse(
-            output.read(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        response['Content-Disposition'] = f'attachment; filename="{
-            data_type}_analytics.xlsx"'
-        return response
+    #     response = HttpResponse(
+    #         output.read(),
+    #         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    #     )
+    #     response['Content-Disposition'] = f'attachment; filename="{
+    #         data_type}_analytics.xlsx"'
+    #     return response
     
 
-    def _export_pdf(self, data, data_type):
-        """ Export data as PDF """
-        # Format data for PDF generator
-        formatted_data = []
+    # def _export_pdf(self, data, data_type):
+    #     """ Export data as PDF """
+    #     # Format data for PDF generator
+    #     formatted_data = []
 
-        if data_type == 'sales':
-            for item in data['trend_data']:
-                formatted_data.append({
-                    'Period': item['period'],
-                    'Total Sales': f"${item['total_sales']}",
-                    'Orders': item['order_count']
-                })
-        else:
-            for item in data['trend_data']:
-                formatted_data.append({
-                    'Period': item['period'],
-                    'Revenue': f"${item['revenue']}"
-                })
+    #     if data_type == 'sales':
+    #         for item in data['trend_data']:
+    #             formatted_data.append({
+    #                 'Period': item['period'],
+    #                 'Total Sales': f"${item['total_sales']}",
+    #                 'Orders': item['order_count']
+    #             })
+    #     else:
+    #         for item in data['trend_data']:
+    #             formatted_data.append({
+    #                 'Period': item['period'],
+    #                 'Revenue': f"${item['revenue']}"
+    #             })
 
-        # Generate PDF
-        pdf_generator = PDFGenerator(data_type)
-        pdf_buffer = pdf_generator.generate(formatted_data)
+    #     # Generate PDF
+    #     pdf_generator = PDFGenerator(data_type)
+    #     pdf_buffer = pdf_generator.generate(formatted_data)
 
-        response = HttpResponse(pdf_buffer, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{
-            data_type}_analytics.pdf"'
-        return response
+    #     response = HttpResponse(pdf_buffer, content_type='application/pdf')
+    #     response['Content-Disposition'] = f'attachment; filename="{
+    #         data_type}_analytics.pdf"'
+    #     return response
 
 
 class AdminCategoryViewSet(viewsets.ModelViewSet):
