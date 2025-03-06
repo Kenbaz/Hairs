@@ -1921,8 +1921,9 @@ class AdminEmailViewSet(viewsets.ModelViewSet):
                             
 
                     except Exception as e:
-                        logger.error(f"Failed to process attachment {
-                                    attachment.name}: {str(e)}", exc_info=True)
+                        logger.error(
+                            f"Failed to process attachment {attachment.name}: {str(e)}", exc_info=True
+                        )
                         continue
 
             # Render email template
@@ -2017,8 +2018,9 @@ class AdminEmailViewSet(viewsets.ModelViewSet):
                                 stored_attachments.append(attachment_instance)
 
                         except Exception as e:
-                            logger.error(f"Failed to process attachment {
-                                        attachment.name}: {str(e)}")
+                            logger.error(
+                                f"Failed to process attachment {attachment.name}: {str(e)}"
+                            )
                             raise
 
                     # Render email template with attachment included
@@ -2389,8 +2391,9 @@ class AdminFlashSaleViewSet(viewsets.ModelViewSet):
     
     
     def create(self, request, *args, **kwargs):
-        logger.info(f"Received create flash sale request with data: {
-                    request.data}")
+        logger.info(
+            f"Recieved create flash sale request with data: {request.data}"
+        )
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
