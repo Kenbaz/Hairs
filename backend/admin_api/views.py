@@ -253,8 +253,7 @@ class DashboardViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
-            logger.error(f"Unexpected error in sales_analytics: {
-                        str(e)}", exc_info=True)
+            logger.error(f"Unexpected error in sales_analytics: {str(e)}", exc_info=True)
             return Response(
                 {'error': 'Failed to fetch sales analytics', 'detail': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
