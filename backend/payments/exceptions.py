@@ -50,8 +50,7 @@ class InvalidCurrencyError(PaymentError):
 
     def __init__(self, currency: str = None):
         self.currency = currency
-        message = f"Currency {
-            currency} is not supported" if currency else "Invalid currency"
+        message = f"Currency {currency} is not supported" if currency else "Invalid currency"
         super().__init__(message, "invalid_currency")
 
 
