@@ -115,8 +115,7 @@ class ReturnEligibilityChecker:
         days_since_delivery = (timezone.now() - self.order.delivered_at).days
         if days_since_delivery > self.policy.return_window_days:
             self.errors.append(
-                f"Return window of {
-                    self.policy.return_window_days} days has expired"
+                f"Return window of {self.policy.return_window_days} days has expired"
             )
             return False
         return True
