@@ -15,8 +15,7 @@ def create_email_metrics(sender, instance, created, **kwargs):
         try:
             EmailMetrics.objects.create(email=instance)
         except Exception as e:
-            logger.error(f"Failed to create email metrics for email {
-                         instance.id}: {str(e)}")
+            logger.error(f"Failed to create email metrics for email {instance.id}: {str(e)}")
 
 
 @receiver(pre_delete, sender=CustomerEmail)
