@@ -59,8 +59,7 @@ class PaymentWebhookError(PaymentError):
 
     def __init__(self, message: str = None, code: str = None, event_type: str = None):
         self.event_type = event_type
-        message = message or f"Error processing webhook event: {
-            event_type}" if event_type else "Webhook processing error"
+        message = message or f"Error processing webhook event: {event_type}" if event_type else "Webhook processing error"
         super().__init__(message, code or "webhook_error")
 
 
@@ -68,8 +67,7 @@ class PaymentExpiredError(PaymentError):
     """Raised when attempting to process an expired payment"""
 
     def __init__(self, payment_id: str = None):
-        message = f"Payment {
-            payment_id} has expired" if payment_id else "Payment has expired"
+        message = f"Payment {payment_id} has expired" if payment_id else "Payment has expired"
         super().__init__(message, "payment_expired")
 
 
@@ -77,8 +75,7 @@ class PaymentAlreadyProcessedError(PaymentError):
     """Raised when attempting to process a payment that's already been processed"""
 
     def __init__(self, payment_id: str = None, status: str = None):
-        message = f"Payment {
-            payment_id} has already been processed" if payment_id else "Payment already processed"
+        message = f"Payment {payment_id} has already been processed" if payment_id else "Payment already processed"
         if status:
             message += f" (status: {status})"
         super().__init__(message, "already_processed")
@@ -99,8 +96,7 @@ class PaymentMethodError(PaymentError):
     """Raised when there's an issue with the payment method"""
 
     def __init__(self, method: str = None):
-        message = f"Invalid or unsupported payment method: {
-            method}" if method else "Invalid payment method"
+        message = f"Invalid or unsupported payment method: {method}" if method else "Invalid payment method"
         super().__init__(message, "invalid_method")
 
 
