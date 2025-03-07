@@ -18,7 +18,10 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.core.files.images import get_image_dimensions
 import logging
+from django.core.files.uploadedfile import UploadedFile
 from cloudinary.uploader import upload
+import cloudinary
+import cloudinary.uploader
 
 logger = logging.getLogger(__name__)
 
@@ -365,16 +368,34 @@ class ProductImage(models.Model):
         ordering = ['-is_primary', '-created_at']
     
 
+    def clean(self):
+        """Validate that the image is not empty"""
+        if not self.image:
+            raise ValidationError('No image file uploaded')
+        
+         # Check file size
+        if self.image.size == 0:
+            raise ValidationError('The uploaded file is empty')
+        
+        # Optional: Check file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/webp']
+        if self.image.content_type not in allowed_types:
+            raise ValidationError('Unsupported file type')
+        
+
     def save(self, *args, **kwargs):
-        if self.image and not self.public_id:
+        self.full_clean()
+
+        if self.image:
             try:
                 logger.info(f"Attempting to upload image: {self.image}")
-                upload_result = upload(
+                upload_result = cloudinary.uploader.upload(
                     self.image,
                     folder=settings.CLOUDINARY_STORAGE_FOLDERS['PRODUCT_IMAGES']
                 )
                 logger.info(f"Cloudinary upload result: {upload_result}")
                 self.public_id = upload_result.get['public_id']
+                self.image = upload_result.get('secure_url')
             except Exception as e:
                 logger.error(f"Cloudinary upload failed: {str(e)}")
         super().save(*args, **kwargs)
