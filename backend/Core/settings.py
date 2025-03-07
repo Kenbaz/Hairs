@@ -6,10 +6,20 @@ import sys
 import secrets
 from decimal import Decimal
 import dj_database_url
+import logging
 
 
 # Load environment variables
 load_dotenv()
+
+logger = logging.getLogger(__name__)
+logger.info("CLOUDINARY ENVIRONMENT VARIABLES CHECK:")
+logger.info(
+    f"CLOUD_NAME: {'SET' if os.getenv('CLOUDINARY_CLOUD_NAME') else 'MISSING'}")
+logger.info(
+    f"API_KEY: {'SET' if os.getenv('CLOUDINARY_API_KEY') else 'MISSING'}")
+logger.info(
+    f"API_SECRET: {'SET' if os.getenv('CLOUDINARY_API_SECRET') else 'MISSING'}")
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -91,6 +101,8 @@ CLOUDINARY_STORAGE = {
 
 # Media settings
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+logger.info(f"DEFAULT_FILE_STORAGE is set to: {DEFAULT_FILE_STORAGE}")
 
 # Cloudinary folders configuration
 CLOUDINARY_STORAGE_FOLDERS = {
