@@ -377,11 +377,6 @@ class ProductImage(models.Model):
         if self.image.size == 0:
             raise ValidationError('The uploaded file is empty')
         
-        # Optional: Check file type
-        allowed_types = ['image/jpeg', 'image/png', 'image/webp']
-        if self.image.content_type not in allowed_types:
-            raise ValidationError('Unsupported file type')
-        
 
     def save(self, *args, **kwargs):
         self.full_clean()
