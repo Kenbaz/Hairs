@@ -23,8 +23,6 @@ class Command(BaseCommand):
             User.objects.create_superuser(
                 email=email,
                 password=password,
-                is_staff=True,
-                is_superuser=True
             )
             self.stdout.write(self.style.SUCCESS(
                 f'Superuser {email} created successfully'))
