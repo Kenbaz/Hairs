@@ -12,6 +12,8 @@ class Command(BaseCommand):
         # Get credentials from environment variables
         email = os.getenv('SUPERUSER_EMAIL')
         password = os.getenv('SUPERUSER_PASSWORD')
+        first_name = os.getenv('SUPERUSER_FIRST_NAME')
+        last_name = os.getenv('SUPERUSER_LAST_NAME')
 
         if not email or not password:
             self.stdout.write(self.style.WARNING(
@@ -23,6 +25,8 @@ class Command(BaseCommand):
             User.objects.create_superuser(
                 email=email,
                 password=password,
+                first_name=first_name,
+                last_name=last_name
             )
             self.stdout.write(self.style.SUCCESS(
                 f'Superuser {email} created successfully'))
