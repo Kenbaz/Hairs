@@ -111,12 +111,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Development frontend
-    os.getenv('FRONTEND_URL', 'https://yourdomain.com'),  # Production frontend
-    os.getenv('PAYSTACK_CHECKOUT'),
-    os.getenv('PAYSTACK_STANDARD')
-]
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
 
 
 CORS_ALLOW_CREDENTIALS = True
@@ -418,6 +413,8 @@ STATICFILES_DIRS = [
 
 EDITOR_IMAGES_PATH = os.path.join(MEDIA_ROOT, 'editor_images')
 os.makedirs(EDITOR_IMAGES_PATH, exist_ok=True)
+
+os.makedirs(os.path.join(BASE_DIR, 'static'), exist_ok=True)
 
 
 # File upload settings
