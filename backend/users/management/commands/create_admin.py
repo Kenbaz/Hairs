@@ -12,8 +12,8 @@ class Command(BaseCommand):
         # Get credentials from environment variables
         email = os.getenv('SUPERUSER_EMAIL')
         password = os.getenv('SUPERUSER_PASSWORD')
-        first_name = os.getenv('SUPERUSER_FIRST_NAME')
-        last_name = os.getenv('SUPERUSER_LAST_NAME')
+        first_name = 'Kenneth'
+        last_name = 'Bassey'
 
         if not email or not password:
             self.stdout.write(self.style.WARNING(
