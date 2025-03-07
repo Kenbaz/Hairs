@@ -28,11 +28,21 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 if ENVIRONMENT == 'production':
     ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
-    RENDER_DOMAIN = os.getenv('RENDER_DOMAIN')
+    RENDER_DOMAIN = 'hairs.onrender.com'
     if RENDER_DOMAIN not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(RENDER_DOMAIN)
+
+    ALLOWED_HOSTS.append(f'.{RENDER_DOMAIN}')
 else:
-    ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+
+ALLOWED_HOSTS.extend([
+    'localhost',
+    '127.0.0.1',
+    'hairs.onrender.com',
+    '.onrender.com'
+])
 
 
 # Application definition
