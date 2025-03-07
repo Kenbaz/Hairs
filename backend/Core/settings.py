@@ -25,8 +25,14 @@ SECRET_KEY = os.getenv('SECRET_KEY', secrets.token_hex(32))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
+if ENVIRONMENT == 'production':
+    ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+    RENDER_DOMAIN = os.getenv('RENDER_DOMAIN')
+    if RENDER_DOMAIN not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(RENDER_DOMAIN)
+else:
+    ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 
 # Application definition
