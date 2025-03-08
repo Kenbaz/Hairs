@@ -36,7 +36,8 @@ class NotificationService {
   }
 
   private establishConnection(token: string) {
-    const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}/ws/admin/dashboard/?token=${token}`;
+    const encodedToken = encodeURIComponent(token);
+    const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}/ws/admin/dashboard/?token=${encodedToken}`;
     console.log("Connecting to WebSocket...");
 
     try {
