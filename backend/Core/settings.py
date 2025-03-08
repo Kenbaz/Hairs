@@ -6,20 +6,10 @@ import sys
 import secrets
 from decimal import Decimal
 import dj_database_url
-import logging
 
 
 # Load environment variables
 load_dotenv()
-
-logger = logging.getLogger(__name__)
-logger.info("CLOUDINARY ENVIRONMENT VARIABLES CHECK:")
-logger.info(
-    f"CLOUD_NAME: {'SET' if os.getenv('CLOUDINARY_CLOUD_NAME') else 'MISSING'}")
-logger.info(
-    f"API_KEY: {'SET' if os.getenv('CLOUDINARY_API_KEY') else 'MISSING'}")
-logger.info(
-    f"API_SECRET: {'SET' if os.getenv('CLOUDINARY_API_SECRET') else 'MISSING'}")
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -91,7 +81,6 @@ INSTALLED_APPS = [
 
 
 # Cloudinary Configuration
-# CLOUDINARY_STORAGE = os.getenv('CLOUDINARY_URL')
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
@@ -101,8 +90,6 @@ CLOUDINARY_STORAGE = {
 
 # Media settings
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-logger.info(f"DEFAULT_FILE_STORAGE is set to: {DEFAULT_FILE_STORAGE}")
 
 # Cloudinary folders configuration
 CLOUDINARY_STORAGE_FOLDERS = {
@@ -206,17 +193,17 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     } if 'test' in sys.argv else {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-        # "CONFIG": {
-        #     "hosts": [(os.getenv('REDIS_HOST', 'localhost'), 6379)],
-        #     "capacity": 1500,
-        #     "expiry": 60,
-        #     "channel_capacity": {
-        #         "http.request": 100,
-        #         "http.response!*": 100,
-        #         "websocket.send!*": 100,
-        #     },
-        # }
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.getenv('REDIS_PROD_URL', 'redis://127.0.0.1:6379/1')],
+            "capacity": 1500,
+            "expiry": 60,
+            "channel_capacity": {
+                "http.request": 100,
+                "http.response!*": 100,
+                "websocket.send!*": 100,
+            },
+        }
     }
 }
 
@@ -237,7 +224,7 @@ else:
     CACHES = {
         'default': {
             'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+            'LOCATION': os.getenv('REDIS_PROD_URL', 'redis://127.0.0.1:6379/1'),
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
                 'PASSWORD': os.getenv('REDIS_PASSWORD', None),
@@ -252,7 +239,7 @@ else:
         },
         'session': {
             'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/2'),
+            'LOCATION': os.getenv('REDIS_PROD_URL', 'redis://127.0.0.1:6379/2'),
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
                 'PASSWORD': os.getenv('REDIS_PASSWORD', None),
