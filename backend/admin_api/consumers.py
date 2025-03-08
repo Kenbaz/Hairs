@@ -3,7 +3,10 @@ from channels.db import database_sync_to_async
 from django.db.models import F
 from orders.models import Order
 from products.models import Product
+from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 from .models import AdminNotification
 import logging
 
@@ -12,41 +15,54 @@ logger = logging.getLogger(__name__)
 
 class DashboardConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
-        print("Attempting WebSocket connection...")
-        
-        user = self.scope["user"]
-        if not user.is_authenticated or not user.is_staff:
-            print("Rejecting connection - authentication failed")
+        # Extract token from query parameters
+        query_string = self.scope.get('query_string', b'').decode()
+        token_param = [param for param in query_string.split(
+            '&') if param.startswith('token=')]
+
+        if not token_param:
+            logger.error("No token provided")
             await self.close()
             return
 
-        # Accept the connection first
-        await self.accept()
-        print(f"WebSocket connected for user: {user.email}")
+        token = token_param[0].split('=')[1]
 
-        # Send initial stats
         try:
+            # Validate the token
+            access_token = AccessToken(token)
+            user = await self.get_user(access_token['user_id'])
+
+            if not user.is_staff:
+                logger.warning(
+                    f"Non-staff user {user.email} attempted to connect")
+                await self.close()
+                return
+
+            # Store user in scope for later use
+            self.scope['user'] = user
+
+            # Accept the connection
+            await self.accept()
+            logger.info(f"WebSocket connected for admin user: {user.email}")
+
+            # Send initial stats
             stats = await self.get_stats()
             await self.send_json({
                 'type': 'stats_update',
                 'data': stats
             })
-            print("Initial stats sent successfully")
 
-            # Send test notification
-            await self.send_json({
-                'type': 'notification',
-                'data': {
-                    'id': 1,
-                    'type': 'system',
-                    'title': 'Connection Successful',
-                    'message': 'WebSocket connection established successfully',
-                    'is_read': False,
-                    'created_at': timezone.now().isoformat()
-                }
-            })
+        except (InvalidToken, TokenError) as e:
+            logger.error(f"Invalid token: {str(e)}")
+            await self.close()
         except Exception as e:
-            logger.error(f"Error in connect: {str(e)}")
+            logger.error(f"Connection error: {str(e)}")
+            await self.close()
+
+    @database_sync_to_async
+    def get_user(self, user_id):
+        User = get_user_model()
+        return User.objects.get(id=user_id)
 
 
     async def disconnect(self, close_code):
