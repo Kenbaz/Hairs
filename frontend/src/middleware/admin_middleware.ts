@@ -16,102 +16,90 @@ async function refreshAccessToken(refreshToken: string): Promise<{ access: strin
         if (!response.ok) throw new Error('Refresh failed');
 
         return response.json();
-    } catch {
+    } catch (error) {
+        console.error("[Token Refresh] Error:", error);
         return null;
     }
 }
 
 
 export async function middleware(request: NextRequest) {
-    // Get both tokens from cookies
-    const accessToken = request.cookies.get('accessToken')?.value;
-    const refreshToken = request.cookies.get('refreshToken')?.value;
+  // Get both tokens from cookies
+  const accessToken = request.cookies.get("accessToken")?.value;
+  const refreshToken = request.cookies.get("refreshToken")?.value;
 
-    const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
-    const isAdminLoginRoute = request.nextUrl.pathname === '/admin/login';
-    const isPasswordResetRoute = request.nextUrl.pathname.startsWith('/admin/password-reset');
-    const isResetPasswordConfirmRoute = request.nextUrl.pathname.match(
-      /^\/admin\/password-reset\/[^/]+$/
+  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
+  const isAdminLoginRoute = request.nextUrl.pathname === "/admin/login";
+  const isPasswordResetRoute = request.nextUrl.pathname.startsWith(
+    "/admin/password-reset"
+  );
+  const isResetPasswordConfirmRoute = request.nextUrl.pathname.match(
+    /^\/admin\/password-reset\/[^/]+$/
+  );
+
+  // Debugging logs
+  console.log("[Middleware] Route:", request.nextUrl.pathname);
+  console.log("[Middleware] Access Token:", !!accessToken);
+  console.log("[Middleware] Refresh Token:", !!refreshToken);
+
+  // Public routes that dont require authentication
+  const isPublicRoute =
+    isAdminLoginRoute || isPasswordResetRoute || isResetPasswordConfirmRoute;
+
+  const redirectToLogin = () => {
+    const loginUrl = new URL(
+      isAdminRoute ? "/admin/login" : "auth/login",
+      request.url
     );
-    
-    
-    // Public routes that dont require authentication
-    const isPublicRoute = isAdminLoginRoute || isPasswordResetRoute || isResetPasswordConfirmRoute;
-    
+    loginUrl.searchParams.set("from", request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  };
 
-    const redirectToLogin = (request: NextRequest) => {
-        const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
-        const loginUrl = new URL(isAdminRoute ? '/admin/login' : 'auth/login', request.url);
-        loginUrl.searchParams.set('from', request.nextUrl.pathname);
-        return NextResponse.redirect(loginUrl);
-    };
-
-    if (isAdminRoute) {
-        // Allow access to public routes without authentication 
-        if (isPublicRoute) {
-          return NextResponse.next();
-        }
-        
-        // Check authentication for protected routes
-        if (accessToken && refreshToken) {
-          // if access token is expired try to refresh
-          if (JWTUtil.isTokenExpired(accessToken)) {
-            const newTokens = await refreshAccessToken(refreshToken);
-
-            if (newTokens) {
-              // If refresh is successful, update access tokens and continue
-              const response = NextResponse.next();
-
-              response.cookies.set({
-                name: "accessToken",
-                value: newTokens.access,
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
-                path: "/",
-              });
-
-              // Validate admin access with new token
-              if (!JWTUtil.isAdminUser(newTokens.access)) {
-                return NextResponse.redirect(new URL("/", request.url));
-              }
-              return response;
-            } else {
-              // if refresh fails, clear all tokens and redirect to login
-              const response = redirectToLogin(request);
-              response.cookies.delete("accessToken");
-              response.cookies.delete("refreshToken");
-              return response;
-            }
-          }
-
-          // Check if user is admin with current token
-          if (!JWTUtil.isAdminUser(accessToken)) {
-            const response = NextResponse.redirect(new URL("/", request.url));
-            response.cookies.delete("accessToken");
-            response.cookies.delete("refreshToken");
-            return response;
-          }
-
-          // Redirect from login page if already authenticated
-          if (isAdminLoginRoute) {
-            return NextResponse.redirect(
-              new URL("/admin/dashboard", request.url)
-            );
-          }
-        }
-        // No tokens present
-        else {
-          // Allow access to login page
-          if (isAdminLoginRoute) {
-            return NextResponse.next();
-          }
-
-          // Redirect to login for all other admin routes
-          return redirectToLogin(request);
-        }
-    }
+  // Allow access to public routes without authentication
+  if (isPublicRoute) {
     return NextResponse.next();
+  }
+
+  if (isAdminRoute) {
+    // No tokens
+    if (!accessToken || !refreshToken) {
+      return redirectToLogin();
+    }
+
+    // Validate token
+    try {
+      // Check if token is expired
+      if (JWTUtil.isTokenExpired(accessToken)) {
+        // Attempt token refresh (your existing logic)
+        const newTokens = await refreshAccessToken(refreshToken);
+
+        if (!newTokens) {
+          return redirectToLogin();
+        }
+
+        // Create response with new token
+        const response = NextResponse.next();
+        response.cookies.set("accessToken", newTokens.access, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+        });
+
+        return response;
+      }
+
+      // Validate admin access
+      if (!JWTUtil.isAdminUser(accessToken)) {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+    } catch (error) {
+      console.error("[Middleware] Token validation error:", error);
+      return redirectToLogin();
+    }
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
