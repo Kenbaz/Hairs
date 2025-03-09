@@ -4,7 +4,6 @@ from django.db.models import F
 from orders.models import Order
 from products.models import Product
 from django.utils import timezone
-from .models import AdminNotification
 import logging
 
 
@@ -15,13 +14,17 @@ class DashboardConsumer(AsyncJsonWebsocketConsumer):
         print("Attempting WebSocket connection...")
         
         user = self.scope["user"]
+        logger.info(f"WebSocket connection attempt for user: {user}")
         if not user.is_authenticated or not user.is_staff:
             print("Rejecting connection - authentication failed")
+            logger.warning(
+                f"Unauthorized WebSocket connection attempt: {user}")
             await self.close()
             return
 
         # Accept the connection first
         await self.accept()
+        logger.info(f"WebSocket connected successfully for user: {user.email}")
         print(f"WebSocket connected for user: {user.email}")
 
         # Send initial stats
