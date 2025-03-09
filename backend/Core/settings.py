@@ -189,33 +189,23 @@ ASGI_APPLICATION = 'Core.asgi.application'
 
 
 # Channel Layers Configuration
-if ENVIRONMENT == 'production':
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {
-                "hosts": [os.getenv('REDIS_PROD_URL', 'redis://127.0.0.1:6379/1')],
-            },
-        },
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    } if 'test' in sys.argv else {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+        # "CONFIG": {
+        #     "hosts": [(os.getenv('REDIS_HOST', 'localhost'), 6379)],
+        #     "capacity": 1500,
+        #     "expiry": 60,
+        #     "channel_capacity": {
+        #         "http.request": 100,
+        #         "http.response!*": 100,
+        #         "websocket.send!*": 100,
+        #     },
+        # }
     }
-else:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels.layers.InMemoryChannelLayer"
-        } if 'test' in sys.argv else {
-            "BACKEND": "channels.layers.InMemoryChannelLayer",
-            # "CONFIG": {
-            #     "hosts": [(os.getenv('REDIS_HOST', 'localhost'), 6379)],
-            #     "capacity": 1500,
-            #     "expiry": 60,
-            #     "channel_capacity": {
-            #         "http.request": 100,
-            #         "http.response!*": 100,
-            #         "websocket.send!*": 100,
-            #     },
-            # }
-        }
-    }
+}
 
 
 # Cache Configuration
@@ -230,57 +220,34 @@ if 'test' in sys.argv:
     }
     SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 else:
-    if ENVIRONMENT == 'production':
-        CACHES = {
-            'default': {
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': os.getenv('REDIS_PROD_URL', 'redis://127.0.0.1:6379/1'),
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                    'PASSWORD': os.getenv('REDIS_PASSWORD', None),
-                },
-                'TIMEOUT': 3600,
-            },
-            'session': {
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': os.getenv('REDIS_PROD_URL', 'redis://127.0.0.1:6379/2'),
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                    'PASSWORD': os.getenv('REDIS_PASSWORD', None),
+    # Use Redis cache for development and production
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'PASSWORD': os.getenv('REDIS_PASSWORD', None),
+                'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+                'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
+                'CONNECTION_POOL_CLASS_KWARGS': {
+                    'max_connections': 50,
+                    'timeout': 20,
                 }
+            },
+            'TIMEOUT': 3600,
+        },
+        'session': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/2'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'PASSWORD': os.getenv('REDIS_PASSWORD', None),
             }
         }
-        SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-        SESSION_CACHE_ALIAS = 'session'
-    else:
-        # Use Redis cache for development and production
-        CACHES = {
-            'default': {
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                    'PASSWORD': os.getenv('REDIS_PASSWORD', None),
-                    'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-                    'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
-                    'CONNECTION_POOL_CLASS_KWARGS': {
-                        'max_connections': 50,
-                        'timeout': 20,
-                    }
-                },
-                'TIMEOUT': 3600,
-            },
-            'session': {
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/2'),
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                    'PASSWORD': os.getenv('REDIS_PASSWORD', None),
-                }
-            }
-        }
-        SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-        SESSION_CACHE_ALIAS = 'session'
+    }
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'session'
 
 
 # Cache Keys and Timeouts
