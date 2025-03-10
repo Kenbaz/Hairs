@@ -36,26 +36,26 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     
 
     def create(self, validated_data):
-        # Remove password_repeat from the data
-        validated_data.pop('password_repeat', None)
-        password = validated_data.pop('password')
+        try:
+            validated_data.pop('password_repeat', None)
+            password = validated_data.pop('password')
 
-        # Generate verification token
-        verification_token = get_random_string(64)
+            verification_token = get_random_string(64)
 
-        # Create user
-        user = User.objects.create_user(
-            **validated_data,
-            email_verification_token=verification_token,
-            verified_email=False
-        )
-        user.set_password(password)
-        user.save()
+            user = User.objects.create_user(
+                **validated_data,
+                email_verification_token=verification_token,
+                verified_email=False
+            )
+            user.set_password(password)
+            user.save()
 
-        # Send verification email
-        self._send_verification_email(user, verification_token)
+            self._send_verification_email(user, verification_token)
 
-        return user
+            return user
+        except Exception as e:
+            print(f"User Creation Error: {e}")
+            raise
     
 
     def _send_verification_email(self, user, token):

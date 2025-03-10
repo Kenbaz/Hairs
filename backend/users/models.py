@@ -12,8 +12,15 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError('Users must have an email address')
         
+        # Remove username from extra_fields if present
+        extra_fields.pop('username', None)
+
+        # Generate a unique username based on email
+        username = self.generate_unique_username(email)
+        
         user = self.model(
             email = self.normalize_email(email),
+            username=username,
             first_name = first_name,
             last_name = last_name,
             **extra_fields
@@ -23,6 +30,19 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
     
+    def generate_unique_username(self, email):
+        # Create a base username from email
+        base_username = email.split('@')[0]
+        username = base_username
+
+        # Ensure username is unique
+        counter = 1
+        while self.model.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        return username
+
 
     def create_superuser(self, first_name, last_name, email, password=None):
         user = self.create_user(
@@ -43,6 +63,12 @@ class User(AbstractUser):
     # Basic Information
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        null=True,
+        blank=True
+    )
     email = models.EmailField(max_length=100, unique=True)
     phone_number = models.CharField(max_length=15, blank=True)
     verified_email = models.BooleanField(default=False)

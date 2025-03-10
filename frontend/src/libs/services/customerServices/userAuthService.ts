@@ -9,13 +9,15 @@ class UserAuthService {
     // Register new user
     async registerUser(data: UserRegisterData): Promise<void> {
         try {
-            await axiosInstance.post(`${this.baseUrl}/register/`, data);
+          const response = await axiosInstance.post(`${this.baseUrl}/register/`, data);
+          return response.data;
         } catch (error) {
             const err = error as AxiosError;
-            console.error(
-              "User Registration Failed:",
-              err.response?.data || err.message
-            );
+            console.error("Full Registration Error:", {
+              status: err.response?.status,
+              data: err.response?.data,
+              headers: err.response?.headers,
+            });
             throw error;
         }
     };
