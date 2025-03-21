@@ -60,6 +60,7 @@ export default function UserLoginForm() {
                 message: "Invalid email address",
               },
             })}
+            className="text-gray-900 focus:ring-1 focus:ring-black"
             error={errors.email?.message}
             disabled={isSubmitting}
           />
@@ -74,6 +75,7 @@ export default function UserLoginForm() {
                 message: "Password must be at least 8 characters",
               },
             })}
+            className="text-gray-900 focus:ring-1 focus:ring-black"
             error={errors.password?.message}
             disabled={isSubmitting}
           />
@@ -94,7 +96,7 @@ export default function UserLoginForm() {
           </div>
 
           <Button
-            variant='default'
+            variant="default"
             type="submit"
             className="w-full bg-customBlack text-white"
             isLoading={isSubmitting}
