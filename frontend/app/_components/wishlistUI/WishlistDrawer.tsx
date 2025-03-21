@@ -219,7 +219,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                     </div>
 
                     {!isEmpty && (
-                      <div className="border-t pb-[12%] border-gray-200 px-4 py-6 sm:px-6">
+                      <div className="border-t pb-[10%] border-gray-200 px-4 py-6 sm:px-6">
                         <div className="mt-6">
                           <Link
                             href="/shop/dashboard/wishlist"
