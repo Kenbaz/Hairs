@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useCartQuery } from "@/src/libs/customHooks/useCart";
-import { ShoppingBag, ArrowRight, Trash2, ChevronLeft, Loader2 } from "lucide-react";
+import { useWishlistQuery } from "@/src/libs/customHooks/useWishlist";
+import { ShoppingBag, ArrowRight, Trash2, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/app/_components/UI/Button";
 import { ConfirmModal } from "@/app/_components/UI/ConfirmModal";
 import { PriceDisplay } from "@/app/_components/UI/PriceDisplay";
@@ -25,8 +26,10 @@ export default function CartPage() {
     clearCart,
     isUpdatingCart,
     isRemovingFromCart,
-    isClearingCart,
+    moveToWishlist,
   } = useCartQuery();
+
+  const { items: wishlistItems } = useWishlistQuery();
 
   const { selectedCurrency } = useCurrency();
   const {shippingFee, isCalculating: isCalculatingShipping} = useShippingFee(cart)
@@ -34,6 +37,11 @@ export default function CartPage() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CartItem | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+
+  // Check if an item is already in wishlist
+  const isItemInWishlist = (productId: number) => {
+    return wishlistItems.some(item => item.product.id === productId);
+  }
 
 
   // Handle quantity change
@@ -92,37 +100,32 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto mt-[7.7rem] sm:mt-[4.4rem] px-4 sm:px-10 lg:px-[5%] xl:px-[10%] py-12">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
-        <div className="flex gap-4">
-          <Button
-            variant="outline"
-            onClick={() => setShowClearConfirm(true)}
-            disabled={isClearingCart}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Clear Cart
-          </Button>
+        <h1 className="text-2xl font-bold text-gray-900">Your Cart</h1>
+        <div className="flex">
           <Link href="/shop/products">
-            <Button variant="outline">
-              <ChevronLeft className="h-4 w-4 mr-2" />
+            <Button
+              variant="default"
+              className="border text-[0.9rem] border-black"
+            >
               Continue Shopping
+              <ChevronRight className="h-[1.2rem] w-[1.2rem] ml-2 -mr-1" />
             </Button>
           </Link>
         </div>
       </div>
 
-      <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+      <div className="lg:grid lg:gap-8">
         {/* Cart Items */}
         <div className="lg:col-span-8">
-          <div className="bg-white shadow-sm rounded-lg divide-y">
+          <div className="divide-y">
             {cart.items.map((item) => (
-              <div key={item.id} className="p-6">
-                <div className="flex items-center">
+              <div key={item.id} className="py-6">
+                <div className="flex sm:items-center sm:space-x-5">
                   {/* Product Image */}
-                  <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border">
+                  <div className="relative h-[8rem] w-[30%] sm:w-[15%] sm:h-[6rem] lg:h-[10vh] lg:landscape:h-[20vh] lg:landscape:w-[15%] flex-shrink-0 overflow-hidden xl:hidden">
                     <Image
                       src={
                         item.product.primary_image?.url || "/placeholder.png"
@@ -131,78 +134,152 @@ export default function CartPage() {
                       fill
                       priority
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover rounded-md"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="relative hidden xl:block h-[16vh] w-[14%] flex-shrink-0 overflow-hidden">
+                    <Image
+                      src={
+                        item.product.primary_image?.url || "/placeholder.png"
+                      }
+                      alt={item.product.name}
+                      fill
+                      priority
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover"
                     />
                   </div>
 
                   {/* Product Details */}
                   <div className="ml-6 flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
+                    <div className="flex items-start">
+                      <div className="space-y-2">
                         <h3 className="text-base font-medium text-gray-900">
                           {item.product.name}
                         </h3>
                         <p className="mt-1 text-sm text-gray-500">
                           {item.product.category.name}
                         </p>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveClick(item)}
-                        disabled={isRemovingFromCart}
-                        className="text-red-600 hover:text-red-700 disabled:opacity-50"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between">
-                      {/* Quantity Controls */}
-                      <div className="flex items-center border rounded-lg">
-                        <button
-                          onClick={() =>
-                            handleQuantityChange(item.id, item.quantity - 1)
-                          }
-                          disabled={isUpdatingCart || item.quantity <= 1}
-                          className="p-2 hover:bg-gray-50 disabled:opacity-50"
-                        >
-                          -
-                        </button>
-                        <span className="px-4 py-2 text-center min-w-[3rem]">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() =>
-                            handleQuantityChange(item.id, item.quantity + 1)
-                          }
-                          disabled={
-                            isUpdatingCart ||
-                            item.quantity >= item.product.stock
-                          }
-                          className="p-2 hover:bg-gray-50 disabled:opacity-50"
-                        >
-                          +
-                        </button>
-                      </div>
-
-                      {/* Price */}
-                      <div className="text-right">
-                        <PriceDisplay
-                          amount={item.price_at_add * item.quantity}
-                          sourceCurrency="USD"
-                          className="font-medium"
-                        />
-                        {item.quantity > 1 && (
-                          <p className="text-sm text-gray-500">
-                            <PriceDisplay
-                              amount={item.price_at_add}
-                              sourceCurrency="USD"
-                            />{" "}
-                            each
-                          </p>
-                        )}
+                        {/* Price */}
+                        <div className="text-gray-800">
+                          <PriceDisplay
+                            amount={item.price_at_add * item.quantity}
+                            sourceCurrency="USD"
+                            className="font-normal"
+                          />
+                          {item.quantity > 1 && (
+                            <p className="text-sm text-gray-500">
+                              <PriceDisplay
+                                amount={item.price_at_add}
+                                sourceCurrency="USD"
+                              />{" "}
+                              each
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <div className="hidden sm:flex items-center space-x-5">
+                    <Button
+                      variant="default"
+                      onClick={() => moveToWishlist(item.id)}
+                      disabled={isItemInWishlist(item.product.id)}
+                      className={`text-white bg-customBlack text-sm py-3 hover:bg-gray-900 ${
+                        isItemInWishlist(item.product.id)
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
+                    >
+                      {isItemInWishlist(item.product.id)
+                        ? "Already in Wishlist"
+                        : "Move to Wishlist"}
+                    </Button>
+                    {/* Quantity Controls */}
+                    <div className="flex items-center border px-3 border-black">
+                      <button
+                        onClick={() =>
+                          handleQuantityChange(item.id, item.quantity - 1)
+                        }
+                        disabled={isUpdatingCart || item.quantity <= 1}
+                        className="p-2 hover:bg-gray-50 disabled:opacity-50 text-gray-900 text-xl"
+                      >
+                        -
+                      </button>
+                      <span className="px-4 py-2 text-gray-900 text-center min-w-[3rem]">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() =>
+                          handleQuantityChange(item.id, item.quantity + 1)
+                        }
+                        disabled={
+                          isUpdatingCart || item.quantity >= item.product.stock
+                        }
+                        className="p-2 hover:bg-gray-50 disabled:opacity-50 text-gray-900 text-xl"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => handleRemoveClick(item)}
+                      disabled={isRemovingFromCart}
+                      className="text-gray-800 hover:text-gray-900 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-8 flex sm:hidden items-center space-x-8">
+                  <Button
+                    variant="default"
+                    onClick={() => moveToWishlist(item.id)}
+                    disabled={isItemInWishlist(item.product.id)}
+                    className={`text-white bg-customBlack text-sm py-3 hover:bg-gray-50 ${
+                      isItemInWishlist(item.product.id)
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                  >
+                    {isItemInWishlist(item.product.id)
+                      ? "Already in Wishlist"
+                      : "Move to Wishlist"}
+                  </Button>
+                  {/* Quantity Controls */}
+                  <div className="flex items-center border px-3 border-black">
+                    <button
+                      onClick={() =>
+                        handleQuantityChange(item.id, item.quantity - 1)
+                      }
+                      disabled={isUpdatingCart || item.quantity <= 1}
+                      className="p-2 hover:bg-gray-50 disabled:opacity-50 text-gray-900 text-xl"
+                    >
+                      -
+                    </button>
+                    <span className="px-4 py-2 text-gray-900 text-center min-w-[3rem]">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() =>
+                        handleQuantityChange(item.id, item.quantity + 1)
+                      }
+                      disabled={
+                        isUpdatingCart || item.quantity >= item.product.stock
+                      }
+                      className="p-2 hover:bg-gray-50 disabled:opacity-50 text-gray-900 text-xl"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => handleRemoveClick(item)}
+                    disabled={isRemovingFromCart}
+                    className="text-gray-800 hover:text-gray-900 disabled:opacity-50"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -211,7 +288,7 @@ export default function CartPage() {
 
         {/* Order Summary */}
         <div className="lg:col-span-4 mt-8 lg:mt-0">
-          <div className="bg-white shadow-sm rounded-lg p-6">
+          <div className="px-4 shadow-sm rounded-lg py-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">
               Order Summary
             </h2>
@@ -254,8 +331,12 @@ export default function CartPage() {
               </div>
 
               <div className="mt-6">
-                <Link href="/shop/checkout">
-                  <Button className="w-full" size="lg">
+                <Link href="#">
+                  <Button
+                    variant="default"
+                    className="w-full cursor-none bg-customBlack text-white"
+                    size="lg"
+                  >
                     Proceed to Checkout
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>

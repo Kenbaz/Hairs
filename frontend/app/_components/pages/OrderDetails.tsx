@@ -12,7 +12,6 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { PriceDisplay } from "../UI/PriceDisplay";
-import { Button } from "../UI/Button";
 import { Alert } from "../UI/Alert";
 import Image from "next/image";
 import { format } from "date-fns";
@@ -107,16 +106,16 @@ export function OrderDetail({ orderId }: OrderDetailProps) {
   }
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
+    <div className="bg-customWhite lg:-mt-[4%] overflow-hidden">
       {/* Order Header */}
-      <div className="p-6 border-b">
-        <div className="flex items-center justify-between mb-4">
+      <div className="py-5 px-4 sm:px-10 lg:px-[2%] border-b">
+        <div className="flex items-center justify-between mb-7">
           <Link
             href="/shop/dashboard/orders"
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-700 text-base font-medium hover:text-gray-700"
           >
             <ArrowLeft className="h-5 w-5 inline mr-1" />
-            Back to Orders
+            Back
           </Link>
           {order.payment_status && (
             <div className="text-green-600 flex items-center">
@@ -128,14 +127,14 @@ export function OrderDetail({ orderId }: OrderDetailProps) {
 
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-semibold text-gray-900">
               Order #{order.id}
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-gray-600 mt-1">
               Placed on {format(new Date(order.created_at), "MMMM d, yyyy")}
             </p>
           </div>
-          <div>{getStatusBadge(order.order_status)}</div>
+          <div className="hidden md:block">{getStatusBadge(order.order_status)}</div>
         </div>
 
         {/* Order Status Tracker */}
@@ -148,12 +147,12 @@ export function OrderDetail({ orderId }: OrderDetailProps) {
       </div>
 
       {/* Order Items */}
-      <div className="px-6 py-4 border-b">
+      <div className="px-6 sm:px-10 lg:px-[2%] py-4 border-b">
         <h2 className="text-lg font-medium text-gray-900 mb-4">Order Items</h2>
         <div className="divide-y">
           {order.items.map((item) => (
             <div key={item.id} className="py-4 flex items-center">
-              <div className="relative h-16 w-16 flex-shrink-0 rounded-md overflow-hidden border border-gray-200">
+              <div className="relative h-16 w-16 sm:w-[4.5rem] sm:h-[4.5rem] flex-shrink-0 overflow-hidden">
                 {item.product && item.product.primary_image ? (
                   <Image
                     src={item.product.primary_image.url}
@@ -170,7 +169,7 @@ export function OrderDetail({ orderId }: OrderDetailProps) {
               </div>
 
               <div className="ml-4 flex-1">
-                <h3 className="text-sm font-medium text-gray-900">
+                <h3 className="text-sm sm:text-base font-medium text-gray-900">
                   {item.product ? item.product.name : "Product"}
                 </h3>
                 <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
@@ -180,10 +179,10 @@ export function OrderDetail({ orderId }: OrderDetailProps) {
                 <PriceDisplay
                   amount={item.product.price_data.amount * item.quantity}
                   sourceCurrency="USD"
-                  className="font-medium"
+                  className="font-medium sm:text-lg text-gray-900"
                 />
                 {item.quantity > 1 && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     <PriceDisplay
                       amount={item.product.price_data.amount}
                       sourceCurrency="USD"
@@ -198,22 +197,23 @@ export function OrderDetail({ orderId }: OrderDetailProps) {
       </div>
 
       {/* Order Summary */}
-      <div className="px-6 py-4 border-b">
+      <div className="px-4 sm:px-10 lg:px-[2%] py-4 border-b">
         <h2 className="text-lg font-medium text-gray-900 mb-4">
           Order Summary
         </h2>
 
         <div className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Subtotal</span>
+          <div className="flex justify-between text-[0.95rem] sm:text-base">
+            <span className="text-gray-700">Subtotal</span>
             <PriceDisplay
               amount={order.total_amount - (order.shipping_fee || 0)}
               sourceCurrency="USD"
+              className="text-gray-900 font-medium sm:text-lg"
             />
           </div>
 
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Shipping</span>
+          <div className="flex justify-between text-[0.95rem] sm:text-base">
+            <span className="text-gray-700">Shipping</span>
             {order.shipping_fee > 0 ? (
               <PriceDisplay amount={order.shipping_fee} sourceCurrency={selectedCurrency} />
             ) : (
@@ -221,20 +221,24 @@ export function OrderDetail({ orderId }: OrderDetailProps) {
             )}
           </div>
 
-          <div className="flex justify-between text-base font-medium pt-2 border-t">
+          <div className="flex justify-between text-base sm:text-lg font-medium pt-2 border-t">
             <span className="text-gray-900">Total</span>
-            <PriceDisplay amount={order.total_amount} sourceCurrency="USD" />
+            <PriceDisplay
+              amount={order.total_amount}
+              sourceCurrency="USD"
+              className="text-gray-900 font-medium"
+            />
           </div>
         </div>
       </div>
 
       {/* Shipping Information */}
-      <div className="px-6 py-4 border-b">
+      <div className="px-4 sm:px-10 lg:px-[2%] py-6">
         <h2 className="text-lg font-medium text-gray-900 mb-4">
           Shipping Information
         </h2>
 
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-gray-50 p-4">
           <p className="whitespace-pre-line text-gray-700">
             {order.shipping_address}
           </p>
@@ -273,12 +277,6 @@ export function OrderDetail({ orderId }: OrderDetailProps) {
 
       {/* Action Buttons */}
       <div className="px-6 py-4 flex flex-wrap gap-4">
-        <Link href="/shop/dashboard/orders">
-          <Button variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Orders
-          </Button>
-        </Link>
 
         {/* Cancel Order - show only if pending */}
         {order.order_status === "pending" && (

@@ -17,12 +17,12 @@ export function MainLayout({ children }: PropsWithChildren) {
   const isWishlistOpen = useAppSelector(selectIsWishlistOpen);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen overflow-y-auto flex flex-col bg-customWhite">
       {/* Header */}
       <Header />
 
       {/* Main Content */}
-      <main className="flex-grow border-2 border-red-800 h-screen overflow-y-auto">{children}</main>
+      <main className="flex-grow">{children}</main>
 
       {/* Footer */}
       <Footer />

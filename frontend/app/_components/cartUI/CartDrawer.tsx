@@ -72,7 +72,7 @@ export function CartDrawer() {
       {isOpen && (
         <motion.div
           ref={cartRef}
-          className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl z-50"
+          className="fixed right-0 top-0 h-full w-full max-w-md bg-customWhite shadow-xl z-50"
           variants={slideInVariants}
           initial="hidden"
           animate="visible"
@@ -81,7 +81,7 @@ export function CartDrawer() {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <div>
-              <h2 className="text-lg font-semibold">Shopping Cart</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Your Cart</h2>
               {cart && cart.items.length > 0 && (
                 <p className="text-sm text-gray-500">
                   {cart.items.length} items
@@ -93,7 +93,7 @@ export function CartDrawer() {
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               aria-label="Close cart"
             >
-              <X className="h-5 w-5" />
+              <X className="h-7 w-7 text-gray-600" />
             </button>
           </div>
 

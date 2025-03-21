@@ -44,16 +44,22 @@ export function WishlistButton({
     return (
       <Button
         onClick={handleClick}
-        variant={isInWishlist ? "primary" : "outline"}
-        size="sm"
-        className={`relative ${className}`}
+        variant="default"
+        className={`relative w-full py-3 rounded-none ${className}`}
         isLoading={isLoading}
         disabled={isLoading}
       >
-        <Heart className={`h-5 w-5 ${isInWishlist ? "fill-current" : ""}`} />
+        {!showText && (
+          <Heart
+            className={`h-8 w-8 text-gray-50 hover:text-customWhite2 ${
+              isInWishlist ? "fill-current" : ""
+            }`}
+          />
+        )}
         {showText && (
-          <span className="ml-2">
-            {isInWishlist ? "In Wishlist" : "Add to Wishlist"}
+          <span className={`ml-2 ${isInWishlist ? "fill-current" : ""
+            }`}>
+            {isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
           </span>
         )}
       </Button>

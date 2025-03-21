@@ -4,7 +4,7 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'outline' | 'danger';
+    variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'default';
     size?: 'sm' | 'md' | 'lg';
     isLoading?: boolean;
 }
@@ -22,10 +22,13 @@ export function Button({
 
     const variants = {
       primary: "bg-blue-600 text-white hover:bg-blue-700 rounded-lg",
-      secondary: "bg-gray-600 text-white hover:bg-gray-700 rounded-lg active:bg-gray-800",
+      secondary:
+        "bg-customBlack text-white hover:bg-gray-700 rounded-lg active:bg-gray-800",
       outline:
         "border-2 border-slate-700 rounded-lg text-slate-900 hover:bg-slate-50 active:bg-blue-100",
-      danger: "bg-red-600 text-white hover:bg-red-700 active:bg-red-800 rounded-lg",
+      danger:
+        "bg-red-600 text-white hover:bg-red-700 active:bg-red-800 rounded-lg",
+      default: "text-gray-900",
     };
 
     const sizes = {

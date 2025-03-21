@@ -1,7 +1,7 @@
 import { OptimizedImage } from "../UI/OptimizedImage";
 import Link from "next/link";
 import { StoreProduct } from "@/src/types";
-import { AddToCartButton } from "../cartUI/AddToCartButton";
+// import { AddToCartButton } from "../cartUI/AddToCartButton";
 import { WishlistButton } from "../wishlistUI/WishlistButton";
 import { PriceDisplay } from "../UI/PriceDisplay";
 
@@ -23,9 +23,7 @@ export function ProductCard({ product, className = "" }: ProductCardProps) {
   } = product.price_data;
 
   return (
-    <div
-      className={`bg-white rounded-lg shadow-sm overflow-hidden ${className}`}
-    >
+    <div className={`bg-customWhite overflow-hidden ${className}`}>
       <Link href={`/shop/products/${product.slug}`} className="group">
         {/* Product Image */}
         <div className="relative aspect-square w-full">
@@ -37,6 +35,9 @@ export function ProductCard({ product, className = "" }: ProductCardProps) {
               className="transition-transform duration-300 group-hover:scale-105"
             />
           )}
+          <div className="absolute -top-1 right-0">
+            <WishlistButton productId={product.id} />
+          </div>
           {/* Only show out of stock overlay if stock is 0 */}
           {product.stock <= 0 && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -46,19 +47,19 @@ export function ProductCard({ product, className = "" }: ProductCardProps) {
         </div>
 
         {/* Product Info */}
-        <div className="p-4">
-          <h3 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+        <div className="py-4">
+          <h3 className="font-medium text-[0.95rem] tracking-wide text-gray-900 group-hover:underline transition-colors">
             {product.name}
           </h3>
 
           {/* Price Display */}
-          <div className="mt-2 space-y-1">
+          <div className="mt-2 space-y-1 grid">
             {hasDiscount ? (
               <>
                 <PriceDisplay
                   amount={discountPrice}
                   sourceCurrency="USD"
-                  className="font-semibold text-lg text-gray-900"
+                  className="font-medium text-lg text-gray-900"
                 />
                 <PriceDisplay
                   amount={originalPrice}
@@ -73,7 +74,7 @@ export function ProductCard({ product, className = "" }: ProductCardProps) {
               <PriceDisplay
                 amount={originalPrice}
                 sourceCurrency="USD"
-                className="font-semibold text-lg text-gray-900"
+                className="font-medium text-[1.1rem] text-gray-900"
               />
             )}
           </div>
@@ -94,7 +95,7 @@ export function ProductCard({ product, className = "" }: ProductCardProps) {
       </Link>
 
       {/* Action Buttons */}
-      <div className="p-4 pt-0 flex gap-2">
+      {/* <div className="p-1 pt-0 flex items-center">
         <AddToCartButton
           productId={product.id}
           stock={product.stock}
@@ -102,8 +103,7 @@ export function ProductCard({ product, className = "" }: ProductCardProps) {
           showQuantity={false}
           className="flex-1"
         />
-        <WishlistButton productId={product.id} />
-      </div>
+      </div> */}
     </div>
   );
 }

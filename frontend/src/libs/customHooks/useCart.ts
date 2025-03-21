@@ -1,16 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cartService } from "../services/customerServices/cartService";
 import { AddToCartData, UpdateCartItemData, CartResponse } from "@/src/types";
-import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../_redux/hooks";
 import { selectIsCartOpen, openCart, closeCart } from "../_redux/cartSlice";
 import { showToast } from "@/app/_components/_providers/ToastProvider";
 
-export const useCartQuery = (autoCloseDelay = 3000) => {
+export const useCartQuery = () => {
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
   const isCartOpen = useAppSelector(selectIsCartOpen);
-  const autoCloseTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Fetch cart
   const {
@@ -24,17 +22,6 @@ export const useCartQuery = (autoCloseDelay = 3000) => {
     staleTime: 60 * 60 * 1000, // 1 hour
   });
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    const timeoutRef = autoCloseTimeoutRef.current;
-
-    return () => {
-      if (timeoutRef) {
-        clearTimeout(timeoutRef);
-      }
-    };
-  }, []);
-
 
   // Add to cart mutation
   const addToCart = useMutation({
@@ -46,18 +33,6 @@ export const useCartQuery = (autoCloseDelay = 3000) => {
     onSuccess: (data) => {
       queryClient.setQueryData(["cart"], data);
       showToast.success("Added to cart");
-      dispatch(openCart());
-
-      // Clear any existing timeout
-      if (autoCloseTimeoutRef.current) {
-        clearTimeout(autoCloseTimeoutRef.current);
-      }
-
-      // Set new timeout
-      autoCloseTimeoutRef.current = setTimeout(() => {
-        dispatch(closeCart());
-        autoCloseTimeoutRef.current = undefined;
-      }, autoCloseDelay);
     },
     onError: (error, _, context) => {
       // Rollback to previous value
@@ -181,6 +156,51 @@ export const useCartQuery = (autoCloseDelay = 3000) => {
   });
 
 
+  // Move to wishlist mutation
+  const moveToWishlist = useMutation({
+    mutationFn: (itemId: number) => cartService.moveItemToWishlist(itemId),
+    onMutate: async (itemId) => {
+      await queryClient.cancelQueries({ queryKey: ["cart"] });
+      const previousCart = queryClient.getQueryData(["cart"]);
+
+      queryClient.setQueryData(["cart"], (old: CartResponse | undefined) => {
+        if (!old) return { items: [], total_amount: 0, shipping_fee: 0 };
+
+        // Completely reconstruct the cart without the item
+        const updatedItems = old.items.filter((item) => item.id !== itemId);
+
+        return {
+          ...old,
+          items: updatedItems,
+          total_amount: updatedItems.reduce(
+            (sum, item) => sum + item.quantity * item.price_at_add,
+            0
+          ),
+        };
+      });
+
+      return { previousCart };
+    },
+    onError: (error, _, context) => {
+      // Rollback to previous cart state
+      if (context?.previousCart) {
+        queryClient.setQueryData(["cart"], context.previousCart);
+      }
+
+      console.error("Failed to move item to wishlist:", error);
+      showToast.error(error.message);
+    },
+    onSettled: () => {
+      // Invalidate both cart and wishlist queries
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+    },
+    onSuccess: () => {
+      showToast.success("Item moved to wishlist");
+    },
+  });
+
+
   // Calculate cart summary
   const CartSummary = {
     totalItems: cart?.items.length ?? 0,
@@ -199,12 +219,7 @@ export const useCartQuery = (autoCloseDelay = 3000) => {
 
 
   // Cart drawer controls
-  // Clear auto-close timeout when manually closing cart
   const handleCloseCart = () => {
-    if (autoCloseTimeoutRef.current) {
-      clearTimeout(autoCloseTimeoutRef.current);
-      autoCloseTimeoutRef.current = undefined;
-    }
     dispatch(closeCart());
   };
 
@@ -227,6 +242,7 @@ export const useCartQuery = (autoCloseDelay = 3000) => {
     addToCart: addToCart.mutate,
     updateCartItem: updateCartItem.mutate,
     removeFromCart: removeFromCart.mutate,
+    moveToWishlist: moveToWishlist.mutate,
     clearCart: clearCart.mutate,
     mergeCart,
     refreshCart,
@@ -242,6 +258,7 @@ export const useCartQuery = (autoCloseDelay = 3000) => {
     isRemovingFromCart: removeFromCart.isPending,
     isClearingCart: clearCart.isPending,
     isMergingCart: mergeCart.isPending,
+    isMovingToWishlist: moveToWishlist.isPending,
 
     // Helper methods
     isItemInCart: (productId: number) =>

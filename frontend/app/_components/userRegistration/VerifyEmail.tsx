@@ -57,7 +57,7 @@ export default function VerifyEmail({ token }: VerifyEmailProps) {
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow">
           {verificationState === "loading" && (
             <div className="text-center">
-              <Loader2 className="h-16 w-16 text-blue-500 animate-spin mx-auto" />
+              <Loader2 className="h-16 w-16 text-gray-900 animate-spin mx-auto" />
               <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
                 Verifying your email
               </h2>
@@ -70,7 +70,7 @@ export default function VerifyEmail({ token }: VerifyEmailProps) {
           {verificationState === "success" && (
             <div className="text-center">
               <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-              <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+              <h2 className="mt-6 text-2xl font-extrabold text-gray-900">
                 Email Verified!
               </h2>
               <p className="mt-2 text-sm text-gray-600">
@@ -88,7 +88,7 @@ export default function VerifyEmail({ token }: VerifyEmailProps) {
           {verificationState === "error" && (
             <div className="text-center">
               <XCircle className="h-16 w-16 text-red-500 mx-auto" />
-              <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+              <h2 className="mt-6 text-2xl font-extrabold text-gray-900">
                 Verification Failed
               </h2>
               <p className="mt-2 text-sm text-gray-600">
@@ -97,8 +97,8 @@ export default function VerifyEmail({ token }: VerifyEmailProps) {
               <div className="mt-6">
                 <Button
                   onClick={handleRetry}
-                  className="w-full"
-                  variant="outline"
+                  className="w-full bg-customBlack text-white"
+                  variant="default"
                 >
                   Request New Verification Link
                 </Button>

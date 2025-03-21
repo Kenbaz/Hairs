@@ -7,7 +7,8 @@ import {
   UpdateCartItemData,
   CartItem,
   ValidatedCartItem,
-  CartValidationResponse
+  CartValidationResponse,
+  ApiError
 } from "@/src/types";
 import { store } from "../../_redux/store";
 
@@ -324,6 +325,24 @@ class CartService {
       const err = error as AxiosError<CartError>;
       console.error("Merge error:", err);
       throw new Error(err.response?.data?.message || "Failed to merge cart");
+    }
+  }
+
+  async moveItemToWishlist(itemId: number): Promise<CartResponse> {
+    try {
+      const response = await axiosInstance.post<CartResponse>(
+        `${this.baseUrl}/move_to_wishlist/`,
+        { item_id: itemId }
+      );
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError<ApiError>;
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.detail ||
+        "Failed to move item to wishlist";
+
+      throw new Error(errorMessage);
     }
   }
 }

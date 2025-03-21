@@ -81,11 +81,11 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                 leaveTo="translate-x-full"
               >
                 <DialogPanel className="pointer-events-auto w-screen max-w-md">
-                  <div className="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
+                  <div className="flex h-full flex-col overflow-y-scroll bg-customWhite shadow-xl">
                     <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
                       <div className="flex items-start justify-between">
                         <DialogTitle className="text-lg font-medium text-gray-900">
-                          My Wishlist ({items.length})
+                          My Wishlist
                         </DialogTitle>
                         <div className="ml-3 flex h-7 items-center">
                           <button
@@ -95,7 +95,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                           >
                             <span className="absolute -inset-0.5" />
                             <span className="sr-only">Close panel</span>
-                            <X className="h-6 w-6" aria-hidden="true" />
+                            <X className="h-6 text-gray-700 w-6" aria-hidden="true" />
                           </button>
                         </div>
                       </div>
@@ -125,7 +125,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                             <ul className="-my-6 divide-y divide-gray-200">
                               {items.map((item) => (
                                 <li key={item.id} className="flex py-6">
-                                  <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                                  <div className="relative aspect-square h-[80%] w-[35%] flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
                                     <Image
                                       src={item.product.primary_image?.url}
                                       alt={item.product.name}
@@ -136,14 +136,14 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                                     />
                                   </div>
 
-                                  <div className="ml-4 flex flex-1 flex-col">
+                                  <div className="ml-[4%] grid">
                                     <div>
-                                      <div className="flex justify-between text-base font-medium text-gray-900">
+                                      <div className="grid space-y-1 items-center text-[0.9rem] tracking-wide font-medium text-gray-900">
                                         <h3>{item.product.name}</h3>
                                         <div>
                                           {item.product.price_data
                                             .discount_amount ? (
-                                            <div className="flex flex-col items-end">
+                                            <div className="grid">
                                               <PriceDisplay
                                                 amount={
                                                   item.product.price_data
@@ -169,13 +169,13 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                                           )}
                                         </div>
                                       </div>
-                                      <p className="mt-1 text-sm text-gray-500">
-                                        {item.product.category.name}
-                                      </p>
                                     </div>
-                                    <div className="flex flex-1 items-end justify-between text-sm">
-                                      <div className="flex space-x-2">
+                                    <div className="flex max-w-full mt-1 items-end justify-between text-sm">
+                                      <div className="flex">
                                         <Button
+                                          variant="default"
+                                          className="flex-shrink-0 text-sm -ml-[10%] text-gray-700 hover:text-gray-900 hover:underline"
+                                          
                                           onClick={() =>
                                             moveItemToCart(item.product.id)
                                           }
@@ -186,7 +186,6 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                                               "number" &&
                                               item.product.stock <= 0)
                                           }
-                                          size="sm"
                                         >
                                           <ShoppingCart className="h-4 w-4 mr-2" />
                                           {isItemInCart(item.product.id)
@@ -195,17 +194,18 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                                                 "number" &&
                                               item.product.stock <= 0
                                             ? "Out of Stock"
-                                            : "Move to Cart"}
+                                            : "Move to cart"}
                                         </Button>
                                         <Button
+                                          variant="default"
+                                          className="flex-shrink-0 text-xs -ml-[8%]"
+                                          
                                           onClick={() =>
                                             removeItem(item.product.id)
                                           }
                                           disabled={isRemoving}
-                                          variant="outline"
-                                          size="sm"
                                         >
-                                          <X className="h-4 w-4" />
+                                          <X className="h-5 w-5 text-red-700" />
                                         </Button>
                                       </div>
                                     </div>
@@ -219,13 +219,16 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                     </div>
 
                     {!isEmpty && (
-                      <div className="border-t border-gray-200 px-4 py-6 sm:px-6">
+                      <div className="border-t pb-[12%] border-gray-200 px-4 py-6 sm:px-6">
                         <div className="mt-6">
                           <Link
                             href="/shop/dashboard/wishlist"
                             onClick={onClose}
                           >
-                            <Button className="w-full">
+                            <Button
+                              variant="default"
+                              className="w-full bg-customBlack hover:bg-gray-900 text-white"
+                            >
                               View Wishlist Page
                             </Button>
                           </Link>
@@ -233,7 +236,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                         <div className="mt-6 flex justify-center text-center text-sm text-gray-500">
                           <button
                             type="button"
-                            className="font-medium text-blue-600 hover:text-blue-500"
+                            className="font-medium text-gray-900 text-base hover:underline"
                             onClick={onClose}
                           >
                             Continue Shopping

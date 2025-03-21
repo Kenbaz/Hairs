@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ProductCard } from "./ProductCard";
 import { Loader2 } from "lucide-react";
 import { StoreProduct } from "@/src/types";
+import FadeInSection from "../UI/FadeInSection";
 import { productService } from "@/src/libs/services/customerServices/productService";
 
 
@@ -32,12 +33,14 @@ export function RelatedProducts({ currentProductId, categoryId }: RelatedProduct
 
     return (
       <div className="mt-16">
-        <h2 className="text-2xl font-bold text-gray-900 mb-8">
-          Related Products
+        <h2 className="text-2xl font-medium tracking-wide text-gray-900 mb-8">
+          You may also like
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 gap-y-5">
           {products.map((product: StoreProduct) => (
-            <ProductCard key={product.id} product={product} />
+            <FadeInSection key={product.id} className="w-full">
+              <ProductCard product={product} />
+            </FadeInSection>
           ))}
         </div>
       </div>

@@ -71,128 +71,134 @@ export function ProductDetailsComp({ slug }: ProductDetailsCompProps) {
   } = product.price_data;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="lg:grid lg:grid-cols-2 lg:gap-12">
-        {/* Product Gallery */}
-        <div>
-          <ProductGallery images={product.images} productName={product.name} />
-        </div>
-
-        {/* Product Info */}
-        <div className="mt-8 lg:mt-0">
-          {/* Category & Name */}
-          <div className="mb-6">
-            <h3 className="text-sm text-gray-500 mb-1">
-              {product.category.name}
-            </h3>
-            <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
+    <>
+      <div className="max-w-7xl mx-auto px-4 sm:px-10 lg:px-[5%] py-8 mt-[5rem] sm:mt-[4rem]">
+        <div className="grid sm:grid-cols-2 sm:gap-10">
+          {/* Product Gallery */}
+          <div>
+            <ProductGallery
+              images={product.images}
+              productName={product.name}
+            />
           </div>
 
-          {/* Price */}
-          <div className="mb-6">
-            {hasDiscount ? (
-              <div className="space-y-1">
-                <PriceDisplay
-                  amount={discountPrice}
-                  sourceCurrency="USD"
-                  className="text-3xl font-bold text-gray-900"
-                />
-                <div className="flex items-center gap-2">
+          {/* Product Info */}
+          <div className="mt-8 sm:mt-0">
+            {/* Category & Name */}
+            <div className="mb-6">
+              <h3 className="text-sm tracking-[0.02em] text-gray-500 mb-1">
+                Miz Viv Luxury Hair
+              </h3>
+              <h1 className="text-[1.6rem] tracking-[0.02em] font-semibold text-gray-900">
+                {product.name}
+              </h1>
+            </div>
+
+            {/* Price */}
+            <div className="mb-6">
+              {hasDiscount ? (
+                <div>
                   <PriceDisplay
-                    amount={originalPrice}
+                    amount={discountPrice}
                     sourceCurrency="USD"
-                    className="text-lg text-gray-500 line-through"
+                    className="text-xl tracking-[0.02em] font-medium text-gray-900"
                   />
-                  <span className="text-green-600 font-medium">
-                    {savings_percentage} % Off
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <PriceDisplay
+                      amount={originalPrice}
+                      sourceCurrency="USD"
+                      className="text-base tracking-[0.02em] text-gray-600 line-through"
+                    />
+                    <span className="text-sm text-green-600 font-medium">
+                      {savings_percentage} % Off
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <PriceDisplay
-                amount={originalPrice}
-                sourceCurrency="USD"
-                className="text-3xl font-bold text-gray-900"
-              />
-            )}
-          </div>
-
-          {/* Stock Status */}
-          <div className="mb-6">
-            {product.stock > 0 ? (
-              product.stock <= (product.low_stock_threshold || 5) ? (
-                <p className="text-orange-600">
-                  Only {product.stock} left in stock - order soon
-                </p>
               ) : (
-                <p className="text-green-600">In Stock</p>
-              )
-            ) : (
-              <p className="text-red-600">Out of Stock</p>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4 mb-8">
-            <AddToCartButton
-              productId={product.id}
-              stock={product.stock}
-              productData={product}
-              className="flex-1"
-            />
-            <WishlistButton productId={product.id} showText />
-            <Button variant="outline" onClick={handleShare}>
-              <Share2 className="h-5 w-5" />
-            </Button>
-          </div>
-
-          {/* Description */}
-          <div className="prose prose-sm max-w-none mb-8">
-            <h2 className="text-lg font-semibold mb-2">Description</h2>
-            <div
-              dangerouslySetInnerHTML={{ __html: product.description }}
-              className="text-gray-600"
-            />
-          </div>
-
-          {/* Specifications */}
-          <div className="border-t pt-8">
-            <h2 className="text-lg font-semibold mb-4">Specifications</h2>
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-              {product.hair_type && (
-                <>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Hair Type
-                  </dt>
-                  <dd className="text-sm text-gray-900">{product.hair_type}</dd>
-                </>
+                <PriceDisplay
+                  amount={originalPrice}
+                  sourceCurrency="USD"
+                  className="text-xl tracking-[0.02em] font-medium text-gray-900"
+                />
               )}
-            </dl>
-          </div>
+            </div>
 
-          {/* Care Instructions */}
-          {product.care_instructions && (
-            <div className="border-t pt-8">
-              <h2 className="text-lg font-semibold mb-2">Care Instructions</h2>
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: product.care_instructions,
-                }}
-                className="prose prose-sm max-w-none text-gray-600"
+            {/* Stock Status */}
+            <div className="mb-6">
+              {product.stock > 0 ? (
+                product.stock <= (product.low_stock_threshold || 5) ? (
+                  <p className="text-gray-600">
+                    Only {product.stock} left in stock - order soon
+                  </p>
+                ) : (
+                  <p className="text-green-600">In Stock</p>
+                )
+              ) : (
+                <p className="text-red-600">Out of Stock</p>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className=" mb-8">
+              <AddToCartButton
+                productId={product.id}
+                stock={product.stock}
+                productData={product}
+                className="flex-1"
+              />
+              <WishlistButton
+                productId={product.id}
+                className=" bg-customBlack text-white mt-3"
+                showText
               />
             </div>
-          )}
+
+            {/* Description */}
+            <div className="prose prose-sm max-w-none mb-8">
+              <div
+                dangerouslySetInnerHTML={{ __html: product.description }}
+                className="text-gray-700 tracking-wide"
+              />
+            </div>
+
+            {/* Share & Copy Link */}
+            <div>
+              <Button
+                variant="default"
+                className="flex items-center gap-3 -ml-4 text-base mt-3 hover:underline"
+                onClick={handleShare}
+              >
+                <Share2 className="h-5 w-5" />
+                Share
+              </Button>
+            </div>
+
+            {/* Care Instructions */}
+            {product.care_instructions && (
+              <div className="pt-8">
+                <h2 className="text-lg tracking-wide text-gray-800 font-semibold mb-2">
+                  Care Instructions
+                </h2>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: product.care_instructions,
+                  }}
+                  className="prose prose-sm max-w-none text-gray-700 tracking-wide"
+                />
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Reviews */}
+        <ReviewsSection productId={product.id} />
+
+        {/* Related Products */}
+        <RelatedProducts
+          currentProductId={product.id}
+          categoryId={product.category.id}
+        />
       </div>
-
-      {/* Reviews */}
-      <ReviewsSection productId={product.id} />
-
-      {/* Related Products */}
-      <RelatedProducts
-        currentProductId={product.id}
-        categoryId={product.category.id}
-      />
-    </div>
+    </>
   );
 }

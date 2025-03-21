@@ -51,7 +51,7 @@ export default function EmailVerification() {
               <Mail className="h-6 w-6 text-blue-600" />
             </div>
 
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            <h2 className="mt-6 text-2xl font-extrabold text-gray-900">
               Verify your email
             </h2>
 
@@ -92,8 +92,8 @@ export default function EmailVerification() {
               onClick={handleResendEmail}
               isLoading={isResending}
               disabled={isResending}
-              variant="outline"
-              className="w-full"
+              variant="default"
+              className="w-full bg-customBlack text-white"
             >
               Resend verification email
             </Button>

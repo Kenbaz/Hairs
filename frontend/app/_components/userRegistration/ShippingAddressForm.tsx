@@ -56,8 +56,8 @@ export default function ShippingAddressForm() {
   return (
     <div className="w-full max-w-2xl mx-auto space-y-8">
       <div className="text-center">
-        <h2 className="text-2xl font-bold">Add Shipping Address</h2>
-        <p className="mt-2 text-sm text-gray-600">
+        <h2 className="text-xl font-bold">Add Shipping Address</h2>
+        <p className="mt-2 text-[0.8rem] sm:text-sm text-gray-600">
           Please provide your shipping details to complete your profile
         </p>
       </div>
@@ -72,6 +72,7 @@ export default function ShippingAddressForm() {
             label="Street Address"
             {...register("address", { required: "Address is required" })}
             error={errors.address?.message}
+            className="text-gray-900 focus:ring-1 focus:ring-black"
             disabled={isLoading}
           />
 
@@ -80,6 +81,7 @@ export default function ShippingAddressForm() {
               label="City"
               {...register("city", { required: "City is required" })}
               error={errors.city?.message}
+              className="text-gray-900 focus:ring-1 focus:ring-black"
               disabled={isLoading}
             />
 
@@ -87,6 +89,7 @@ export default function ShippingAddressForm() {
               label="State/Province"
               {...register("state", { required: "State is required" })}
               error={errors.state?.message}
+              className="text-gray-900 focus:ring-1 focus:ring-black"
               disabled={isLoading}
             />
           </div>
@@ -96,6 +99,7 @@ export default function ShippingAddressForm() {
               value={countryValue || ""}
               onChange={(value) => setValue("country", value)}
               error={errors.country?.message}
+              className="text-gray-900 focus:ring-1 focus:ring-black"
               disabled={isLoading}
               required
             />
@@ -104,14 +108,16 @@ export default function ShippingAddressForm() {
               label="Postal Code"
               {...register("postal_code")}
               error={errors.postal_code?.message}
+              className="text-gray-900 focus:ring-1 focus:ring-black"
               disabled={isLoading}
             />
           </div>
         </div>
 
         <Button
+          variant="default"
           type="submit"
-          className="w-full"
+          className="w-full bg-customBlack text-white"
           isLoading={isLoading}
           disabled={isLoading}
         >

@@ -84,24 +84,28 @@ export default function UserProfilePage() {
 
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 bg-customWhite pb-[10%] sm:px-10">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">Profile</h1>
+          <div></div>
           {!isEditing && (
-            <Button onClick={() => setIsEditing(true)} variant="outline">
+            <Button
+              onClick={() => setIsEditing(true)}
+              variant="default"
+              className="border border-gray-900 hover:ring-1 hover:ring-black"
+            >
               Edit Profile
             </Button>
           )}
         </div>
 
-        <div className="bg-white shadow rounded-lg">
-          <div className="p-6">
+        <div className="">
+          <div className="py-6 px-3 border">
             <h2 className="text-lg font-medium text-gray-900 mb-4">
               Personal Information
             </h2>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 text-gray-900 md:grid-cols-2 gap-6">
                 <Input
                   label="First Name"
                   {...register("first_name", {
@@ -135,11 +139,11 @@ export default function UserProfilePage() {
                 />
               </div>
 
-              <div className="border-t pt-6">
+              <div className=" pt-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">
                   Shipping Address
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 text-gray-900 md:grid-cols-2 gap-6">
                   <Input
                     label="Street Address"
                     {...register("address")}
@@ -181,7 +185,8 @@ export default function UserProfilePage() {
                 <div className="flex justify-end space-x-4">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="default"
+                    className="border border-gray-900"
                     onClick={() => {
                       setIsEditing(false);
                       reset();
@@ -190,7 +195,11 @@ export default function UserProfilePage() {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" isLoading={isUpdating}>
+                  <Button 
+                    type="submit"
+                    variant="default"
+                    className="bg-customBlack text-white"
+                    isLoading={isUpdating}>
                     Save Changes
                   </Button>
                 </div>
@@ -199,12 +208,13 @@ export default function UserProfilePage() {
           </div>
         </div>
 
-        <div className="bg-white shadow rounded-lg">
+        <div className="bg-customWhite border shadow">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-medium text-gray-900">Password</h2>
               <Button
-                variant="outline"
+                variant="default"
+                className="border border-gray-900 bg-customBlack text-white"
                 onClick={() => setShowPasswordSection(!showPasswordSection)}
               >
                 {showPasswordSection ? "Cancel" : "Change Password"}

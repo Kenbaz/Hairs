@@ -180,6 +180,8 @@ class ProductService {
   // Instant search (for autocomplete)
   async instantSearch(query: string): Promise<InstantSearchResult[]> {
     try {
+      if (query.trim().length < 1) return [];
+      
       const response = await axiosInstance.get<InstantSearchResult[]>(
         `${this.baseUrl}instant_search/`,
         {

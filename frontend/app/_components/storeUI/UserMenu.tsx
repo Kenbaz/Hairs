@@ -84,7 +84,7 @@ export function UserMenu() {
             <MenuItem>
               <button
                 onClick={() => dispatch(logout())}
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                className="flex items-center px-4 w-full py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 <LogOut className="h-4 w-4 mr-3" />
                 Logout

@@ -39,9 +39,9 @@ export default function UserLoginForm() {
 
 
     return (
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-md space-y-8 pb-10">
         <div className="text-center">
-          <h2 className="text-2xl font-bold">Welcome Back</h2>
+          <h2 className="text-2xl text-gray-900 font-bold">Welcome Back</h2>
           <p className="mt-2 text-sm text-gray-600">
             Sign in to your account to continue shopping
           </p>
@@ -81,21 +81,22 @@ export default function UserLoginForm() {
           <div className="flex items-center justify-between">
             <Link
               href="/auth/register"
-              className="text-sm text-blue-600 hover:text-blue-500"
+              className="text-sm text-gray-800 hover:text-gray-900"
             >
               Create an account
             </Link>
             <Link
               href="/auth/password-reset"
-              className="text-sm text-blue-600 hover:text-blue-500"
+              className="text-sm text-gray-800 hover:text-gray-900"
             >
               Forgot password?
             </Link>
           </div>
 
           <Button
+            variant='default'
             type="submit"
-            className="w-full"
+            className="w-full bg-customBlack text-white"
             isLoading={isSubmitting}
             disabled={isSubmitting}
           >

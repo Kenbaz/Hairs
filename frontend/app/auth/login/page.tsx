@@ -1,11 +1,14 @@
 import UserLoginForm from "@/app/_components/_authForms/UserLoginForm";
+import { PublicAuthLayout } from "@/app/_components/_authForms/publicForms/PublicAuthLayout";
 
 export default function LoginPage() {
     return (
-            <div className="flex flex-col items-center justify-center space-y-4">
-                <h1 className="text-2xl font-bold text-gray-900">Login</h1>
-                <p className="text-gray-600">Please log in to continue shopping</p>
-                <UserLoginForm />
-            </div>
+      <div className="h-screen overflow-y-auto">
+        <PublicAuthLayout>
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <UserLoginForm />
+          </div>
+        </PublicAuthLayout>
+      </div>
     );
 }

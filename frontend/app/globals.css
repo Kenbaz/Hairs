@@ -43,6 +43,16 @@ body {
       gap: 10px;
     }
 
+    .grid-style5 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 4px;
+    }
+
+    .search-input::-webkit-scrollbar {
+      display: none;
+    }
+
     .overide-height {
       max-height: 60rem !important;
       scrollbar-width: thin;
@@ -95,6 +105,61 @@ body {
     .layout-container::-webkit-scrollbar {
       display: none;
     }
+
+        /* Hero Background Styles */
+        .hero-background {
+          position: relative;
+          background-color: #f9c588;
+          background-image: url('/hero-background.svg');
+          background-size: cover;
+          background-position: center;
+          overflow: hidden;
+        }
+    
+        .hero-image {
+          position: absolute;
+          background-size: contain;
+          background-repeat: no-repeat;
+        }
+    
+        /* Positioning for specific images */
+        .hero-image-1 {
+          top: 10%;
+          left: -5%;
+          width: 300px;
+          height: 300px;
+          background-image: url('/Third-image.jpg');
+          transform: rotate(-15deg);
+        }
+    
+        .hero-image-2 {
+          top: 40%;
+          right: -10%;
+          width: 250px;
+          height: 250px;
+          background-image: url('/Second-image.jpg');
+          transform: rotate(10deg);
+        }
+    
+        .hero-image-3 {
+          bottom: 20%;
+          left: 30%;
+          width: 200px;
+          height: 200px;
+          background-image: url('/First-image.jpg');
+          transform: rotate(0deg);
+        }
+    
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+    
+          .hero-image-1,
+          .hero-image-2,
+          .hero-image-3 {
+            width: 200px;
+            height: 200px;
+          }
+        }
 }
 
 

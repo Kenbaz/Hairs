@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 600" preserveAspectRatio="xMinYMin slice">
+  <defs>
+    <!-- Base color -->
+    <rect id="base" width="100%" height="100%" fill="#f9c588"/>
+    
+    <!-- Reduced curve pattern -->
+    <pattern id="curvePattern" x="0" y="0" width="300" height="300" patternUnits="userSpaceOnUse">
+      <path d="M0 100 Q100 75, 200 100 T400 100" stroke="#e68a00" fill="none" stroke-width="2"/>
+      <path d="M-100 250 Q100 200, 300 250 T500 250" stroke="#e68a00" fill="none" stroke-width="2"/>
+    </pattern>
+  </defs>
+  
+  <!-- Apply base color -->
+  <rect width="100%" height="100%" fill="#f9c588"/>
+  
+  <!-- Apply curve pattern -->
+  <rect width="100%" height="100%" fill="url(#curvePattern)"/>
+  
+  <!-- Circles with #fdfdfd color -->
+  <circle cx="200" cy="100" r="120" fill="#fdfdfd"/>
+  <circle cx="1200" cy="500" r="150" fill="#fdfdfd"/>
+  <circle cx="300" cy="450" r="90" fill="#fdfdfd"/>
+  <circle cx="1000" cy="150" r="80" fill="#fdfdfd"/>
+  <circle cx="700" cy="300" r="110" fill="#fdfdfd"/>
+</svg>

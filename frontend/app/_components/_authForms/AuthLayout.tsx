@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export function AuthLayout({ children }: PropsWithChildren) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-customWhite">
       {/* Container for the auth form */}
       <div className="w-full max-w-md px-6 py-12">
         {/* Logo and branding container */}

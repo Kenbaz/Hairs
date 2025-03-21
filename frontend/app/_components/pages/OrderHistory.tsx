@@ -51,10 +51,10 @@ export function OrderHistory() {
 
     return (
       <div className="flex flex-col items-start">
-        <span className={` py-1 rounded-full text-xs font-medium ${color}`}>
+        <span className={` py-1 rounded-full text-xs sm:text-sm font-medium ${color}`}>
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </span>
-        <span className="text-xs text-gray-500 mt-1">{message}</span>
+        <span className="text-xs sm:text-sm text-gray-500 mt-1">{message}</span>
       </div>
     );
   };
@@ -96,40 +96,43 @@ export function OrderHistory() {
   }
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
-      <div className="border-b px-6 py-4">
-        <h2 className="text-lg font-medium text-gray-900">Order History</h2>
+    <div className="bg-customWhite overflow-hidden">
+      <div className="border-b px-4 sm:px-10 lg:px-[4%] py-4">
+        <h2 className="text-lg sm:text-xl font-medium text-gray-900">
+          My Order History
+        </h2>
       </div>
       <div className="divide-y">
         {data.results.map((order: CustomerOrder) => (
           <Link
             key={order.id}
             href={`/shop/dashboard/orders/${order.id}`}
-            className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
+            className="grid px-4 sm:px-10 lg:px-[4%] py-4 hover:bg-gray-50 transition-colors"
           >
-            <div className="flex-1">
-              <div className="flex items-center space-x-3">
-                <span className="font-medium text-gray-900">
+            <div className="flex-1 space-y-1">
+              <div className="relative flex space-x-3">
+                <span className="font-medium sm:text-lg text-gray-900">
                   Order #{order.id}
                 </span>
-                {getStatusBadge(order.order_status)}
+                <div className="sm:-mt-[0.1rem]">
+                  {getStatusBadge(order.order_status)}
+                  <div className="sm:mt-2">
+                    <PriceDisplay
+                      amount={order.total_amount}
+                      sourceCurrency="USD"
+                      className="font-medium text-gray-900 text-sm sm:text-base"
+                    />
+                    <div className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-500">
+                      Placed{" "}
+                      {formatDistanceToNow(new Date(order.created_at), {
+                        addSuffix: true,
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <ChevronRight className="h-5 w-5 absolute right-0 top-[45%] text-gray-600" />
               </div>
-              <div className="mt-1 text-sm text-gray-500">
-                Placed{" "}
-                {formatDistanceToNow(new Date(order.created_at), {
-                  addSuffix: true,
-                })}
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <PriceDisplay
-                  amount={order.total_amount}
-                  sourceCurrency="USD"
-                  className="font-medium"
-                />
-              </div>
-              <ChevronRight className="h-5 w-5 text-gray-400" />
             </div>
           </Link>
         ))}

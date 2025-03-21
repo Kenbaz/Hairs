@@ -55,23 +55,30 @@ export default function RegistrationForm() {
     return (
       <div className="w-full max-w-2xl mx-auto space-y-8">
         <div className="text-center">
-          <h2 className="text-2xl font-bold">Create Your Account</h2>
+          <h2 className="text-2xl text-gray-900 font-bold">
+            Create Your Account
+          </h2>
           <p className="mt-2 text-sm text-gray-600">
             Already have an account?{" "}
-            <Link href="/auth/login" className="text-blue-600 hover:text-blue-500">
+            <Link
+              href="/auth/login"
+              className="text-blue-600 hover:text-blue-500"
+            >
               Sign in
             </Link>
           </p>
         </div>
 
         {alert && (
-                  <Alert type={alert.type} message={alert.message} className="mb-4" />
-                )}
+          <Alert type={alert.type} message={alert.message} className="mb-4" />
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Account Information */}
           <div className="space-y-6">
-            <h3 className="text-lg font-medium">Account Information</h3>
+            <h3 className="text-lg text-gray-500 font-medium">
+              Account Information
+            </h3>
             <Input
               label="Email Address"
               type="email"
@@ -82,6 +89,7 @@ export default function RegistrationForm() {
                   message: "Invalid email address",
                 },
               })}
+              className="text-gray-900 focus:ring-1 focus:ring-black"
               error={errors.email?.message}
               disabled={isLoading}
             />
@@ -89,7 +97,9 @@ export default function RegistrationForm() {
 
           {/* Personal Information */}
           <div className="space-y-6">
-            <h3 className="text-lg font-medium">Personal Information</h3>
+            <h3 className="text-lg text-gray-500 font-medium">
+              Personal Information
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
                 label="First Name"
@@ -97,6 +107,7 @@ export default function RegistrationForm() {
                   required: "First name is required",
                 })}
                 error={errors.first_name?.message}
+                className="text-gray-900 focus:ring-1 focus:ring-black"
                 disabled={isLoading}
               />
 
@@ -106,6 +117,7 @@ export default function RegistrationForm() {
                   required: "Last name is required",
                 })}
                 error={errors.last_name?.message}
+                className="text-gray-900 focus:ring-1 focus:ring-black"
                 disabled={isLoading}
               />
             </div>
@@ -120,6 +132,7 @@ export default function RegistrationForm() {
                   message: "Invalid phone number",
                 },
               })}
+              className="text-gray-900 focus:ring-1 focus:ring-black"
               error={errors.phone_number?.message}
               disabled={isLoading}
             />
@@ -127,7 +140,7 @@ export default function RegistrationForm() {
 
           {/* Password Section */}
           <div className="space-y-6">
-            <h3 className="text-lg font-medium">Set Password</h3>
+            <h3 className="text-lg text-gray-500 font-medium">Set Password</h3>
             <Input
               label="Password"
               type="password"
@@ -138,6 +151,7 @@ export default function RegistrationForm() {
                   message: "Password must be at least 8 characters",
                 },
               })}
+              className="text-gray-900 focus:ring-1 focus:ring-black"
               error={errors.password?.message}
               disabled={isLoading}
             />
@@ -150,14 +164,16 @@ export default function RegistrationForm() {
                 validate: (value) =>
                   value === password || "Passwords do not match",
               })}
+              className="text-gray-900 focus:ring-1 focus:ring-black"
               error={errors.password_repeat?.message}
               disabled={isLoading}
             />
           </div>
 
           <Button
+            variant='default'
             type="submit"
-            className="w-full mt-8"
+            className="w-full mt-8 bg-customBlack text-white"
             isLoading={isLoading}
             disabled={isLoading}
           >

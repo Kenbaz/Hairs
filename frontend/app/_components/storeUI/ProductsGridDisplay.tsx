@@ -4,6 +4,7 @@ import { ProductCard } from "./ProductCard";
 import { StoreProduct } from "@/src/types";
 import { Loader2 } from "lucide-react";
 import { Pagination } from "../UI/Pagination";
+import FadeInSection from "../UI/FadeInSection";
 
 
 interface ProductGridProps {
@@ -51,9 +52,14 @@ export function ProductGrid({
     return (
       <div className={className}>
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 gap-y-5">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <FadeInSection
+              key={product.id}
+              className="w-full"
+            >
+              <ProductCard product={product} />
+            </FadeInSection>
           ))}
         </div>
 

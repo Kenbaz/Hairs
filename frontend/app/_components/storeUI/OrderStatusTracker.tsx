@@ -34,7 +34,7 @@ export function OrderStatusTracker({ status }: OrderStatusTrackerProps) {
       ) : (
         <div className="relative">
           {/* Progress Bar */}
-          <div className="hidden sm:block absolute left-0 top-1/2 w-full h-0.5 -translate-y-1/2 bg-gray-200">
+          <div className=" sm:block absolute left-0 top-[53%] sm:top-1/2 w-full h-0.5 -translate-y-1/2 bg-gray-200">
             <div
               className="h-full bg-blue-600 transition-all duration-500"
               style={{
@@ -54,7 +54,7 @@ export function OrderStatusTracker({ status }: OrderStatusTrackerProps) {
           </div>
 
           {/* Steps */}
-          <div className="relative grid grid-cols-1 sm:grid-cols-4 gap-2">
+          <div className="relative grid grid-cols-4 sm:grid-cols-4 gap-2">
             {steps.map((step, index) => {
               const isCompleted = index <= currentStepIndex;
               const isCurrent = index === currentStepIndex;
@@ -62,11 +62,11 @@ export function OrderStatusTracker({ status }: OrderStatusTrackerProps) {
               return (
                 <div
                   key={step.id}
-                  className={`flex flex-col sm:items-center ${
-                    index < steps.length - 1 ? "mb-4 sm:mb-0" : ""
+                  className={`flex sm:items-center ${
+                    index < steps.length - 1 ? "mb-0 sm:mb-0" : ""
                   }`}
                 >
-                  <div className="flex items-center mb-2 sm:flex-col sm:mb-0">
+                  <div className="flex flex-col items-center mb-0 sm:flex-col sm:mb-0">
                     <div
                       className={`
                       relative flex items-center justify-center w-10 h-10 rounded-full 
@@ -81,15 +81,15 @@ export function OrderStatusTracker({ status }: OrderStatusTrackerProps) {
                     >
                       <step.icon className="h-5 w-5" />
                     </div>
-                    <div className="ml-4 sm:ml-0 sm:mt-2 flex-1 sm:text-center">
+                    <div className="ml-0 mt-2 text-center sm:ml-0 sm:mt-2 flex-1 sm:text-center">
                       <p
-                        className={`font-medium ${
+                        className={`font-medium text-[0.8rem] sm:text-base ${
                           isCompleted ? "text-blue-600" : "text-gray-500"
                         }`}
                       >
                         {step.label}
                       </p>
-                      <p className="text-xs text-gray-500 hidden sm:block">
+                      <p className="text-xs sm:text-sm text-gray-500">
                         {isCurrent
                           ? "In progress"
                           : isCompleted
@@ -99,7 +99,7 @@ export function OrderStatusTracker({ status }: OrderStatusTrackerProps) {
                     </div>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className="w-0.5 h-6 bg-gray-200 ml-5 sm:hidden">
+                    <div className="w-0.5 h-6 bg-gray-200 ml-5 hidden">
                       <div
                         className="h-full bg-blue-600 transition-all duration-500"
                         style={{ height: isCompleted ? "100%" : "0%" }}

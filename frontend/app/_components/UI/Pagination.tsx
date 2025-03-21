@@ -51,24 +51,24 @@ export function Pagination({
   return (
     <nav className={`flex items-center justify-center space-x-2 ${className}`}>
       <Button
-        variant="outline"
+        variant="default"
         size="sm"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-5 w-5" />
       </Button>
 
       {getPageNumbers().map((pageNumber, index) => (
         <div key={index}>
           {pageNumber === "..." ? (
             <span className="px-2">
-              <MoreHorizontal className="h-4 w-4 text-gray-400" />
+              <MoreHorizontal className="h-4 w-4 text-gray-600" />
             </span>
           ) : (
             <Button
-              variant={currentPage === pageNumber ? "primary" : "outline"}
-              size="sm"
+              variant="default"
+              className={`text-sm ${currentPage === pageNumber ? "border-b border-black font-medium w-5" : ""}`}
               onClick={() =>
                 typeof pageNumber === "number" && onPageChange(pageNumber)
               }
@@ -80,12 +80,12 @@ export function Pagination({
       ))}
 
       <Button
-        variant="outline"
+        variant="default"
         size="sm"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-5 w-5" />
       </Button>
     </nav>
   );

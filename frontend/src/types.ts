@@ -1412,9 +1412,11 @@ export interface InstantSearchResult {
   id: number;
   name: string;
   slug: string;
-  primary_image: {
-    image: string | null;
-  };
+  primary_image?: {
+    url: string; // Change from 'image' to 'url'
+    is_primary?: boolean;
+  } | null;
+  type: "exact" | "suggestion";
 }
 
 export interface StoreProductFilters {

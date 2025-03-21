@@ -65,7 +65,7 @@ export function ReviewForm({ onSubmit, onCancel, isSubmitting }: ReviewFormProps
             rows={4}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md p-4 text-gray-900 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             placeholder="What did you like or dislike about this product?"
             required
           />
@@ -75,13 +75,16 @@ export function ReviewForm({ onSubmit, onCancel, isSubmitting }: ReviewFormProps
         <div className="flex justify-end gap-4">
           <Button
             type="button"
-            variant="outline"
+            variant="default"
+            className="border border-black hover:ring-1 hover:ring-black"
             onClick={onCancel}
             disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button
+            variant="default"
+            className="bg-customBlack text-white"
             type="submit"
             isLoading={isSubmitting}
             disabled={rating === 0}

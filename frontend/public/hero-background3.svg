@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 800">
+  <!-- Base Background -->
+  <rect width="1440" height="800" fill="#000000" />
+  
+  <!-- Subtle wave pattern -->
+  <path d="M0,160 C320,200 480,100 720,120 C960,140 1120,200 1440,160 L1440,0 L0,0 Z" 
+        fill="#0f0f0f" opacity="0.85" />
+  
+  <!-- Diagonal lines - more pronounced -->
+  <g opacity="0.5" stroke="#353535" stroke-width="1.5">
+    <line x1="0" y1="0" x2="1440" y2="800" />
+    <line x1="240" y1="0" x2="1440" y2="600" />
+    <line x1="480" y1="0" x2="1440" y2="400" />
+    <line x1="720" y1="0" x2="1440" y2="200" />
+    <line x1="0" y1="200" x2="720" y2="800" />
+    <line x1="0" y1="400" x2="480" y2="800" />
+    <line x1="0" y1="600" x2="240" y2="800" />
+  </g>
+  
+  <!-- Floating circles - more pronounced -->
+  <circle cx="200" cy="150" r="70" fill="#181818" opacity="0.85" stroke="#2a2a2a" stroke-width="1" />
+  <circle cx="1200" cy="250" r="90" fill="#141414" opacity="0.8" stroke="#2a2a2a" stroke-width="1" />
+  <circle cx="400" cy="650" r="110" fill="#161616" opacity="0.75" stroke="#2a2a2a" stroke-width="1" />
+  <circle cx="1000" cy="600" r="55" fill="#121212" opacity="0.85" stroke="#2a2a2a" stroke-width="1" />
+  <circle cx="600" cy="350" r="80" fill="#151515" opacity="0.7" stroke="#2a2a2a" stroke-width="1" />
+  
+  <!-- Dot pattern - more visible -->
+  <g fill="#ffffff" opacity="0.08">
+    <circle cx="100" cy="100" r="1.5" />
+    <circle cx="400" cy="200" r="1.5" />
+    <circle cx="700" cy="300" r="1.5" />
+    <circle cx="1000" cy="150" r="1.5" />
+    <circle cx="1300" cy="250" r="1.5" />
+    <circle cx="200" cy="400" r="1.5" />
+    <circle cx="500" cy="500" r="1.5" />
+    <circle cx="800" cy="600" r="1.5" />
+    <circle cx="1100" cy="450" r="1.5" />
+    <circle cx="1400" cy="550" r="1.5" />
+    <circle cx="300" cy="700" r="1.5" />
+    <circle cx="600" cy="100" r="1.5" />
+    <circle cx="900" cy="200" r="1.5" />
+    <circle cx="1200" cy="700" r="1.5" />
+  </g>
+  
+  <!-- Additional circular patterns -->
+  <circle cx="100" cy="300" r="3" fill="#333" opacity="0.7" />
+  <circle cx="1300" cy="600" r="3" fill="#333" opacity="0.7" />
+  <circle cx="800" cy="150" r="3" fill="#333" opacity="0.7" />
+  <circle cx="250" cy="550" r="3" fill="#333" opacity="0.7" />
+  <circle cx="950" cy="400" r="3" fill="#333" opacity="0.7" />
+  
+  <!-- Subtle gradient overlay -->
+  <rect width="1440" height="800" fill="url(#gradient)" opacity="0.25" />
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#222222" />
+      <stop offset="50%" stop-color="#161616" />
+      <stop offset="100%" stop-color="#1c1c1c" />
+    </linearGradient>
+  </defs>
+</svg>

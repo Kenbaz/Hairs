@@ -53,23 +53,19 @@ export function Cart({ isDrawer = false }: CartProps) {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex bg-customWhite flex-col h-full">
       {/* Cart Header - only for drawer mode */}
       {isDrawer && (
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              className="flex items-center border-gray-900 font-medium border py-2 px-4 space-x-1 hover:ring-1 hover:ring-black text-gray-900"
               onClick={() => setShowClearConfirm(true)}
               disabled={isClearingCart}
             >
-              <Trash2 className="h-4 w-4 mr-1" />
+              <Trash2 className="h-4 w-4 mr-1 text-gray-700 hover:text-gray-900" />
               Clear
-            </Button>
-          </div>
-          <div className="text-sm">
-            {cart.items.length} {cart.items.length === 1 ? "item" : "items"}
+            </button>
           </div>
         </div>
       )}
@@ -77,33 +73,35 @@ export function Cart({ isDrawer = false }: CartProps) {
       {/* Cart Items */}
       <div className="flex-grow overflow-auto divide-y">
         {cart.items.map((item) => (
-          <div key={item.id} className="p-4 flex items-center">
-            <div className="relative h-16 w-16 flex-shrink-0">
+          <div key={item.id} className="p-4 grid grid-cols-2 items-center">
+            <div className="relative h-[110%] w-[55%] flex-shrink-0">
               <Image
                 src={item.product.primary_image?.url || "/placeholder.png"}
                 alt={`${item.product.name || "Product"} Image`}
                 fill
                 sizes="64px"
-                className="object-cover rounded-md"
+                className="object-cover rounded"
               />
             </div>
-            <div className="ml-4 flex-grow text-gray-900">
-              <p className="font-medium truncate">{item.product.name}</p>
+            <div className="-ml-[37%] text-gray-900">
+              <p className="font-medium text-[0.93rem] tracking-wide">
+                {item.product.name}
+              </p>
               <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
-            </div>
-            <div className="ml-4">
-              <PriceDisplay
-                amount={item.price_at_add * item.quantity}
-                sourceCurrency="USD"
-                className="font-medium text-gray-900"
-              />
+              <div className="mt-1">
+                <PriceDisplay
+                  amount={item.price_at_add * item.quantity}
+                  sourceCurrency="USD"
+                  className="font-medium text-[0.95rem] text-gray-900 tracking-wide"
+                />
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Cart Footer */}
-      <div className="border-t p-4">
+      <div className="border-t p-4 pb-8">
         <div className="flex justify-between mb-4 text-gray-900">
           <span className="font-medium">Total</span>
           <PriceDisplay
@@ -114,21 +112,20 @@ export function Cart({ isDrawer = false }: CartProps) {
         </div>
         <div className="flex gap-2">
           <Link href="/shop/cart" className="flex-1">
-            <Button
-              variant="outline"
-              className="w-full"
+            <button
+              className="w-full bg-customBlack text-white py-3"
               onClick={() => isDrawer && dispatch(closeCart())}
             >
               View Cart
-            </Button>
+            </button>
           </Link>
-          <Link href="/shop/checkout" className="flex-1">
-            <Button
-              className="w-full"
+          <Link href="#" className="flex-1">
+            <button
+              className="w-full bg-customBlack text-white py-3"
               onClick={() => isDrawer && dispatch(closeCart())}
             >
               Checkout
-            </Button>
+            </button>
           </Link>
         </div>
       </div>

@@ -5,9 +5,9 @@ import Image from "next/image";
 
 export function PublicAuthLayout({ children }: PropsWithChildren) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen w-full flex items-center justify-center bg-customWhite">
       {/* Container for the auth form */}
-      <div className="w-full max-w-md px-6 py-12">
+      <div className="w-full px-6 py-12">
         {/* Logo and branding container */}
         <div className="mb-8 text-center">
           <Image
@@ -23,7 +23,12 @@ export function PublicAuthLayout({ children }: PropsWithChildren) {
         </div>
 
         {/* Form container */}
-        <div className="bg-white shadow-md rounded-lg p-8">{children}</div>
+        <div className="bg-white mx-auto shadow-md sm:w-[72%] lg:landscape:w-[60%] rounded-lg px-4 py-8 2xl:hidden">
+          {children}
+        </div>
+        <div className="bg-white hidden 2xl:block mx-auto shadow-md w-[50%] rounded-lg px-4 py-8 ">
+          {children}
+        </div>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-600">

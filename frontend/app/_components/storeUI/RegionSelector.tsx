@@ -1,22 +1,25 @@
 "use client";
 
-import { useCurrency } from "../_providers/CurrencyContext";
-import { Loader2, ChevronDown } from "lucide-react";
+import { Fragment } from "react";
 import {
   Listbox,
-  ListboxOption,
   ListboxButton,
   ListboxOptions,
+  ListboxOption,
   Transition,
 } from "@headlessui/react";
-import { Fragment } from "react";
+import { ChevronDown, Check } from "lucide-react";
+import { useCurrency } from "../_providers/CurrencyContext";
 
 interface RegionSelectorProps {
   className?: string;
+  variant?: "default" | "mobile";
 }
 
-export function RegionSelector({ className = "" }: RegionSelectorProps) {
-
+export function RegionSelector({
+  className = "",
+  variant = "default",
+}: RegionSelectorProps) {
   const {
     selectedCurrency,
     updateCurrency,
@@ -27,67 +30,95 @@ export function RegionSelector({ className = "" }: RegionSelectorProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center space-x-2 px-3 py-2 text-gray-500">
-        <Loader2 className="h-4 w-4 animate-spin" />
+      <div
+        className={`flex items-center space-x-2 px-3 py-2 text-gray-500 ${className}`}
+      >
+        <div className="animate-pulse bg-gray-200 h-4 w-20 rounded" />
       </div>
     );
   }
 
   if (error || !availableCurrencies.length) return null;
 
-  return (
-    <div className={`relative ${className}`}>
-      <Listbox value={selectedCurrency} onChange={updateCurrency}>
-        <div className="relative">
-          <ListboxButton
-            className="flex w-[30vw] md:w-[20vw] lg:landscape:w-[14vw] items-center justify-between rounded-lg border bg-white px-3 py-2 text-gray-800 shadow-sm text-base lg:landscape:text-sm 2xl:currency-list-style  
-                      focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm md:text-base"
-          >
-            <span>
-              {
-                availableCurrencies.find((c) => c.code === selectedCurrency)
-                  ?.symbol
-              }{" "}
-              {selectedCurrency}
-            </span>
-            <ChevronDown className="h-4 w-4 text-gray-500" />
-          </ListboxButton>
+  // Determine styling based on variant
+  const variantStyles = {
+    default: {
+      button:
+        "w-full md:w-[200px] flex items-center justify-between bg-white px-3 py-3 text-gray-800 shadow-sm",
+      optionsContainer:
+        "absolute z-10 mt-1 w-full text-gray-700 max-h-60 overflow-auto bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none",
+      optionBase: "cursor-pointer select-none relative py-2 pl-10 pr-4",
+      optionActive: "bg-gray-100 text-gray-700",
+      optionSelected: "bg-gray-50 text-gray-900",
+    },
+    mobile: {
+      button:
+        "w-full flex items-center justify-between py-3 px-4 text-gray-800 hover:bg-gray-50",
+      optionsContainer: "overflow-auto max-h-60 text-gray-800",
+      optionBase: "cursor-pointer select-none relative py-2 pl-10 pr-4",
+      optionActive: "bg-gray-100",
+      optionSelected: "bg-gray-50 text-gray-900",
+    },
+  };
 
-          <Transition
-            as={Fragment}
-            enter="transition ease-out duration-100"
-            enterFrom="transform opacity-0 scale-95"
-            enterTo="transform opacity-100 scale-100"
-            leave="transition ease-in duration-75"
-            leaveFrom="transform opacity-100 scale-100"
-            leaveTo="transform opacity-0 scale-95"
-          >
-            <ListboxOptions className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none md:text-base sm:text-sm lg:landscape:text-sm xl:overide">
-              {availableCurrencies.map((currency) => (
-                <ListboxOption
-                  key={currency.code}
-                  value={currency.code}
-                  className={({ active }) =>
-                    `cursor-pointer select-none px-3 py-2 ${
-                      active ? "bg-gray-100" : ""
-                    }`
-                  }
-                >
-                  {({ selected }) => (
+  const styles = variantStyles[variant];
+
+  return (
+    <Listbox value={selectedCurrency} onChange={updateCurrency}>
+      <div className="relative">
+        <ListboxButton className={styles.button}>
+          <span>
+            {
+              availableCurrencies.find((c) => c.code === selectedCurrency)
+                ?.symbol
+            }{" "}
+            {selectedCurrency}{" | "}
+            {
+              availableCurrencies.find((c) => c.code === selectedCurrency)
+                ?.name
+            }
+          </span>
+          <ChevronDown className="h-5 w-5 text-gray-500" />
+        </ListboxButton>
+
+        <Transition
+          as={Fragment}
+          leave="transition ease-in duration-100"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <ListboxOptions className={styles.optionsContainer}>
+            {availableCurrencies.map((currency) => (
+              <ListboxOption
+                key={currency.code}
+                value={currency.code}
+                className={({ active, selected }) => `
+                  ${styles.optionBase}
+                  ${active ? styles.optionActive : ""}
+                  ${selected ? styles.optionSelected : ""}
+                `}
+              >
+                {({ selected }) => (
+                  <>
                     <span
-                      className={`flex items-center ${
-                        selected ? "font-medium text-blue-600" : "text-gray-800"
+                      className={`block truncate ${
+                        selected ? "font-medium" : "font-normal"
                       }`}
                     >
-                      {currency.symbol} {currency.code}
+                      {currency.symbol} {currency.code} | {currency.name}
                     </span>
-                  )}
-                </ListboxOption>
-              ))}
-            </ListboxOptions>
-          </Transition>
-        </div>
-      </Listbox>
-    </div>
+                    {selected ? (
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-800">
+                        <Check className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                    ) : null}
+                  </>
+                )}
+              </ListboxOption>
+            ))}
+          </ListboxOptions>
+        </Transition>
+      </div>
+    </Listbox>
   );
 }

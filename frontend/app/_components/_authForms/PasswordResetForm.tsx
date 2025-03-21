@@ -54,8 +54,8 @@ export function PasswordResetForm() {
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Reset Password</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-xl text-gray-900 font-bold">Reset Password</h1>
+          <p className="mt-2 text-[0.8rem] text-gray-600">
             Enter your email address and we&apos;ll send you instructions to
             reset your password.
           </p>
@@ -65,6 +65,7 @@ export function PasswordResetForm() {
           <Input
             type="email"
             label="Email Address"
+            className="text-gray-900 focus:ring-1 focus:ring-black"
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -73,8 +74,9 @@ export function PasswordResetForm() {
           />
 
           <Button
+            variant="default"
             type="submit"
-            className="w-full"
+            className="w-full bg-customBlack text-white"
             isLoading={isLoading}
             disabled={isLoading}
           >
@@ -85,7 +87,7 @@ export function PasswordResetForm() {
         <div className="text-center">
           <Link
             href={adminRoute ? "/admin-auth/login" : "/auth/login"}
-            className="text-sm text-blue-600 hover:text-blue-500"
+            className="text-sm text-gray-600 hover:text-gray-900"
           >
             Back to Login
           </Link>

@@ -52,7 +52,7 @@ export function ChangePassword() {
 
 
     return (
-      <div className="bg-white py-4 rounded-lg">
+      <div className="bg-white py-4">
         <h2 className="text-xl text-gray-900 font-semibold mb-4">
           Change Password
         </h2>
@@ -70,7 +70,7 @@ export function ChangePassword() {
           <Input
             type="password"
             label="Current Password"
-            className="text-gray-900 border rounded-lg"
+            className="text-gray-900 border"
             value={oldPassword}
             onChange={(e) => setOldPassword(e.target.value)}
             required
@@ -80,7 +80,7 @@ export function ChangePassword() {
           <Input
             type="password"
             label="New Password"
-            className="text-gray-900 border rounded-lg"
+            className="text-gray-900 border"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
@@ -90,7 +90,7 @@ export function ChangePassword() {
           <Input
             type="password"
             label="Confirm New Password"
-            className="text-gray-900 border rounded-lg"
+            className="text-gray-900 border"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
@@ -98,8 +98,9 @@ export function ChangePassword() {
           />
 
           <Button
+            variant="default"
             type="submit"
-            className="w-full mt-4 md:w-auto bg-slate-700 hover:bg-slate-800"
+            className="w-full mt-4 md:w-auto bg-customBlack hover:bg-gray-900"
             isLoading={isLoading}
             disabled={isLoading}
           >

@@ -65,8 +65,8 @@ export function PasswordResetConfirmation({ token }: PasswordResetConfirmationPr
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Set New Password</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-xl text-gray-900 font-bold">Set New Password</h1>
+          <p className="mt-2 text-[0.8rem] sm:text-sm text-gray-600">
             Please enter your new password below.
           </p>
         </div>
@@ -77,6 +77,7 @@ export function PasswordResetConfirmation({ token }: PasswordResetConfirmationPr
           <Input
             type="password"
             label="New Password"
+            className="text-gray-900 focus:ring-1 focus:ring-black"
             placeholder="Enter your new password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -87,6 +88,7 @@ export function PasswordResetConfirmation({ token }: PasswordResetConfirmationPr
           <Input
             type="password"
             label="Confirm New Password"
+            className="text-gray-900 focus:ring-1 focus:ring-black"
             placeholder="Confirm your new password"
             value={passwordConfirmation}
             onChange={(e) => setPasswordConfirmation(e.target.value)}
@@ -95,8 +97,9 @@ export function PasswordResetConfirmation({ token }: PasswordResetConfirmationPr
           />
 
           <Button
+            variant='default'
             type="submit"
-            className="w-full"
+            className="w-full bg-customBlack text-white"
             isLoading={isLoading}
             disabled={isLoading}
           >
