@@ -5,13 +5,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Category, Product
-from .serializers import (CategorySerializer, ProductListSerializer, ProductDetailsSerializer)
+from .serializers import (CategorySerializer, ProductListSerializer, ProductDetailsSerializer, ProductImageSerializer)
 from .pagination import ProductPagination
 from currencies.utils import CurrencyConverter
 from decimal import Decimal
 from django.conf import settings
 from utils.cache import cache_response
 from rest_framework.decorators import action
+from django.db.models import Q
 import decimal
 import logging
 
@@ -72,25 +73,40 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def list_cached(self, request, *args, **kwargs):
         return super().list_cached(request, *args, **kwargs)
     
-
     @action(detail=False)
     def instant_search(self, request):
-        """ Endpoint for instant search with minimal data """
+        """ Endpoint for instant search with product matches and suggestions """
         query = request.query_params.get('query', '')
         if len(query) < 3:
             return Response([])
-        
-        queryset = self.get_queryset().filter(name__icontains=query)[:10] # Limit to 10 results
 
-        # Using a minimal serializer for performance
+        # Exact matches
+        exact_matches = self.get_queryset().filter(name__icontains=query)[:5]
+
+        # Suggestions (multiple matching strategies)
+        suggestions = self.get_queryset().filter(
+            name__istartswith=query
+        ).exclude(
+            name__icontains=query
+        )[:5]
+
+        # Combine and deduplicate
+        results = list(exact_matches) + list(suggestions)
+
+        # Serialize results
         data = [{
             'id': product.id,
             'name': product.name,
             'slug': product.slug,
-            'primary_image': {
-                'image': product.images.filter(is_primary=True).first().image.url if product.images.filter(is_primary=True).exists() else None
-            }
-        } for product in queryset]
+            'primary_image': (
+                ProductImageSerializer(
+                    product.images.filter(is_primary=True).first(),
+                    context={'request': request}
+                ).data if product.images.filter(is_primary=True).exists()
+                else None
+            ),
+            'type': 'exact' if product in exact_matches else 'suggestion'
+        } for product in results[:10]]
 
         return Response(data)
 

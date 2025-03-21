@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from .models import Cart, CartItem, GuestCart, GuestCartItem
 from .serializers import CartSerializer
 from products.models import Product
+from wishlist.models import Wishlist, WishlistItem
 
 
 class CartViewSet(viewsets.GenericViewSet):
@@ -272,3 +273,75 @@ class CartViewSet(viewsets.GenericViewSet):
                     user_item.save()
             except Product.DoesNotExist:
                 continue
+    
+
+    @action(detail=False, methods=['post'])
+    def move_to_wishlist(self, request):
+        """
+        Move an item from cart to wishlist
+        
+        Expected payload:
+        {
+            'item_id': int,  # ID of the cart item to move
+        }
+        """
+        # Get cart for current user
+        cart = self.get_cart(request)
+
+        # Get item ID from request data
+        item_id = request.data.get('item_id')
+
+        if not item_id:
+            return Response(
+                {"error": "Item ID is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Find the cart item
+            cart_item = CartItem.objects.get(cart=cart, id=item_id)
+            product = cart_item.product
+
+            # Check if product is available
+            if not product.is_available:
+                return Response(
+                    {"error": "Product is not currently available"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get or create user's wishlist
+            wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
+
+            # Check if product is already in wishlist
+            if WishlistItem.objects.filter(
+                wishlist=wishlist,
+                product=product
+            ).exists():
+                return Response(
+                    {"error": "Product is already in your wishlist"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create wishlist item 
+            WishlistItem.objects.create(
+                wishlist=wishlist,
+                product=product
+            )
+
+            # Remove item form cart
+            cart_item.delete()
+
+            # Serialize and return updated cart
+            serializer = self.get_serializer(cart)
+            return Response(serializer.data)
+        
+        except CartItem.DoesNotExist:
+            return Response(
+                {"error": "Cart item not found"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
