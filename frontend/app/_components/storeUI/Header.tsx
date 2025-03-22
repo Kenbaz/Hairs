@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Menu,
   User,
@@ -13,7 +12,6 @@ import {
   LogOut,
   Store,
   Phone,
-  Search,
 } from "lucide-react";
 import Image from "next/image";
 import { useAppDispatch } from "@/src/libs/_redux/hooks";
@@ -21,21 +19,15 @@ import { openCart } from "@/src/libs/_redux/cartSlice";
 import { openWishlist } from "@/src/libs/_redux/wishlistUISlice";
 import { useAuth } from "@/src/libs/customHooks/useAuth";
 import { Button } from "../UI/Button";
-import { Input } from "../UI/Input";
 import { CartIndicator } from "../cartUI/CartIndicator";
 import { WishlistIndicator } from "../wishlistUI/WislistIndicator";
 import { logout } from "@/src/libs/_redux/authSlice";
 import { RegionSelector } from "./RegionSelector";
 import { UserMenu } from "./UserMenu";
-import { productService } from "@/src/libs/services/customerServices/productService";
-import { useDebounce } from "@/src/libs/customHooks/useDebounce";
-import { SearchDropdown } from "./SearchDropdown";
-import { InstantSearchResult } from "@/src/types";
 import { SearchInput } from "./Search";
 
 export function Header() {
   const dispatch = useAppDispatch();
-  const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
