@@ -31,6 +31,7 @@ import { productService } from "@/src/libs/services/customerServices/productServ
 import { useDebounce } from "@/src/libs/customHooks/useDebounce";
 import { SearchDropdown } from "./SearchDropdown";
 import { InstantSearchResult } from "@/src/types";
+import { SearchInput } from "./Search";
 
 export function Header() {
   const dispatch = useAppDispatch();
@@ -38,65 +39,6 @@ export function Header() {
   const { isAuthenticated, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Search state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<InstantSearchResult[]>([]);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
-  const debouncedSearchTerm = useDebounce(searchQuery, 300);
-
-  // Handle search results
-  useEffect(() => {
-    const fetchSearchResults = async () => {
-      if (debouncedSearchTerm.trim().length > 1) {
-        try {
-          const results = await productService.instantSearch(
-            debouncedSearchTerm
-          );
-          setSearchResults(results);
-        } catch (error) {
-          console.error("Search error:", error);
-          setSearchResults([]);
-        }
-      } else {
-        setSearchResults([]);
-      }
-    };
-
-    fetchSearchResults();
-  }, [debouncedSearchTerm]);
-
-  // Close search dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        searchContainerRef.current &&
-        !searchContainerRef.current.contains(event.target as Node)
-      ) {
-        setIsSearchFocused(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(
-        `/shop/products?search=${encodeURIComponent(searchQuery.trim())}`
-      );
-      setIsSearchFocused(false);
-    }
-  };
-
-  const handleSelectSearchItem = () => {
-    setIsSearchFocused(false);
-    setSearchQuery("");
-  };
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
@@ -244,10 +186,12 @@ export function Header() {
       </AnimatePresence>
 
       <header className="bg-white fixed top-0 z-40 w-full shadow-sm pb-[0.6rem] xl:px-[4%]">
-        <div className="-mb-2">
+        <div
+          className="-mb-2"
+        >
           {/* Main Header */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center lg:space-x-4 justify-between h-16">
+            <div className="flex items-center sm:space-x-8 lg:space-x-5 justify-between h-16">
               <div className="flex items-center space-x-3">
                 {/* Hamburger Menu */}
                 <button className="lg:hidden p-2" onClick={toggleMobileMenu}>
@@ -275,30 +219,7 @@ export function Header() {
 
               {/* Search Bar */}
               <div className="hidden sm:block w-full">
-                {/* Search Bar */}
-                <div
-                  ref={searchContainerRef}
-                  className="w-full max-w-lg mx-auto px-4 mt-2 relative"
-                >
-                  <form onSubmit={handleSearch} className="w-full relative">
-                    <Input
-                      type="search"
-                      placeholder="Search products..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onFocus={() => setIsSearchFocused(true)}
-                      className="pl-10 pr-10 bg-white text-gray-900 py-3 border focus:ring-gray-200 focus:ring-1"
-                    />
-                    <Search className="absolute text-gray-400 shadow-sm hover:text-gray-600 top-[23%] left-2" />
-                  </form>
-
-                  {isSearchFocused && searchResults.length > 0 && (
-                    <SearchDropdown
-                      results={searchResults}
-                      onSelectItem={handleSelectSearchItem}
-                    />
-                  )}
-                </div>
+                <SearchInput/>
               </div>
 
               <div className="hidden xl:block">
@@ -328,31 +249,13 @@ export function Header() {
           </div>
         </div>
         <div className="sm:hidden">
-          {/* Search Bar */}
-          <div
-            ref={searchContainerRef}
-            className="w-full max-w-lg mx-auto px-4 mt-2 relative"
-          >
-            <form onSubmit={handleSearch} className="w-full relative">
-              <Input
-                type="search"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                className="pl-10 pr-10 rounded-full bg-white text-gray-900 py-3 border focus:ring-gray-200 focus:ring-1"
-              />
-              <Search className="absolute text-gray-400 shadow-sm hover:text-gray-600 top-[23%] left-2" />
-            </form>
-
-            {isSearchFocused && searchResults.length > 0 && (
-              <SearchDropdown
-                results={searchResults}
-                onSelectItem={handleSelectSearchItem}
-              />
-            )}
-          </div>
+          <SearchInput
+            className="w-[90%] mx-auto rounded-full"
+          />
         </div>
+        {/* <div className="hidden sm:block">
+         <SearchInput/>
+        </div> */}
       </header>
     </>
   );
