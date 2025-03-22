@@ -274,28 +274,31 @@ export function Header() {
               </nav>
 
               {/* Search Bar */}
-              <div
-                ref={searchContainerRef}
-                className="w-full hidden sm:block max-w-lg mx-auto px-4 mt-2 relative"
-              >
-                <form onSubmit={handleSearch} className="w-full relative">
-                  <Input
-                    type="search"
-                    placeholder="Search products..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => setIsSearchFocused(true)}
-                    className="pl-10 pr-10 bg-white text-gray-900 py-3 border focus:ring-gray-200 focus:ring-1"
-                  />
-                  <Search className="absolute text-gray-400 shadow-sm hover:text-gray-600 top-[23%] left-2" />
-                </form>
+              <div className="hidden sm:block w-full">
+                {/* Search Bar */}
+                <div
+                  ref={searchContainerRef}
+                  className="w-full max-w-lg mx-auto px-4 mt-2 relative"
+                >
+                  <form onSubmit={handleSearch} className="w-full relative">
+                    <Input
+                      type="search"
+                      placeholder="Search products..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      className="pl-10 pr-10 bg-white text-gray-900 py-3 border focus:ring-gray-200 focus:ring-1"
+                    />
+                    <Search className="absolute text-gray-400 shadow-sm hover:text-gray-600 top-[23%] left-2" />
+                  </form>
 
-                {isSearchFocused && searchResults.length > 0 && (
-                  <SearchDropdown
-                    results={searchResults}
-                    onSelectItem={handleSelectSearchItem}
-                  />
-                )}
+                  {isSearchFocused && searchResults.length > 0 && (
+                    <SearchDropdown
+                      results={searchResults}
+                      onSelectItem={handleSelectSearchItem}
+                    />
+                  )}
+                </div>
               </div>
 
               <div className="hidden xl:block">

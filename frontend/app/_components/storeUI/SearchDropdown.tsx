@@ -59,7 +59,7 @@ export function SearchDropdown({
           className="flex items-center px-4 py-3 hover:bg-gray-100 transition-colors gap-4"
         >
           {item.primary_image?.url && (
-            <div className="relative aspect-square h-[15%] w-[15%] flex-shrink-0 overflow-hidden border border-gray-200">
+            <div className="relative aspect-square h-[15%] w-[15%] flex-shrink-0 overflow-hidden">
               <Image
                 src={item.primary_image.url}
                 alt={item.name}

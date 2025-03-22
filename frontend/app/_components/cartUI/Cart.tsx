@@ -101,7 +101,7 @@ export function Cart({ isDrawer = false }: CartProps) {
       </div>
 
       {/* Cart Footer */}
-      <div className="border-t p-4 pb-[25%] sm:pb-[10%]">
+      <div className="border-t p-4 pb-[25%] sm:pb-[20%] xl:pb-[10%]">
         <div className="flex justify-between mb-4 text-gray-900">
           <span className="font-medium">Total</span>
           <PriceDisplay
