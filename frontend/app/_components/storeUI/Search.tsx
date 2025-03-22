@@ -70,7 +70,6 @@ export function SearchInput({ className = "" }: SearchProps) {
   };
 
   const handleSelectSearchItem = () => {
-    console.log("Select search item triggered");
     setIsSearchFocused(false);
     setSearchQuery("");
   };
