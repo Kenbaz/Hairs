@@ -81,7 +81,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                 leaveTo="translate-x-full"
               >
                 <DialogPanel className="pointer-events-auto w-screen max-w-md">
-                  <div className="flex h-full flex-col overflow-y-scroll bg-customWhite shadow-xl">
+                  <div className="flex h-full flex-col overflow-y-scroll bg-customWhite shadow-xl hide-scrollbar">
                     <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
                       <div className="flex items-start justify-between">
                         <DialogTitle className="text-lg font-medium text-gray-900">
@@ -95,7 +95,10 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                           >
                             <span className="absolute -inset-0.5" />
                             <span className="sr-only">Close panel</span>
-                            <X className="h-6 text-gray-700 w-6" aria-hidden="true" />
+                            <X
+                              className="h-6 text-gray-700 w-6"
+                              aria-hidden="true"
+                            />
                           </button>
                         </div>
                       </div>
@@ -175,7 +178,6 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                                         <Button
                                           variant="default"
                                           className="flex-shrink-0 text-sm -ml-[10%] text-gray-700 hover:text-gray-900 hover:underline"
-                                          
                                           onClick={() =>
                                             moveItemToCart(item.product.id)
                                           }
@@ -199,7 +201,6 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                                         <Button
                                           variant="default"
                                           className="flex-shrink-0 text-xs -ml-[8%]"
-                                          
                                           onClick={() =>
                                             removeItem(item.product.id)
                                           }

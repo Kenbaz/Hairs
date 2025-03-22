@@ -53,6 +53,10 @@ body {
       display: none;
     }
 
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
     .overide-height {
       max-height: 60rem !important;
       scrollbar-width: thin;

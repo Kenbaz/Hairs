@@ -71,7 +71,7 @@ export function Cart({ isDrawer = false }: CartProps) {
       )}
 
       {/* Cart Items */}
-      <div className="flex-grow overflow-auto divide-y">
+      <div className="flex-grow overflow-auto divide-y hide-scrollbar">
         {cart.items.map((item) => (
           <div key={item.id} className="p-4 grid grid-cols-2 items-center">
             <div className="relative h-[110%] w-[55%] flex-shrink-0">
