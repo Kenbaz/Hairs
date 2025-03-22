@@ -100,7 +100,7 @@ export function ChangePassword() {
           <Button
             variant="default"
             type="submit"
-            className="w-full mt-4 md:w-auto bg-customBlack hover:bg-gray-900"
+            className="w-full mt-4 md:w-auto bg-customBlack hover:bg-gray-900 text-white"
             isLoading={isLoading}
             disabled={isLoading}
           >

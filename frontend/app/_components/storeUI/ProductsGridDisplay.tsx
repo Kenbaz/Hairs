@@ -2,7 +2,6 @@
 
 import { ProductCard } from "./ProductCard";
 import { StoreProduct } from "@/src/types";
-import { Loader2 } from "lucide-react";
 import { Pagination } from "../UI/Pagination";
 import FadeInSection from "../UI/FadeInSection";
 
@@ -17,6 +16,25 @@ interface ProductGridProps {
 }
 
 
+const ProductSkeleton = () => (
+  <div className="animate-pulse bg-white shadow-sm overflow-hidden">
+    {/* Image skeleton */}
+    <div className="aspect-square w-full bg-gray-200" />
+
+    {/* Product info skeleton */}
+    <div className="py-4 px-2">
+      {/* Title */}
+      <div className="h-5 bg-gray-200 rounded w-3/4 mb-2" />
+
+      {/* Price */}
+      <div className="mt-2 space-y-1">
+        <div className="h-6 bg-gray-200 rounded w-1/3" />
+      </div>
+    </div>
+  </div>
+);
+
+
 export function ProductGrid({
     products,
     isLoading,
@@ -27,9 +45,13 @@ export function ProductGrid({
 }: ProductGridProps) { 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <Loader2 className="h-10 w-10 text-gray-600" />
+          <div className={className}>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 gap-y-5">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <ProductSkeleton key={index} />
+              ))}
             </div>
+          </div>
         );
     };
 

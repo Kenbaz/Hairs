@@ -230,7 +230,7 @@ export function Header() {
               )}
 
               {/* Region Selector */}
-              <div className="p-6">
+              <div className="p-6 hidden sm:block">
                 <h3 className="text-base font-medium text-gray-700 mb-2">
                   Select Region
                 </h3>
