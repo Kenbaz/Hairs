@@ -12,11 +12,11 @@ import { StoreProduct } from "@/src/types";
 
 // Define your CDN image URLs
 const HERO_IMAGE_1 =
-  "https://res.cloudinary.com/dxgp5h8qw/image/upload/v1741483223/products/v0vczzeaj2kkaki212ha.jpg";
+  "https://res.cloudinary.com/dxgp5h8qw/image/upload/v1753315205/Hair-demo1_mudlp7.png";
 const HERO_IMAGE_2 =
-  "https://res.cloudinary.com/dxgp5h8qw/image/upload/v1741483222/products/bwaltmdn3h9svijbbmrh.jpg";
+  "https://res.cloudinary.com/dxgp5h8qw/image/upload/v1753315205/Hair-demo2_t5selc.png";
 const HERO_IMAGE_3 =
-  "https://res.cloudinary.com/dxgp5h8qw/image/upload/v1741483550/products/wgu59gd2s1v1qf6nljce.jpg";
+  "https://res.cloudinary.com/dxgp5h8qw/image/upload/v1753315205/Hair-demo2_t5selc.png";
 
 
 export default function HomePage() {
